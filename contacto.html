@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contacto — Pico de Gallo</title>
+  <meta name="description" content="Habla con Pico de Gallo. Estudio de diseño y marca en Madrid, España." />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+
+  <header class="site-header">
+    <div class="container site-header__bar">
+      <a class="site-header__logo" href="index.html" aria-label="Pico de Gallo — inicio">
+        <img class="logo-mark" src="assets/icons/logo-pdg-blanco-mark.png" alt="" />
+        <img class="logo-word" src="assets/icons/logo-pdg-blanco-word.png" alt="Pico de Gallo" />
+      </a>
+      <nav class="site-nav" aria-label="Navegación principal">
+        <ul class="site-nav__links" id="primary-nav-links">
+          <li><a href="proyectos.html">Proyectos</a></li>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="contacto.html" aria-current="page">Contacto</a></li>
+        </ul>
+        <div class="lang-toggle" aria-label="Idioma">
+          <button type="button" aria-pressed="false">EN</button>
+          <button type="button" aria-pressed="true">ES</button>
+        </div>
+      </nav>
+      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="primary-nav-links">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero container">
+      <h1 class="page-hero__title">Contacto</h1>
+    </section>
+
+    <section class="contact-layout container">
+      <div>
+        <span class="content-pending__tag">Texto pendiente del cliente</span>
+        <p class="content-pending">Esta sección está pendiente de redacción final. Aquí debería ir una breve introducción de contacto escrita por Pico de Gallo — qué tipo de proyectos aceptan, cómo es el primer contacto, plazos de respuesta, etc.</p>
+
+        <div class="contact-meta">
+          <p><a href="mailto:correo@picodegallodesign.com">correo@picodegallodesign.com</a></p>
+          <p>Madrid, España</p>
+          <p><a href="https://www.instagram.com/picodegallodesign?igsh=MThrNWx5endqMWR2cA==" target="_blank" rel="noopener noreferrer">Instagram</a> · <a href="#" rel="noopener">LinkedIn</a></p>
+        </div>
+      </div>
+
+      <form class="contact-form" novalidate>
+        <div class="form-field">
+          <label for="contact-name">Nombre</label>
+          <input id="contact-name" name="nombre" type="text" autocomplete="name" required />
+        </div>
+        <div class="form-field">
+          <label for="contact-email">Email</label>
+          <input id="contact-email" name="email" type="email" autocomplete="email" required />
+        </div>
+        <div class="form-field">
+          <label for="contact-message">Cuéntanos tu proyecto</label>
+          <textarea id="contact-message" name="mensaje" rows="5" required></textarea>
+        </div>
+        <button class="btn-primary" type="submit">Enviar mensaje</button>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__logo">
+          <div class="logo-row">
+            <img class="logo-mark" src="assets/icons/logo-pdg-blanco-mark.png" alt="" />
+            <img class="logo-word" src="assets/icons/logo-pdg-blanco-word.png" alt="Pico de Gallo" />
+          </div>
+          <img class="logo-tagline" src="assets/icons/logo-pdg-blanco-tagline.png" alt="" />
+        </div>
+        <ul class="site-footer__col">
+          <li><a href="proyectos.html">Proyectos</a></li>
+          <li><a href="nosotros.html">Nosotros</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+        </ul>
+        <ul class="site-footer__col">
+          <li><a href="mailto:correo@picodegallodesign.com">correo@picodegallodesign.com</a></li>
+          <li>Madrid, España</li>
+          <li><a href="https://www.instagram.com/picodegallodesign?igsh=MThrNWx5endqMWR2cA==" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+          <li><a href="#" rel="noopener">LinkedIn</a></li>
+        </ul>
+        <div class="site-footer__legal">
+          <p>Política de privacidad, Aviso legal, Comunicación de criterios y requisitos, Política de seguridad de la información</p>
+          <p>©2026 Pico de Gallo Design</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+/* Pico de Gallo — Design tokens */
+:root {
+  /* Color */
+  --color-bg: #000000;
+  --color-bg-elevated: #111111;
+  --color-text: #ffffff;
+  --color-text-muted: #5e5e5e;
+  --color-text-soft: #989898;
+  --color-button-bg: #5e5e5e;
+  --color-border: #2b2b2b;
+  --color-header-on-light: #000000;
+  --color-focus: #ffffff;
+
+  /* Tipografia: Georgia es fuente de sistema (sin CDN externo); el resto
+     usa un fallback sans neutro hasta disponer de la tipografia de marca. */
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+
+  /* Escala tipografica (clamp = fluido entre mobile y desktop) */
+  --text-display-xl: clamp(2.75rem, 5vw + 1.5rem, 6rem);   /* 96px desktop */
+  --text-display-lg: clamp(2.25rem, 4vw + 1rem, 4.5rem);   /* 72px desktop */
+  --text-display-md: clamp(1.75rem, 3vw + 1rem, 4rem);     /* 64px desktop */
+  --text-heading: clamp(1.375rem, 1vw + 1rem, 2rem);       /* 32px desktop */
+  --text-body-lg: clamp(1rem, 0.3vw + 0.9rem, 1.125rem);   /* 16-18px */
+  --text-body: 0.875rem;                                    /* 14px */
+  --text-nav: 0.875rem;                                     /* 14px */
+
+  /* Espaciado */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+  --space-3xl: 9rem;
+
+  /* Layout */
+  --content-max: 1280px;
+  --content-padding: clamp(1.25rem, 4vw, 4.5rem);
+  --header-height: 77px;
+
+  /* Movimiento */
+  --ease-standard: cubic-bezier(0.2, 0.6, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-base: 280ms;
+}
