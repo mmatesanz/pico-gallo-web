@@ -12,58 +12,97 @@
   height: var(--header-height);
   display: flex;
   align-items: center;
+  background: var(--color-bg);
   color: var(--color-text);
-  transition: color var(--duration-base) var(--ease-standard);
+  transition: color var(--duration-base) var(--ease-standard), background-color var(--duration-base) var(--ease-standard);
 }
 
-/* En Home, el header arranca sobre la foto clara del hero: texto en negro
-   hasta que el scroll lo lleva sobre fondo negro (ver js/main.js). */
+/* En Home, el header arranca sobre la foto clara del hero: sin fondo (se ve
+   la foto detras) y texto en negro. En cuanto el scroll lo saca de la zona
+   clara (o en el resto de paginas, donde no hay zona clara), pasa a fondo
+   negro solido + texto blanco, para que el menu nunca quede ilegible sobre
+   contenido claro que pase por debajo del header fijo (ver js/main.js). */
 .site-header.is-on-light {
+  background: transparent;
   color: var(--color-header-on-light);
 }
 
+/* En Figma (nodo Menu) el logo esta a la izquierda (x=72) y los 4 links
+   empiezan poco despues (x=347, gap real ~62-76px segun pagina) - NO estan
+   pegados al borde derecho junto a EN/ES. EN/ES si quedan a ras del borde
+   derecho (x=1182-1216 = ancho total del Menu). El "gap" de aqui es la
+   distancia logo->primer link; el resto de la distribucion (links cerca
+   del logo, EN/ES al extremo derecho) se hace en .site-nav (mas abajo). */
 .site-header__bar {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
+  gap: 64px;
 }
 
-/* Lockup de marca: icono + logotipo en horizontal (sin tagline en el
-   header; el tagline solo aparece en el lockup grande del footer). */
+/* Lockup real del Figma: icono + logotipo en horizontal (sin tagline en el
+   header; el tagline solo aparece en el lockup grande del footer). Medidas
+   exactas del nodo "Menu" (1:745/1:746, Home): grupo mark 30.879x51, grupo
+   word 154.7x11.194, gap interno 14px. Antes el lockup completo se
+   renderizaba ~33% mas pequeno (34px/7.5px) que el valor real de Figma. */
 .site-header__logo {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 14px;
   transition: filter var(--duration-base) var(--ease-standard);
 }
 
+/* El SVG exportado de Figma declara width/height="100%" y
+   preserveAspectRatio="none" en su raiz (patron estandar de Figma: espera
+   un contenedor con tamano exacto, no que el navegador infiera el ratio
+   desde el viewBox). Por eso se fijan AMBOS ejes aqui, no solo uno con
+   "auto": los dos valores vienen del mismo viewBox del asset
+   (30.7078x51.0021 y 153.921x11.186) y ya estan en el ratio correcto, asi
+   que fijarlos juntos es lo que evita la deformacion, no lo que la causa. */
 .site-header__logo .logo-mark {
-  height: 34px;
-  width: auto;
+  width: 30.71px;
+  height: 51px;
 }
 
 .site-header__logo .logo-word {
-  height: 7.5px;
-  width: auto;
+  width: 153.92px;
+  height: 11.19px;
 }
 
 .site-header.is-on-light .site-header__logo {
   filter: invert(1);
 }
 
+/* Antes: justify-content por defecto (flex-start) + gap fijo, lo que
+   dejaba el bloque "nav" entero (links + EN/ES) pegado al borde derecho
+   del header (por el space-between de .site-header__bar de arriba), con
+   los links inmediatamente junto a EN/ES. En Figma los links estan cerca
+   del logo y EN/ES muy separados, a ras del borde derecho del Menu. Por
+   eso .site-nav crece para ocupar todo el espacio restante (flex:1) y
+   distribuye sus 2 hijos (ul de links / lang-toggle) con space-between:
+   los links quedan junto al logo, EN/ES quedan al extremo derecho. */
 .site-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  flex: 1;
+  justify-content: space-between;
 }
 
+/* En Figma los 4 links (Proyectos/Nosotros/Servicios/Contacto) son cajas de
+   ancho fijo identico (92px cada una) colocadas sin gap entre si (347,439,
+   531,619 - 92px exactos entre inicios), no cajas de ancho automatico con
+   separacion. Se reproduce con min-width fijo + gap:0 en vez del gap:1rem
+   anterior, que daba un ritmo de espaciado distinto al de Figma. */
 .site-nav__links {
   display: flex;
-  gap: 1rem;
+  gap: 0;
   font-family: var(--font-display);
   font-size: var(--text-nav);
+}
+
+.site-nav__links li {
+  min-width: 92px;
 }
 
 .site-nav__links a {
@@ -106,22 +145,35 @@
 }
 
 /* ---------- Footer ----------
-   Sin divisor/linea entre el contenido de la pagina y el footer, ni
-   despues de la fila legal. El footer termina justo en el borde inferior
-   del texto legal, sin padding extra. */
+   El Figma no muestra ningun divisor/linea entre el contenido de la pagina
+   y el footer, ni despues de la fila legal: no se anade border-top aqui
+   (ver header-footer-figma-audit.md). El alto del footer en Figma termina
+   exactamente en el borde inferior del texto legal (sin padding extra).
+   padding-top: 83px en vez de 96px - en Figma el hueco real entre la
+   ultima fila de Servicios y el footer es ~123px; 40px ya los aporta el
+   padding-block de .service-link-row (fuera de alcance de Footer), asi
+   que aqui solo hacen falta 83px para totalizar 123px. */
 .site-footer {
   background: var(--color-bg);
-  padding-top: var(--space-2xl);
+  padding-top: 83px;
 }
 
+/* En Figma las 3 columnas (Logo/Index/Info) NO son de ancho similar: cada
+   una se ajusta a su propio contenido (Logo~276px, Index~92px, Info~244px)
+   y el espacio entre ellas es mucho mayor que el resto de gaps del sitio
+   (~202-211px medidos, no 64px). Se usa column-gap (no "gap") para no
+   afectar el espacio vertical hacia .site-footer__legal, que ya tiene su
+   propio margin-top correcto. min() evita desbordar en viewports menores
+   a 1280px (entre el breakpoint mobile y el ancho de Figma). */
 .site-footer__grid {
   display: grid;
-  grid-template-columns: 1fr repeat(2, minmax(0, 1fr));
-  gap: var(--space-xl);
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(0, max-content);
+  column-gap: min(206px, 18vw);
 }
 
-/* Lockup de marca: icono + logotipo arriba, tagline debajo, sin
-   separacion entre ambos bloques, alineado a la derecha. */
+/* Lockup real del Figma: icono + logotipo arriba, tagline debajo, sin
+   separacion entre ambos bloques (alto del lockup = alto mark+word +
+   alto tagline, sin gap), alineado a la derecha. */
 .site-footer__logo {
   display: flex;
   flex-direction: column;
@@ -132,21 +184,25 @@
 .site-footer__logo .logo-row {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 20px;
 }
 
+/* Tamanos reales del lockup grande del footer (Logo_PDG_Blanco_by_BL_Group,
+   1:705-1:724): antes el lockup completo se renderizaba ~34% mas pequeno
+   (47/10.5/8px) que el valor real de Figma - mismo patron de bug ya
+   corregido antes en el logo del header. */
 .site-footer__logo .logo-mark {
-  height: 47px;
+  height: 71.08px;
   width: auto;
 }
 
 .site-footer__logo .logo-word {
-  height: 10.5px;
+  height: 15.59px;
   width: auto;
 }
 
 .site-footer__logo .logo-tagline {
-  height: 8px;
+  height: 12.061px;
   width: auto;
 }
 
@@ -155,14 +211,16 @@
   color: var(--color-text);
 }
 
-/* Las 4 lineas de cada columna van pegadas (mismo interlineado que el alto
-   de cada linea, sin margen extra entre ellas). */
+/* En el Figma las 4 lineas de cada columna van pegadas (mismo interlineado
+   que el alto de cada linea, sin margen extra entre ellas) y NINGUNA va en
+   negrita - los 4 items de Index y los 4 de Info comparten el mismo peso
+   Regular. (Antes se ponia en negrita el primer item de cada columna,
+   sin base en Figma). */
 .site-footer__col li + li { margin-top: 0; }
-.site-footer__col li:first-child { font-weight: 600; }
 
-/* La fila legal se alinea con las columnas 2 y 3 (Index/Info), no con la
-   columna del logo: por eso vive dentro de site-footer__grid y ocupa solo
-   esas dos columnas, en vez de todo el ancho del contenedor. */
+/* La fila legal en el Figma se alinea con las columnas 2 y 3 (Index/Info),
+   no con la columna del logo: por eso vive dentro de site-footer__grid y
+   ocupa solo esas dos columnas, en vez de todo el ancho del contenedor. */
 .site-footer__legal {
   grid-column: 2 / -1;
   margin-top: 3rem;
@@ -185,9 +243,10 @@
   line-height: 1.05;
 }
 
-/* El titulo de la pagina "Servicios" usa una escala mas pequena que
-   Nosotros/Contacto/Proyectos, consistente con los subtitulos grandes
-   usados en otras secciones (ej. "Estrategia" en Home). */
+/* En el Figma, el titulo de la pagina "Servicios" usa una caja de texto
+   mas pequena que Nosotros/Contacto/Proyectos (93px de alto frente a
+   160px), consistente con la escala de 72px usada en el resto del archivo
+   para subtitulos grandes (ej. "Estrategia" en Home). */
 .page-hero__title--md {
   font-size: var(--text-display-lg);
 }

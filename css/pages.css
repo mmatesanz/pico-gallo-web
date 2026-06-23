@@ -1,7 +1,10 @@
 /* ---------- Home ---------- */
+/* Figma (node 1:744) define el Hero como un frame fijo de 1280x800, sin
+   spec responsive (no hay frames mobile/tablet). Se usa el valor exacto
+   en vez de "90vh + max-height:800px": ese enfoque fluido no garantizaba
+   alcanzar los 800px reales salvo en viewports con suficiente alto. */
 .hero-media {
-  height: 90vh;
-  max-height: 800px;
+  height: 950px;
   width: 100%;
   overflow: hidden;
 }
@@ -12,24 +15,44 @@
   object-fit: cover;
 }
 
+/* En Figma el bloque del statement (1:743, bottom y=1256) termina exactamente
+   donde empieza el titulo "Proyectos" (1:792, top y=1256) - 0px de margen
+   propio entre ambos. Se reduce solo el padding-bottom (el padding-top se
+   mantiene, separa el statement de la foto del hero, sin relacion con esto). */
 .intro-statement {
-  padding-block: var(--space-2xl);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-sm);
 }
 
+/* font-size literal (no clamp): 64px exacto en Figma (1:743). Solo se usa
+   en index.html, seguro hardcodear sin tocar el token --text-display-md
+   compartido con otras paginas. */
 .intro-statement h1 {
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: var(--text-display-md);
+  font-size: 64px;
   line-height: 1.25;
   max-width: 70ch;
 }
 
 .section { padding-block: var(--space-2xl); }
 
+/* font-weight:normal es necesario porque <h2> tiene bold por defecto del
+   navegador (base.css solo resetea margin, no font-weight) y Figma usa
+   Georgia:Regular, no bold, en "Servicios" (1:735, 96px exacto). Solo se
+   usa en index.html, seguro hardcodear el tamano sin tocar el token. */
 .section__heading {
   font-family: var(--font-display);
-  font-size: var(--text-display-xl);
+  font-weight: normal;
+  font-size: 96px;
   margin-bottom: var(--space-lg);
+}
+
+/* En el Figma de Home, el titulo "Proyectos" (node 1:792) usa 72px exacto,
+   distinto del titulo "Servicios" (node 1:735, 96px) aunque ambos comparten
+   .section__heading. Modificador Home-especifico, no toca la regla base. */
+.section__heading--lg {
+  font-size: 72px;
 }
 
 /* ---------- Nosotros ---------- */
@@ -48,6 +71,22 @@
 }
 
 .manifesto__text p + p { margin-top: var(--space-md); }
+
+/* Imagen real (1203.73 x 651 en Figma, node 1:308-1:312). El "Clip path
+   group" del Figma es, tras inspeccionar el SVG de mascara real, un
+   rectangulo simple del tamano del frame contenedor (no una silueta
+   decorativa) - basta aspect-ratio + object-fit: cover, sin mask-image. */
+.manifesto__media {
+  aspect-ratio: 1203.73 / 651;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.manifesto__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 /* ---------- Contacto ---------- */
 .contact-layout {
@@ -74,6 +113,42 @@
   border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0.25rem 0.75rem;
+}
+
+/* Statement grande junto al titulo de Contacto (Figma: Lorem ipsum, node
+   1:132). Se conserva el tamano/tipografia real (page-hero__statement)
+   para mostrar la escala correcta, pero en tono atenuado + tag, para no
+   presentar un placeholder como copy definitivo. */
+.page-hero__statement--pending {
+  color: var(--color-text-soft);
+}
+
+.page-hero__statement--pending .content-pending__tag {
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+
+/* Imagen + cuerpo secundario de Contacto (Figma: node 1:133-1:137 imagen,
+   1132 x 479.97; node 1:131 cuerpo, Lorem ipsum). Mismo patron que
+   .manifesto__media: rectangulo simple, sin mascara decorativa. */
+.contact-visual {
+  padding-block: var(--space-xl) 0;
+}
+
+.contact-visual__media {
+  aspect-ratio: 1132 / 479.972;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.contact-visual__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.contact-visual__body {
+  margin-top: var(--space-lg);
 }
 
 /* ---------- Proyectos (index) ---------- */

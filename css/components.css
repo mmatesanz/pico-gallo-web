@@ -5,9 +5,11 @@
 }
 
 /* ---------- Project entry ----------
-   Los 4 proyectos del Home usan la misma proporcion de columnas y la misma
-   imagen en formato retrato (ratio ~0.9). No hay un proyecto "destacado"
-   mas grande que el resto: las 4 filas son visualmente equivalentes. */
+   En el Figma, los 4 proyectos del Home usan la misma proporcion de
+   columnas y la misma imagen ~retrato (texto ~410px / imagen ~770-790px,
+   imagen con altura mayor que el ancho, ratio ~0.9). No hay un proyecto
+   "destacado" mas grande que el resto: las 4 filas son visualmente
+   equivalentes. */
 .project-entry {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr);
@@ -18,6 +20,78 @@
 }
 
 .project-entry:first-of-type { border-top: none; }
+
+/* HOME-only (#home-proyectos, index.html). En Figma (Vector 1 dentro de
+   cada Proyecto_1: nodos 1:776/1:781/1:786/1:791) la linea separadora vive
+   pegada al titulo -11px de separacion, ancho = columna de texto (406px)-,
+   no como border-top de toda la fila. Los 4 proyectos la tienen, incluido
+   el primero. Se ancla al propio <h3> para que el ancho quede acotado a la
+   columna de texto y la separacion de 11px no varie por el align-items:
+   center del grid. proyectos.html no se toca (fuera de alcance, usa las
+   reglas base de arriba sin cambios). Ver current-section-repair.md. */
+/* Ajuste de padding-top de Proyectos (hereda 96px de .section, que tambien
+   usa el teaser de Servicios mas abajo - no se toca esa regla compartida). */
+#home-proyectos {
+  padding-top: 100px;
+}
+
+#home-proyectos .project-entry {
+  border-top: none;
+  padding-block: 24px;
+}
+
+#home-proyectos .project-entry__title {
+  border-top: 1px solid var(--color-text-muted);
+  margin-top: 115px;
+  padding-top: 11px;
+}
+
+/* Valores exactos de Figma (1:772/1:778/1:783/1:788): 32px, peso Regular
+   (no 600), ancho de caja 397px (necesario para que "Abu Dhabi" parta en
+   2 lineas igual que en Figma). Escopado a #home-proyectos: no toca el
+   token --text-heading compartido ni la regla base que usa proyectos.html. */
+#home-proyectos .project-entry__title {
+  font-size: 32px;
+  font-weight: normal;
+  line-height: 1.1;
+  max-width: 397px;
+}
+
+#home-proyectos .project-entry__category {
+  font-size: 32px;
+  margin-top: 0;
+}
+
+/* Descripcion: ancho exacto 410px en las 4 fichas (Figma). El font-size es
+   14px solo en la primera ficha (Wanderlust, 1:774) y 16px en las otras 3
+   (Abu Dhabi/Warner/Devcon, 1:780/1:785/1:790) - inconsistencia real del
+   propio Figma, no se normaliza. La posicion vertical se corrige mas abajo
+   (anclada al fondo de la fila, no con margin-top fijo). */
+#home-proyectos .project-entry__description {
+  max-width: 410px;
+  margin-top: auto;
+  padding-bottom: 100px;
+}
+
+#home-proyectos .project-entry:not(:first-child) .project-entry__description {
+  font-size: 16px;
+}
+
+/* En Figma la descripcion queda anclada al borde inferior de cada fila
+   (bottom de su caja = bottom del frame del proyecto, exacto en 3/4 casos),
+   no pegada justo debajo de la categoria con un margen fijo. Se logra
+   estirando la fila (en vez de centrarla) y convirtiendo la columna de
+   texto en flex-column: titulo+categoria quedan arriba en su flujo normal,
+   y "margin-top:auto" en la descripcion (arriba) empuja solo a ella hacia
+   el fondo. */
+#home-proyectos .project-entry {
+  align-items: stretch;
+}
+
+#home-proyectos .project-entry > div:first-child {
+  display: flex;
+  flex-direction: column;
+}
 
 .project-entry__title {
   font-family: var(--font-body);
@@ -53,14 +127,16 @@
 }
 
 /* ---------- Botones ---------- */
-/* Este boton no ocupa el ancho completo del contenedor: se alinea con la
-   columna de imagen de las fichas de proyecto (~65% del ancho, a la
-   derecha), no con la columna de texto. */
+/* En el Figma este boton no ocupa el ancho completo del contenedor: se
+   alinea con la columna de imagen de las fichas de proyecto, no con la
+   columna de texto. Se calcula el ancho exacto de esa columna a partir del
+   mismo grid-template-columns/gap que usa .project-entry (1fr/1.9fr,
+   gap var(--space-xl)=64px), en vez de aproximarlo con un 65% fijo. */
 .btn-bar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: 65%;
+  width: calc((100% - 64px) * 1.9 / 2.9);
   margin-left: auto;
   padding: var(--space-sm) var(--space-md);
   background: var(--color-button-bg);
@@ -146,33 +222,17 @@
 
 .service-link-row:first-of-type { border-top: none; }
 
+/* font-size literal: 72px exacto en Figma (teaser de Servicios en Home,
+   1:736/1:738/1:740). Solo se usa en index.html, seguro hardcodear. */
 .service-link-row__title {
   font-family: var(--font-display);
-  font-size: var(--text-display-lg);
+  font-size: 72px;
   color: var(--color-text-soft);
   transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .service-link-row:hover .service-link-row__title,
 .service-link-row:focus-visible .service-link-row__title { color: var(--color-text); }
-
-/* ---------- Placeholder de imagen pendiente ---------- */
-.media-placeholder {
-  position: relative;
-  border-radius: 4px;
-  overflow: hidden;
-  aspect-ratio: 16 / 10;
-  background: linear-gradient(135deg, #1c1c1c 0%, #050505 60%, #1c1c1c 100%);
-  display: flex;
-  align-items: flex-end;
-}
-
-.media-placeholder__label {
-  margin: var(--space-sm);
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
-  color: var(--color-text-muted);
-}
 
 /* ---------- Formulario de contacto ---------- */
 .contact-form {

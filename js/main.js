@@ -29,21 +29,26 @@
 
   /* Header adaptativo: solo en paginas con foto clara en el primer
      viewport (Home). El resto de paginas usa fondo negro desde el inicio,
-     por lo que el header ya nace en su variante clara (blanca). */
+     por lo que el header ya nace en su variante solida (fondo negro,
+     texto blanco). En Home, el header nace transparente (se ve la foto
+     detras, texto negro) y pasa a fondo negro solido + texto blanco en
+     cuanto el usuario hace el primer scroll, en vez de esperar a que la
+     foto del hero quede tapada del todo - asi el menu nunca se confunde
+     con la imagen mientras se sigue viendo. */
   var lightZone = document.querySelector("[data-header-light-zone]");
   if (header && lightZone) {
+    var SCROLL_THRESHOLD = 10;
     var setHeaderState = function () {
-      var zoneBottom = lightZone.getBoundingClientRect().bottom;
-      header.classList.toggle("is-on-light", zoneBottom > header.offsetHeight);
+      header.classList.toggle("is-on-light", window.scrollY < SCROLL_THRESHOLD);
     };
     setHeaderState();
     window.addEventListener("scroll", setHeaderState, { passive: true });
     window.addEventListener("resize", setHeaderState);
   }
 
-  /* Toggle EN/ES decorativo: todavia no hay contenido en ingles aprobado.
-     Se deja el estado activo marcado y se evita prometer un cambio de
-     idioma que no existe. */
+  /* Toggle EN/ES decorativo: el Figma solo define el control visual,
+     sin contenido en ingles aprobado todavia. Se deja el estado activo
+     marcado y se evita prometer un cambio de idioma que no existe. */
   document.querySelectorAll(".lang-toggle button").forEach(function (btn) {
     btn.addEventListener("click", function () {
       document.querySelectorAll(".lang-toggle button").forEach(function (b) {

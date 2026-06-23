@@ -1,4 +1,5 @@
-/* Pico de Gallo — Design tokens */
+/* Pico de Gallo — Design tokens
+   Extraidos del Figma "Web_PDG" (frame Home, node 4:2) via Figma MCP. */
 :root {
   /* Color */
   --color-bg: #000000;
@@ -11,8 +12,11 @@
   --color-header-on-light: #000000;
   --color-focus: #ffffff;
 
-  /* Tipografia: Georgia es fuente de sistema (sin CDN externo); el resto
-     usa un fallback sans neutro hasta disponer de la tipografia de marca. */
+  /* Tipografia
+     "Georgia" es fuente de sistema (sin CDN externo).
+     "Early Sans Variable" es la tipografia de marca del Figma; al no estar
+     disponible como web font libre, se usa un fallback sans neutro hasta
+     que el cliente facilite el archivo/licencia (ver design-notes.md). */
   --font-display: Georgia, "Times New Roman", serif;
   --font-body: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
 
@@ -37,7 +41,7 @@
   /* Layout */
   --content-max: 1280px;
   --content-padding: clamp(1.25rem, 4vw, 4.5rem);
-  --header-height: 77px;
+  --header-height: 77px; /* Figma: top 26px + alto del lockup de logo 51px */
 
   /* Movimiento */
   --ease-standard: cubic-bezier(0.2, 0.6, 0.2, 1);
