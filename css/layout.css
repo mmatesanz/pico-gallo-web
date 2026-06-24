@@ -187,23 +187,22 @@
   gap: 20px;
 }
 
-/* Tamanos reales del lockup grande del footer (Logo_PDG_Blanco_by_BL_Group,
-   1:705-1:724): antes el lockup completo se renderizaba ~34% mas pequeno
-   (47/10.5/8px) que el valor real de Figma - mismo patron de bug ya
-   corregido antes en el logo del header. Los 3 SVG (logo-pdg-blanco-mark/
-   word/tagline.png) declaran width/height="100%" + preserveAspectRatio=
-   "none" en su raiz - igual que el SVG del header - por lo que "width:auto"
-   no garantiza resolver el ancho real via el viewBox (en el word esto
-   dejaba el logotipo invisible/mal dimensionado). Se fijan AMBOS ejes con
-   los valores literales del viewBox de cada asset (42.5957x71.0795,
-   213.484x15.5902, 86.8055x12.0612), que ya estan en el ratio correcto. */
+/* El footer reutiliza el MISMO asset que ya funciona en el header
+   (logo-pdg-blanco-mark/word-header.svg, en vez del lockup grande propio
+   del footer, que seguia dando problemas). Es el mismo SVG con
+   width/height="100%" + preserveAspectRatio="none" en su raiz que el
+   header - por eso se fijan ambos ejes (width Y height), nunca solo uno
+   con "auto", para no deformarlo. El alto se mantiene en el tamano que ya
+   tenia el lockup del footer en Figma (71.08px/15.59px); el ancho se
+   recalcula con el ratio real de ESTE asset (30.71x51 / 153.92x11.19,
+   igual que en .site-header__logo), no con el del asset anterior. */
 .site-footer__logo .logo-mark {
-  width: 42.6px;
+  width: 42.8px;
   height: 71.08px;
 }
 
 .site-footer__logo .logo-word {
-  width: 213.48px;
+  width: 214.34px;
   height: 15.59px;
 }
 
