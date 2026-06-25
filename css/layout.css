@@ -152,10 +152,16 @@
    padding-top: 83px en vez de 96px - en Figma el hueco real entre la
    ultima fila de Servicios y el footer es ~123px; 40px ya los aporta el
    padding-block de .service-link-row (fuera de alcance de Footer), asi
-   que aqui solo hacen falta 83px para totalizar 123px. */
+   que aqui solo hacen falta 83px para totalizar 123px.
+   padding-bottom: 50px - desviacion aceptada respecto a Figma (donde el
+   footer termina exactamente en el borde inferior del texto legal, sin
+   padding extra). Anadido a peticion explicita del usuario para que el
+   final del footer no quede pegado al borde de la pagina; no es un valor
+   extraido de Dev Mode. */
 .site-footer {
   background: var(--color-bg);
   padding-top: 83px;
+  padding-bottom: 50px;
 }
 
 /* En Figma las 3 columnas (Logo/Index/Info) NO son de ancho similar: cada
@@ -225,16 +231,27 @@
 
 /* La fila legal en el Figma se alinea con las columnas 2 y 3 (Index/Info),
    no con la columna del logo: por eso vive dentro de site-footer__grid y
-   ocupa solo esas dos columnas, en vez de todo el ancho del contenedor. */
+   ocupa solo esas dos columnas, en vez de todo el ancho del contenedor.
+   Los 2 bloques (texto legal + copyright) van centrados verticalmente
+   entre si (items-center en Figma, node 1:701/1:703). */
 .site-footer__legal {
   grid-column: 2 / -1;
   margin-top: 3rem;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
   color: var(--color-text-muted);
   font-size: var(--text-body);
+}
+
+/* En Figma el texto legal tiene una caja de 282px de ancho (node 1:702),
+   lo que lo obliga a partir en varias lineas en vez de fluir en una sola
+   linea larga; el copyright (segundo parrafo) no tiene ese tope, queda en
+   una sola linea (whitespace-nowrap en Figma, node 1:704). */
+.site-footer__legal p:first-child {
+  max-width: 282px;
 }
 
 /* ---------- Page heading ---------- */
@@ -248,12 +265,51 @@
   line-height: 1.05;
 }
 
-/* En el Figma, el titulo de la pagina "Servicios" usa una caja de texto
-   mas pequena que Nosotros/Contacto/Proyectos (93px de alto frente a
-   160px), consistente con la escala de 72px usada en el resto del archivo
-   para subtitulos grandes (ej. "Estrategia" en Home). */
+/* Figma (Servicios, node 1:226): "Servicios", Georgia Regular, 48px,
+   blanco, line-height normal, sin letter-spacing. Re-auditado a fondo
+   2026-06-24 a peticion del usuario (foco estricto en texto/tipografia):
+   - font-size: el token --text-display-lg (recalibrado en HT-01, llega a
+     72px exacto a 1280px) no sirve aqui porque el target de este titulo
+     es 48px, no 72px - son dos escalones tipograficos distintos.
+   - font-weight: <h1> tiene bold por defecto del navegador (base.css solo
+     resetea margin, no font-weight) y Figma pide Regular - mismo bug ya
+     encontrado y corregido antes en otros titulares de este proyecto (ver
+     pages.css linea ~40-46, HOME-TYPO-SWEEP-02 en pixel-fidelity-audit.md)
+     pero nunca aplicado a .page-hero__title/--md hasta ahora.
+   - line-height: la base .page-hero__title usa 1.05 (pensado para los
+     titulos de 96px de Nosotros/Proyectos/Contacto); Figma especifica
+     "normal" para Servicios, no un valor compacto - se sobreescribe aqui.
+   Todo escopado a --md porque esta clase solo se usa en servicios.html
+   (no afecta a Nosotros/Proyectos/Contacto, que usan .page-hero__title
+   sin este modificador). */
 .page-hero__title--md {
-  font-size: var(--text-display-lg);
+  font-size: 48px;
+  font-weight: normal;
+  line-height: normal;
+}
+
+/* Figma (Servicios, node 1:185): linea decorativa fina debajo de
+   "Servicios". Ancho FIJO 339px (no el ancho del texto "Servicios", que
+   es mas corto) - señalado directamente por el usuario: la linea tiene
+   que llegar hasta la "a" de "Estrategia" (la primera "a", x≈439), no
+   acabar donde termina la palabra "Servicios". x=100 (inicio de la linea)
+   practicamente coincide con x=98 (inicio del texto "Servicios"), por eso
+   no hace falta offset horizontal, solo el ancho fijo. display:inline-block
+   ya no es necesario en .page-hero__title--md (la linea no depende del
+   ancho del texto). Posicion vertical derivada de las coordenadas de
+   Figma (texto 1:226 top=163/h=93, linea 1:185 y=233 -> offset ~13px bajo
+   la caja de linea del texto de 48px). Color inferido del convenio ya
+   usado en este proyecto para hairlines decorativas (var(--color-text-muted),
+   ver HOME-PROJECTS-LINE-01); el nodo de Figma se exporto como imagen sin
+   valor de color explicito en los datos leidos via MCP - pendiente de
+   confirmacion visual del tono exacto. */
+.page-hero__title--md::after {
+  width: 339px;
+  content: "";
+  display: block;
+  margin-top: 13px;
+  height: 1px;
+  background: var(--color-text-muted);
 }
 
 .page-hero__statement {

@@ -20,11 +20,21 @@
   --font-display: Georgia, "Times New Roman", serif;
   --font-body: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
 
-  /* Escala tipografica (clamp = fluido entre mobile y desktop) */
-  --text-display-xl: clamp(2.75rem, 5vw + 1.5rem, 6rem);   /* 96px desktop */
-  --text-display-lg: clamp(2.25rem, 4vw + 1rem, 4.5rem);   /* 72px desktop */
-  --text-display-md: clamp(1.75rem, 3vw + 1rem, 4rem);     /* 64px desktop */
-  --text-heading: clamp(1.375rem, 1vw + 1rem, 2rem);       /* 32px desktop */
+  /* Escala tipografica (clamp = fluido entre mobile y desktop).
+     HT-01 (recalibrado 2026-06-24): el Figma de este proyecto es un frame
+     fijo de 1280px (sin breakpoints definidos), pero los coeficientes de
+     vw originales no alcanzaban el valor maximo hasta viewports de
+     ~1400-1800px - es decir, ni siquiera a 1280px (la referencia real del
+     diseno) se llegaba al valor exacto de Figma, y la mayoria de pantallas
+     de escritorio reales (1280-1440px) quedaban por debajo de lo previsto.
+     Los coeficientes de abajo estan recalculados para que el valor
+     PREFERRED del clamp() sea exactamente el valor de Figma a 1280px de
+     viewport (formula: vw_coef = (target_px - rem_offset_px) / 12.8),
+     manteniendo el mismo piso movil y el mismo techo de antes. */
+  --text-display-xl: clamp(2.75rem, 5.625vw + 1.5rem, 6rem);   /* 96px a 1280px */
+  --text-display-lg: clamp(2.25rem, 4.375vw + 1rem, 4.5rem);   /* 72px a 1280px */
+  --text-display-md: clamp(1.75rem, 3.75vw + 1rem, 4rem);      /* 64px a 1280px */
+  --text-heading: clamp(1.375rem, 1.25vw + 1rem, 2rem);        /* 32px a 1280px */
   --text-body-lg: clamp(1rem, 0.3vw + 0.9rem, 1.125rem);   /* 16-18px */
   --text-body: 0.875rem;                                    /* 14px */
   --text-nav: 0.875rem;                                     /* 14px */
@@ -40,7 +50,11 @@
 
   /* Layout */
   --content-max: 1280px;
-  --content-padding: clamp(1.25rem, 4vw, 4.5rem);
+  /* HT-01 (recalibrado 2026-06-24): igual que la escala tipografica de
+     arriba - antes el maximo (72px, igual al x=72 real de Figma) no se
+     alcanzaba hasta ~1800px de viewport; ahora se alcanza exactamente a
+     1280px (referencia del frame de Figma). */
+  --content-padding: clamp(1.25rem, 5.625vw, 4.5rem);
   --header-height: 77px; /* Figma: top 26px + alto del lockup de logo 51px */
 
   /* Movimiento */

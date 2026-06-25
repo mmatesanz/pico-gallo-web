@@ -165,52 +165,156 @@
 .btn-primary:hover, .btn-primary:focus-visible { opacity: 0.85; }
 
 /* ---------- Servicios: filas de categoria ---------- */
+/* Figma (frame Servicios 1:138): el diseñador piensa la pagina en 3
+   columnas verticales reales -- col1 vacia/margen (alineada con "Servicios",
+   x=98), col2 titulo+tagline de cada fila (x=351 en las 3 filas, sin
+   excepcion) y col3 cuerpo/descripciones (x=640 en las 3 filas). El grid
+   anterior (1fr/2fr, sin columna 1) dejaba el titulo+tagline pegado al
+   margen del contenedor, igual que "Servicios" -- no reproducia la
+   indentacion real. gap:0 porque los anchos de columna ya incluyen la
+   distancia real hasta el inicio de la siguiente (279px = 351-72 hasta
+   col2; 289px = 640-351 hasta col3, usando x=72 del Menu como margen real
+   de Figma, igual que en el resto de esta auditoria). */
 .service-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: var(--space-xl);
-  padding-block: var(--space-2xl);
-  border-top: 1px solid var(--color-border);
+  grid-template-columns: 279px 289px minmax(0, 1fr);
+  gap: 0;
 }
 
-.service-row:first-of-type { border-top: none; }
+/* Figma (frame Servicios 1:138, confirmado con captura de pantalla
+   2026-06-24): NO hay ninguna linea entre filas (ni border-top ni vector) -
+   "Diseño Editorial" (fin de fila 1) y "Sistemas de Diseño" (inicio de
+   fila 2) no tienen ningun separador visual, solo espacio en blanco.
+   Se elimina el border-top que no tenia respaldo en Figma, y el
+   padding-block:var(--space-2xl) (96px arriba+abajo = 192px entre filas)
+   se sustituye por el espacio real medido en las coordenadas de Figma:
+   fila1 termina en y=1311 (max de 1:197/1:198), fila2 empieza en y=1340
+   (1:228) -> 29px; fila2 termina en y=2325 (1:227), fila3 empieza en
+   y=2367 (1:225) -> 42px. Son 2 valores distintos porque no es un padding
+   uniforme, son posiciones absolutas en Figma (no hay Auto Layout aqui). */
+.service-row:nth-of-type(2) { margin-top: 29px; }
+.service-row:nth-of-type(3) { margin-top: 42px; }
 
+/* Los 2 <div> hijos de .service-row (titulo+tagline, cuerpo) ocupan las
+   columnas 2 y 3; la columna 1 queda vacia a proposito (el margen real). */
+.service-row > div:first-child { grid-column: 2; }
+/* Figma (1:198/1:197, 1:228/1:227, 1:225/1:224, las 3 filas con el mismo
+   patron exacto): la columna de cuerpo NO empieza a la misma altura que la
+   columna de titulo - empieza 32px mas abajo (titulo y=283/1340/2367,
+   linea decorativa del primer grupo y=315/1372/2399 -> offset +32px en
+   los 3 casos). Sin este margen, la grid alineaba ambas columnas al mismo
+   borde superior y la linea quedaba mas alta de lo que marca Figma. */
+.service-row > div:last-child { grid-column: 3; margin-top: 32px; }
+
+/* Figma (Servicios, nodos 1:198/1:228/1:225): titulo de fila 48px exacto,
+   Georgia Regular, blanco, line-height normal. Re-auditado a fondo
+   2026-06-24 (mismo patron que SRV-002 en el titulo de pagina):
+   - font-weight: <h2> tiene bold por defecto del navegador (base.css solo
+     resetea margin) y Figma pide Regular - no se habia corregido aqui.
+   - line-height: heredaba 1.5 de body (Figma pide "normal", ~1.15-1.2
+     para Georgia) - con titulos de 2 lineas ("Sistemas"/"de Diseño",
+     "Experiencias"/"y Ejecución") esto separaba las 2 lineas mucho mas de
+     lo que marca Figma (72px de alto de linea en vez de ~55px).
+   El token --text-display-lg (recalibrado en HT-01, llega a 72px exacto a
+   1280px) no sirve aqui porque su target es 72px, no 48px; el color soft
+   (gris) tampoco coincide con Figma (blanco). Compartido por las 3 filas
+   de Servicios (mismo componente repetido, no contenido distinto). */
 .service-row__title {
   font-family: var(--font-display);
-  font-size: var(--text-display-lg);
-  color: var(--color-text-soft);
+  font-size: 48px;
+  font-weight: normal;
+  line-height: normal;
+  color: var(--color-text);
 }
 
+/* Figma (mismos nodos): tagline 16px exacto, color #5e5e5e
+   (--color-text-muted) - el gris soft actual no coincide. line-height
+   normal añadido 2026-06-24 (heredaba 1.5 de body; font-weight no hacia
+   falta - los <p> ya son normal por defecto, a diferencia de los <h2>). */
 .service-row__tagline {
   margin-top: var(--space-sm);
-  color: var(--color-text-soft);
-  font-size: var(--text-body-lg);
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: normal;
 }
 
-.service-group + .service-group { margin-top: var(--space-lg); }
+/* Figma (nodos 1:197/1:227/1:224): entre el ultimo item de un grupo y el
+   titulo del siguiente hay 2 lineas en blanco (una a 16px sans, otra a
+   32px sans -ambas con leading-normal, no Georgia-) en vez de 1 sola.
+   Gap inferido ~58px (19px + 38px de interlineado), no 40px (--space-lg).
+   Valor inferido a partir de lineas en blanco del texto exportado, no de
+   una propiedad "gap" literal (Figma no usa Auto Layout aqui) - pendiente
+   de confirmacion visual. */
+.service-group + .service-group { margin-top: 58px; }
 
-.service-group__title { font-size: var(--text-heading); font-family: var(--font-body); font-weight: 600; }
-.service-group__desc { margin-top: 0.5rem; color: var(--color-text-soft); }
+/* Figma (vectores 1:188/1:191/1:194, confirmados visualmente vía
+   captura de pantalla del frame Servicios): linea fina sobre el primer
+   grupo de cada fila, ancho fijo 495px, ~33px por encima del texto
+   (consistente en las 3 filas, no varia). Color inferido del mismo
+   convenio de hairlines ya usado en este proyecto (var(--color-text-muted)
+   - ver HOME-PROJECTS-LINE-01 y la linea bajo "Servicios", SRV-004); los
+   vectores se exportaron como imagen plana sin color explicito disponible
+   vía MCP - pendiente de confirmacion visual del tono exacto. */
+.service-row > div:last-child .service-group:first-child {
+  position: relative;
+  padding-top: 33px;
+}
 
+.service-row > div:last-child .service-group:first-child::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 495px;
+  height: 1px;
+  background: var(--color-text-muted);
+}
+
+/* Figma (nodos 1:197/1:227/1:224): titulo de grupo Georgia Regular (no
+   bold), 32px exacto, blanco, line-height normal. Aunque --text-heading ya
+   llega a 32px exacto a 1280px tras la recalibracion de HT-01, se
+   hardcodea igualmente aqui porque el target SI coincide con el token
+   compartido (no hace falta un escalon distinto como en
+   .service-row__title) - hardcodear evita que un cambio futuro del token
+   global desalinee Servicios sin darse cuenta. La familia sans y el peso
+   600 anteriores no coincidian con Figma (Georgia + Regular) y eso si era
+   un error real, no de clamp. line-height:normal añadido 2026-06-24
+   (heredaba 1.5 de body). */
+.service-group__title { font-size: 32px; font-family: var(--font-display); font-weight: normal; line-height: normal; }
+/* Figma: descripcion de grupo 16px exacto, blanco, line-height normal -
+   el color soft (gris) actual no coincide (Figma no aplica gris a la
+   descripcion, solo a los items de la lista). margin-top eliminado
+   2026-06-24: en Figma el titulo y la descripcion son lineas adyacentes
+   sin parrafo en blanco entre ellas (a diferencia del hueco antes del
+   primer item, que si tiene 1 linea en blanco) - el unico espacio es el
+   propio interlineado, no un margen extra. */
+.service-group__desc { color: var(--color-text); font-size: 16px; line-height: normal; }
+
+/* Figma: cada item ocupa su propia linea, sin excepcion (lista vertical
+   simple, no texto que fluye en chips). display:flex + flex-wrap:wrap
+   (eliminado 2026-06-24) permitia que items cortos como "Tono de voz" o
+   "Packaging" compartieran linea con el siguiente, en vez de quedar cada
+   uno en su propia linea como en Figma. */
 .service-group__items {
   margin-top: var(--space-sm);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
+  flex-direction: column;
 }
 
+/* Figma: items de lista 16px exacto, color #5e5e5e (--color-text-muted),
+   line-height normal - el blanco y los 14px de antes no coincidian (color
+   y tamano invertidos respecto a la descripcion del grupo); line-height
+   añadido 2026-06-24 (heredaba 1.5 de body). */
+/* Figma (1:197/1:227/1:224, confirmado con captura de pantalla 2026-06-24):
+   los items son texto plano, sin guion/bullet/marcador delante de ninguno.
+   Eliminados position:relative + padding-left:1rem (existian solo para
+   posicionar el guion) y la regla ::before con content:"—" (no tiene
+   respaldo en Figma - se hizo visible en todas las lineas al arreglar
+   SRV-021, antes quedaba disimulado por el layout de flex-wrap roto). */
 .service-group__items li {
-  color: var(--color-text);
-  font-size: var(--text-body);
-  position: relative;
-  padding-left: 1rem;
-}
-
-.service-group__items li::before {
-  content: "—";
-  position: absolute;
-  left: 0;
   color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: normal;
 }
 
 /* ---------- Link de servicios en Home ---------- */
@@ -280,5 +384,18 @@
   .service-row {
     grid-template-columns: 1fr;
     gap: var(--space-md);
+  }
+
+  /* Sin esto, los hijos de .service-row siguen intentando ocupar las
+     columnas 2/3 del grid de escritorio (279px 289px 1fr), que en una
+     sola columna no existen - rompería el layout mobile. */
+  .service-row > div:first-child,
+  .service-row > div:last-child {
+    grid-column: 1;
+  }
+
+  /* La linea de 495px fijos (SRV-018) desbordaria en viewports estrechos. */
+  .service-row > div:last-child .service-group:first-child::before {
+    width: 100%;
   }
 }
