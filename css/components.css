@@ -288,20 +288,6 @@
 
 .btn-bar:hover, .btn-bar:focus-visible { background: #707070; }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.9rem 1.75rem;
-  background: var(--color-text);
-  color: var(--color-bg);
-  border-radius: 999px;
-  font-size: var(--text-body);
-  transition: opacity var(--duration-fast) var(--ease-standard);
-}
-
-.btn-primary:hover, .btn-primary:focus-visible { opacity: 0.85; }
-
 /* ---------- Servicios: layout de pagina + filas de categoria ---------- */
 /* Peticion del cliente (2026-06-26): "Servicios" (titulo de pagina) se
    queda fijo SIEMPRE, en su propia columna a la izquierda, mientras se
@@ -597,46 +583,6 @@
 .service-link-row:hover .service-link-row__title,
 .service-link-row:focus-visible .service-link-row__title { color: var(--color-text); }
 
-/* ---------- Formulario de contacto ---------- */
-.contact-form {
-  margin-top: var(--space-xl);
-  display: grid;
-  gap: var(--space-md);
-  max-width: 540px;
-}
-
-.form-field { display: grid; gap: 0.5rem; }
-
-.form-field label { font-size: var(--text-body); color: var(--color-text-soft); }
-
-.form-field input,
-.form-field textarea {
-  border: none;
-  border-bottom: 1px solid var(--color-border);
-  padding-block: 0.6rem;
-  background: transparent;
-}
-
-.form-field input:focus-visible,
-.form-field textarea:focus-visible {
-  outline: none;
-  border-color: var(--color-text);
-}
-
-.form-status {
-  font-size: var(--text-body);
-  color: var(--color-text-soft);
-  min-height: 1.2em;
-}
-
-.contact-meta {
-  margin-top: var(--space-xl);
-  display: grid;
-  gap: 0.5rem;
-  font-size: var(--text-body-lg);
-}
-
-.contact-meta a { text-decoration: underline; text-decoration-color: var(--color-text-muted); }
 
 @media (max-width: 860px) {
   .project-entry,

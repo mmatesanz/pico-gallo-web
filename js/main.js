@@ -159,18 +159,4 @@
       btn.setAttribute("aria-pressed", "true");
     });
   });
-
-  /* Formulario de contacto: prototipo sin backend. No se envia a ningun
-     servicio real; solo confirma visualmente la interaccion. */
-  var contactForm = document.querySelector(".contact-form");
-  if (contactForm) {
-    contactForm.addEventListener("submit", function (event) {
-      event.preventDefault();
-      var status = contactForm.querySelector(".form-status");
-      if (status) {
-        status.textContent = "Gracias. Este formulario es parte del prototipo y aun no envia datos reales.";
-      }
-      contactForm.reset();
-    });
-  }
 })();

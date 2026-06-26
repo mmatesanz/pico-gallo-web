@@ -278,13 +278,6 @@
   background: var(--color-text-muted);
 }
 
-.contact-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--space-2xl);
-  padding-block: var(--space-xl) var(--space-2xl);
-}
-
 /* Imagen + cuerpo secundario de Contacto (Figma: node 1:133-1:137 imagen,
    1132 x 479.97; node 1:131 cuerpo, Lorem ipsum). Mismo patron que
    .manifesto__media: rectangulo simple, sin mascara decorativa - ya
@@ -642,8 +635,7 @@
 
 @media (max-width: 860px) {
   .about-hero,
-  .contact-hero,
-  .contact-layout { grid-template-columns: 1fr; }
+  .contact-hero { grid-template-columns: 1fr; }
 
   /* Sin spec movil en Figma - accepted-deviation: en movil el cuerpo de
      Nosotros y de Contacto vuelve a ocupar el ancho completo en vez de
