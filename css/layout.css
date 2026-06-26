@@ -217,8 +217,12 @@
   height: 12.061px;
 }
 
+/* Cambio de marca 2026-06-26: Figma subio el footer (Index/Info, p.ej.
+   nodo 103:1934 y equivalentes) de 14px a 16px - distinto del nav del
+   header (103:1631, sigue en 14px, var(--text-nav)), asi que ya no
+   pueden compartir el mismo token. */
 .site-footer__col {
-  font-size: var(--text-nav);
+  font-size: 16px;
   color: var(--color-text);
 }
 

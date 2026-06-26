@@ -12,22 +12,17 @@
   --color-header-on-light: #000000;
   --color-focus: #ffffff;
 
-  /* Tipografia
-     "Georgia" es fuente de sistema (sin CDN externo) - ya correcta, no
-     requiere @font-face.
-     "Early Sans Variable" es la tipografia de marca del Figma. Auditoria
-     2026-06-25 (TYPOGRAPHY_FOUNDATION_REPAIR, ver
-     client-feedback/typography-audit.md): el archivo de la fuente NO
-     existe en el repositorio (sin carpeta fonts/, sin .woff2/.woff/.ttf/.otf
-     en projects/pico-de-gallo/prototype/) - estado blocked-needs-font-file.
-     No se descarga ni se sustituye por una alternativa sin autorizacion.
-     Se declara "Early Sans Variable" como primer nombre del stack (no
-     rompe nada si no esta instalada/cargada - el navegador simplemente
-     pasa al siguiente nombre) para que la base quede preparada: en cuanto
-     el cliente facilite el archivo, basta con descomentar el @font-face de
-     abajo y rellenar la ruta, sin tocar el resto del CSS. */
-  --font-display: Georgia, "Times New Roman", serif;
-  --font-body: "Early Sans Variable", "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+  /* Tipografia (cambio de marca 2026-06-26): el cliente sustituyo las
+     tipografias del proyecto - Figma ya usa "Lora:Regular" (antes
+     "Georgia:Regular") en los titulos y "Libre Franklin:Regular" (antes
+     "Early Sans Variable", que nunca llego a tener archivo real) en el
+     cuerpo de texto, verificado nodo por nodo via get_design_context
+     (Nosotros, Servicios, Contacto, Proyectos, etc. - todos ya devuelven
+     Lora/Libre Franklin, no quedan referencias a Georgia/Early Sans en
+     el Figma actual). Archivos .ttf reales facilitados por el cliente en
+     brief/fonts/, activados via @font-face mas abajo. */
+  --font-display: "Lora", "Times New Roman", serif;
+  --font-body: "Libre Franklin", "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
 
   /* Escala tipografica (clamp = fluido entre mobile y desktop).
      HT-01 (recalibrado 2026-06-24): el Figma de este proyecto es un frame
@@ -45,8 +40,12 @@
   --text-display-md: clamp(1.75rem, 3.75vw + 1rem, 4rem);      /* 64px a 1280px */
   --text-heading: clamp(1.375rem, 1.25vw + 1rem, 2rem);        /* 32px a 1280px */
   --text-body-lg: clamp(1rem, 0.3vw + 0.9rem, 1.125rem);   /* 16-18px */
-  --text-body: 0.875rem;                                    /* 14px */
-  --text-nav: 0.875rem;                                     /* 14px */
+  /* Cambio de marca 2026-06-26: Figma subio el cuerpo legal del footer
+     (1:702/1:704 y equivalentes en las 6 paginas de detalle) de 14px a
+     16px - usado tambien por .project-entry__description de Home (la
+     ficha de Wanderlust tambien pasa a 16px, ya sin excepcion). */
+  --text-body: 1rem;                                        /* 16px */
+  --text-nav: 0.875rem;                                     /* 14px, solo header (footer ya no usa este token, ver layout.css) */
 
   /* Espaciado */
   --space-xs: 0.5rem;
@@ -72,27 +71,31 @@
   --duration-base: 280ms;
 }
 
-/* ---------- Early Sans Variable (blocked-needs-font-file) ----------
-   Plantilla lista para activar en cuanto el cliente facilite el archivo
-   real de la fuente (TYPOGRAPHY_FOUNDATION_REPAIR, 2026-06-25). No
-   descomentar con una fuente distinta a la autorizada por el cliente.
-
-   Pasos para activarla:
-   1. Copiar el/los archivo(s) de fuente a projects/pico-de-gallo/prototype/assets/fonts/
-      (crear la carpeta si no existe).
-   2. Descomentar el bloque @font-face de abajo y ajustar "src" a la ruta real.
-   3. Si la fuente variable expone varios pesos via "font-variation-settings"
-      en vez de varios archivos, usar font-weight: 100 900; en vez de un
-      peso fijo.
-   No hace falta tocar --font-body ni ninguna otra regla: ya prioriza
-   "Early Sans Variable" en el stack (ver arriba).
-
+/* ---------- Lora / Libre Franklin (cambio de marca 2026-06-26) ----------
+   Archivos .ttf reales del cliente, copiados a assets/fonts/. Solo se
+   activan los pesos realmente usados en el sitio (verificado: el unico
+   font-weight numerico de todo el CSS es 600, en .project-entry__title/
+   __category - el resto es siempre "normal"/400). */
 @font-face {
-  font-family: "Early Sans Variable";
-  src: url("../assets/fonts/early-sans-variable.woff2") format("woff2-variations"),
-       url("../assets/fonts/early-sans-variable.woff") format("woff");
+  font-family: "Lora";
+  src: url("../assets/fonts/Lora-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
-*/
+
+@font-face {
+  font-family: "Libre Franklin";
+  src: url("../assets/fonts/LibreFranklin-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Franklin";
+  src: url("../assets/fonts/LibreFranklin-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}

@@ -114,13 +114,14 @@
   padding-bottom: var(--space-sm);
 }
 
-/* font-size literal (no clamp): 64px exacto en Figma (1:743). Solo se usa
-   en index.html, seguro hardcodear sin tocar el token --text-display-md
-   compartido con otras paginas. */
+/* font-size literal (no clamp): 48px exacto en Figma (1:743, cambio de
+   marca 2026-06-26 - antes 64px). Solo se usa en index.html, seguro
+   hardcodear sin tocar el token --text-display-md compartido con otras
+   paginas. */
 .intro-statement h1 {
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: 64px;
+  font-size: 48px;
   line-height: 1.25;
   max-width: 70ch;
 }
@@ -138,11 +139,12 @@
   margin-bottom: var(--space-lg);
 }
 
-/* En el Figma de Home, el titulo "Proyectos" (node 1:792) usa 72px exacto,
-   distinto del titulo "Servicios" (node 1:735, 96px) aunque ambos comparten
+/* En el Figma de Home, el titulo "Proyectos" (node 1:792) usa 48px exacto
+   (cambio de marca 2026-06-26 - antes 72px), distinto del titulo
+   "Servicios" (node 1:735, 96px, sin cambios) aunque ambos comparten
    .section__heading. Modificador Home-especifico, no toca la regla base. */
 .section__heading--lg {
-  font-size: 72px;
+  font-size: 48px;
 }
 
 /* ---------- Nosotros (columna fija añadida 2026-06-26) ----------
@@ -699,26 +701,25 @@
   top: calc(var(--header-height) + var(--space-2xl));
 }
 
-/* Figma: titulo Georgia 40px en Wanderlust/Bobbejaanland/Warner, pero
-   48px en Slagharen - inconsistencia real del propio archivo Figma (ya
-   hay precedentes similares documentados en typography-map.md), se
-   respeta literalmente por pagina en vez de forzar un valor uniforme. */
+/* Cambio de marca 2026-06-26: re-verificado en las 6 paginas de detalle
+   (Wanderlust 3:105, Bobbejaanland 1:400, Warner 1:313, Slagharen 1:493,
+   Abu Dhabi 11:208, DEVCON VI 44:314) - Figma ahora usa **32px en las 6,
+   sin excepcion** (antes 40px en 3 de ellas y 48px en Slagharen via el
+   modificador --lg, que ya no hace falta - Slagharen tambien es 32px). */
 .project-detail__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: 32px;
   font-weight: normal;
   line-height: normal;
   color: var(--color-text);
 }
 
-.project-detail__title--lg { font-size: 48px; }
-
 .project-detail__country {
   margin: 0;
   margin-top: 8px;
   font-family: var(--font-body);
-  font-size: 24px;
+  font-size: 20px;
   line-height: normal;
   color: var(--color-text);
 }
@@ -726,7 +727,7 @@
 .project-detail__tag {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 24px;
+  font-size: 20px;
   line-height: normal;
   color: var(--color-text-muted);
 }
@@ -750,11 +751,10 @@
   background: var(--color-text-muted);
 }
 
-/* Figma: cuerpo a 16px/26px de interlineado en Bobbejaanland/Warner/
-   Slagharen, pero Wanderlust usa 14px/interlineado normal - misma
-   inconsistencia ya documentada para las fichas de Home en
-   typography-map.md ("varia ligeramente entre fichas"), aqui se repite
-   en las paginas de detalle y se respeta igual, literal por pagina. */
+/* Cambio de marca 2026-06-26: re-verificado en las 6 paginas - el cuerpo
+   es **16px/26px de interlineado en las 6, sin excepcion** (antes
+   Wanderlust usaba 14px/interlineado normal via el modificador --sm, que
+   ya no hace falta - Wanderlust tambien es 16px/26px ahora). */
 .project-detail__body {
   margin: 0;
   font-family: var(--font-body);
@@ -764,11 +764,6 @@
 }
 
 .project-detail__body p + p { margin-top: 1em; }
-
-.project-detail__body--sm {
-  font-size: 14px;
-  line-height: normal;
-}
 
 .project-detail__gallery {
   display: grid;

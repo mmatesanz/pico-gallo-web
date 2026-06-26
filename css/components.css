@@ -57,24 +57,24 @@
   max-width: 397px;
 }
 
+/* Cambio de marca 2026-06-26: Figma (1:773/etc.) ahora usa 20px para la
+   categoria de cada ficha (antes 32px, igual que el titulo). */
 #home-proyectos .project-entry__category {
-  font-size: 32px;
+  font-size: 20px;
   margin-top: 0;
 }
 
-/* Descripcion: ancho exacto 410px en las 4 fichas (Figma). El font-size es
-   14px solo en la primera ficha (Wanderlust, 1:774) y 16px en las otras 3
-   (Abu Dhabi/Warner/Devcon, 1:780/1:785/1:790) - inconsistencia real del
-   propio Figma, no se normaliza. La posicion vertical se corrige mas abajo
-   (anclada al fondo de la fila, no con margin-top fijo). */
+/* Descripcion: ancho exacto 410px en las 4 fichas (Figma). Cambio de
+   marca 2026-06-26: Figma unifico el font-size a 16px en las 4 fichas
+   (antes 14px solo en Wanderlust, 1:774 - inconsistencia real que el
+   propio cliente corrigio) - ya no hace falta el override por ficha, el
+   16px de --text-body (ver tokens.css) cubre las 4. La posicion vertical
+   se corrige mas abajo (anclada al fondo de la fila, no con margin-top
+   fijo). */
 #home-proyectos .project-entry__description {
   max-width: 410px;
   margin-top: auto;
   padding-bottom: 100px;
-}
-
-#home-proyectos .project-entry:not(:first-child) .project-entry__description {
-  font-size: 16px;
 }
 
 /* En Figma la descripcion queda anclada al borde inferior de cada fila
@@ -269,6 +269,10 @@
    columna de texto. Se calcula el ancho exacto de esa columna a partir del
    mismo grid-template-columns/gap que usa .project-entry (1fr/1.9fr,
    gap var(--space-xl)=64px), en vez de aproximarlo con un 65% fijo. */
+/* font-size literal: 20px exacto en Figma (1:800, cambio de marca
+   2026-06-26 - antes var(--text-body-lg), 16-18px). Solo se usa en
+   index.html, seguro hardcodear sin tocar el token compartido (body,
+   input/textarea). */
 .btn-bar {
   display: flex;
   align-items: center;
@@ -278,7 +282,7 @@
   margin-top: 20px;
   padding: var(--space-sm) var(--space-md);
   background: var(--color-button-bg);
-  font-size: var(--text-body-lg);
+  font-size: 20px;
   transition: background var(--duration-fast) var(--ease-standard);
 }
 
