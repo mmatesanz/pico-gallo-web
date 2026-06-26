@@ -145,29 +145,48 @@
   font-size: 72px;
 }
 
-/* ---------- Nosotros ---------- */
-/* Figma (frame Nosotros 1:230, re-auditado 2026-06-26): titulo "Nosotros"
+/* ---------- Nosotros (columna fija añadida 2026-06-26) ----------
+   Figma (frame Nosotros 1:230, re-auditado 2026-06-26): titulo "Nosotros"
    en una columna estrecha a la izquierda y el statement grande a la
    derecha, EN LA MISMA FILA - no apilados como hace hoy .page-hero
    (titulo arriba, statement debajo, mismo ancho). Mismo patron de
    "titulo + frase grande en 2 columnas" ya identificado tambien en
    Contacto (ST-01 en figma-vs-prototype-audit.md, pendiente ahi).
    235px = distancia real en Figma entre el inicio del titulo (x=36) y el
-   inicio del statement (x=271). */
-.about-hero {
+   inicio del statement (x=271).
+
+   Peticion del cliente (2026-06-26): mismo efecto que Servicios/Contacto -
+   "Nosotros" se queda fijo SIEMPRE (toda la pagina) y el contenido que
+   sube por scroll desaparece a la altura de la linea, no en el header.
+   .about-page envuelve TODO (statement + imagen + cuerpo), no solo el
+   hero como antes (.about-hero). */
+.about-page {
   display: grid;
   grid-template-columns: 235px minmax(0, 1fr);
-  padding-block: calc(var(--header-height) + var(--space-2xl)) var(--space-xl);
+  padding-top: calc(var(--header-height) + var(--space-2xl));
+  padding-bottom: var(--space-xl);
 }
 
 /* Figma (node 1:305): "Nosotros", Georgia Regular, 48px, blanco - mismo
    escalon que Servicios/Proyectos (.page-hero__title sin modificador usa
    96px, --text-display-xl, equivocado para esta pagina - hallazgo ya
-   documentado en typography-map.md). Linea decorativa (node 1:277): ancho
-   fijo 209px (no 339px de Servicios ni 230px de Proyectos - cada pagina
-   tiene su propio ancho de linea). Figma rota esa linea 0.26deg - tan
-   sutil que no se reproduce. */
+   documentado en typography-map.md).
+
+   Linea decorativa (node 1:277): Figma define un ancho propio (209px) y
+   una rotacion de 0.26deg (tan sutil que no se reproduce) distintos de
+   Servicios/Contacto (339px) - pero el usuario pidio explicitamente
+   (2026-06-26) que el ancho de esta linea y el espacio titulo->linea
+   coincidan con los de Servicios, como decision de consistencia visual
+   entre paginas (no una correccion de fidelidad a Figma, una excepcion
+   deliberada igual que el tamaño de titulo de Contacto). 339px y 13px =
+   mismos valores exactos que .page-hero__title--md::after en
+   servicios.html. */
 .page-hero__title--nosotros {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl));
+  z-index: 2;
+  background: var(--color-bg);
   font-size: 48px;
   font-weight: normal;
   line-height: normal;
@@ -176,31 +195,92 @@
 .page-hero__title--nosotros::after {
   content: "";
   display: block;
-  margin-top: 25px;
-  width: 209px;
+  margin-top: 13px;
+  width: 339px;
   height: 1px;
   background: var(--color-text-muted);
 }
 
-/* El statement reutiliza .page-hero__statement (64px ya exacto tras
-   HT-01, var(--text-display-md)) - aqui es hermano del titulo en la
-   misma fila del grid, no apilado debajo, asi que se anula el
-   margin-top pensado para ese otro contexto (Servicios/Contacto/etc). */
-.about-hero .page-hero__statement {
-  margin-top: 0;
+/* Franja opaca (mismo mecanismo que en Servicios/Contacto): el contenido
+   de la columna derecha desaparece al llegar a la altura de la linea de
+   "Nosotros", no al llegar al header. Alto = space-2xl (hasta donde
+   empieza el titulo) + ~69px (texto del titulo a 48px + margin-top de la
+   linea, ya ajustado a 13px como en Servicios, + la linea). */
+.about-page::before {
+  content: "";
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: calc(var(--space-2xl) + 69px);
+  background: var(--color-bg);
+  z-index: 1;
+  pointer-events: none;
 }
+
+/* El bloque de texto (statement + parrafo intro) va DEBAJO de la linea de
+   "Nosotros" (no al lado del titulo, en la misma fila) y, al hacer
+   scroll, se oculta justo ahi - no antes ni despues (en el header). Base
+   69px = mismo alto del bloque titulo+linea usado para calcular
+   .about-page::before (ver nota ahi, ajustado tras igualar el espacio
+   titulo->linea al de Servicios) - empieza exactamente donde acaba la
+   linea, dentro del alcance de la franja. +30px adicionales (2026-06-26,
+   pedido por el usuario) de aire extra entre la linea y el statement. */
+.about-page__content .page-hero__statement {
+  margin-top: 99px;
+}
+
+/* Contenido actualizado 2026-06-26 (Figma revisado por el cliente, nodo
+   1:307): el statement grande ya NO es "Somos el punto exacto..." (64px) -
+   ahora es un texto distinto y mas largo, "Pico de Gallo es una
+   consultora de marca...", a 48px (no 64px) con line-height 92.055%
+   (valor literal de Figma, mas apretado que "normal" - no se redondea a
+   "normal" porque esta vez Figma especifica un numero concreto, a
+   diferencia del resto de titulos de este sitio). */
+.page-hero__statement--nosotros {
+  font-size: 48px;
+  line-height: 0.9206;
+}
+
+/* Parrafo nuevo bajo el statement (Figma, nodo 96:435): "Descubrimos la
+   idea que esta en el corazon de cada negocio...". No existia antes -
+   confirmado que es contenido nuevo del cliente, no un olvido previo.
+   16px, Early Sans Variable, color #989898 (--color-text-soft),
+   line-height normal. Gap real aproximado statement->parrafo (no se
+   puede medir el alto real del statement sin navegador, estimado a
+   partir del numero de lineas visibles en la captura de Figma): 28px. */
+.about-page__intro {
+  margin-top: 28px;
+  color: var(--color-text-soft);
+  font-size: 16px;
+  line-height: normal;
+}
+
+.about-page__intro p { margin: 0; }
+.about-page__intro p + p { margin-top: 1em; }
 
 .manifesto {
   padding-block: var(--space-2xl);
 }
 
-/* Imagen real (1203.73 x 651 en Figma, node 1:308-1:312) a todo el ancho
-   del contenedor - el grid de 2 columnas anterior (texto y imagen lado a
-   lado) no correspondia a Figma: la imagen ocupa todo el ancho y el
-   cuerpo de texto va DEBAJO en una columna propia, no al lado. El "Clip
-   path group" es, tras inspeccionar el SVG de mascara real, un
-   rectangulo simple del tamano del frame contenedor (no una silueta
-   decorativa) - basta aspect-ratio + object-fit: cover, sin mask-image. */
+/* La imagen del manifiesto ocupa casi todo el ancho del FRAME completo
+   (1203.73 de 1280), no solo el ancho de la columna de contenido de
+   .about-page (mas estrecha, al reservar 235px para "Nosotros") - por
+   eso este wrapper (solo la imagen, no el resto de .manifesto) "escapa"
+   de su columna con width/margin-left negativos, igual de ancha que si
+   no hubiera columna de titulo. Mismo mecanismo que .contact-visual en
+   Contacto - aqui aislado en su propio wrapper porque .manifesto ahora
+   tambien contiene texto (.manifesto__statement/__text) que SI debe
+   quedarse dentro del ancho normal de la columna, no a ancho completo. */
+.manifesto__media-wrap {
+  width: calc(100% + 235px);
+  margin-left: -235px;
+}
+
+/* Imagen real (1203.73 x 651 en Figma, node 1:308-1:312). El "Clip path
+   group" es, tras inspeccionar el SVG de mascara real, un rectangulo
+   simple del tamano del frame contenedor (no una silueta decorativa) -
+   basta aspect-ratio + object-fit: cover, sin mask-image. */
 .manifesto__media {
   aspect-ratio: 1203.73 / 651;
   border-radius: 4px;
@@ -213,20 +293,35 @@
   object-fit: cover;
 }
 
+/* Texto nuevo bajo la imagen (Figma, nodo 96:436): "Somos el ingrediente
+   que le da caracter a cada idea." No existia antes. 64px Georgia
+   blanco, line-height 92.055% (mismo valor literal que el statement de
+   arriba, ver nota en .page-hero__statement--nosotros). Gap real
+   imagen->texto: 25px (y=1358 - (682+651)). */
+.manifesto__statement {
+  margin: 0;
+  margin-top: 25px;
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 64px;
+  line-height: 0.9206;
+  color: var(--color-text);
+}
+
 /* Figma (node 1:306): el cuerpo NO es texto corrido en 4 parrafos largos -
    son 8 grupos de lineas cortas con saltos de linea manuales dentro de
    cada grupo y una linea en blanco entre grupos (cadencia poetica
    deliberada, confirmada linea por linea via get_design_context). 16px
    exacto, Early Sans Variable, color #989898 (--color-text-soft),
-   line-height normal (no el 1.8 generico de --text-body-lg, que no
-   corresponde a este texto). Columna derecha: el texto empieza en x=629
-   de 1280 (~49%) - margin-left:50% en un bloque sin width explicito
-   ocupa exactamente la mitad derecha del contenedor. Gap real medido
-   entre el final de la imagen y el inicio del texto: 67px
-   (y=1373 - (655+651)). */
+   line-height normal. Posicion actualizada 2026-06-26: en la revision
+   anterior de Figma este texto empezaba en x=629 de 1280 (~49%, mitad
+   derecha) - en la version actual del cliente empieza en x=290, la MISMA
+   columna que el resto del contenido (ya no hay desplazamiento a la
+   derecha) - se quita el margin-left:50% que tenia antes. Gap real
+   texto-de-arriba->cuerpo: ~75px (estimado, no se puede medir el alto
+   real de .manifesto__statement sin navegador). */
 .manifesto__text {
-  margin-top: 67px;
-  margin-left: 50%;
+  margin-top: 75px;
   color: var(--color-text-soft);
   font-size: 16px;
   line-height: normal;
@@ -235,8 +330,8 @@
 .manifesto__text p { margin: 0; }
 .manifesto__text p + p { margin-top: 1.5em; }
 
-/* ---------- Contacto (re-auditada 2026-06-26, dos veces) ---------- */
-/* Figma (frame Contacto 1:55): titulo "Contacto" (x=98,y=229) y statement
+/* ---------- Contacto (re-auditada 2026-06-26, columna fija añadida) ----------
+   Figma (frame Contacto 1:55): titulo "Contacto" (x=98,y=229) y statement
    Lorem ipsum (x=495,y=416) NO empiezan a la misma altura - a diferencia
    de Nosotros (donde si estan alineados en la misma fila), aqui el
    statement esta deliberadamente 187px mas abajo que el titulo, ademas
@@ -246,43 +341,106 @@
    (inicio del titulo) = ancho de la columna 1. El titulo de esta pagina
    SI usa 96px (--text-display-xl, ya correcto - es la unica pagina de
    las 4 cuyo titulo coincide con el token grande, confirmado en
-   typography-map.md), por eso no hace falta modificador de tamano aqui,
-   solo el wrapper de 2 columnas + la linea decorativa + el offset
-   vertical real del statement. */
-.contact-hero {
+   typography-map.md), por eso no hace falta modificador de tamano aqui.
+
+   Peticion del cliente (2026-06-26): mismo efecto que en Servicios -
+   "Contacto" se queda fijo SIEMPRE (toda la pagina, no solo el hero) y
+   el contenido que sube por scroll desaparece a la altura de la linea,
+   no en el header. Por eso .contact-page envuelve TODO (statement +
+   imagen + cuerpo), no solo el hero como antes (.contact-hero). */
+.contact-page {
   display: grid;
   grid-template-columns: 397px minmax(0, 1fr);
-  padding-block: calc(var(--header-height) + var(--space-2xl)) var(--space-xl);
+  padding-top: calc(var(--header-height) + var(--space-2xl));
+  padding-bottom: var(--space-2xl);
 }
 
-/* El statement reutiliza .page-hero__statement (64px ya exacto). Primera
-   correccion (2026-06-26): se anulo el margin-top a 0 asumiendo que debia
-   alinearse con el titulo, igual que en Nosotros - equivocado, señalado
-   por el usuario ("no has respetado el diseño de Figma"). Las coordenadas
-   reales muestran al statement 187px MAS ABAJO que el titulo (y=416 vs
-   y=229), no a la misma altura - corregido al valor exacto. */
-.contact-hero .page-hero__statement {
-  margin-top: 187px;
+/* Excepcion deliberada pedida por el cliente (2026-06-26): el titulo de
+   Contacto pasa a 48px, igual que "Servicios" en servicios.html. Figma
+   define 96px para el nodo de Contacto (1:130) - se confirmo esto
+   explicitamente con el cliente antes de aplicarlo, es una decision de
+   diseño consciente que se aparta de Figma, no un error de fidelidad.
+
+   Ajuste 2026-06-26 (pedido por el usuario): mismo margin-top de pagina
+   y de titulo, y misma tipografia/tamaño, que "Nosotros". La posicion
+   (padding-top de .contact-page, top del sticky) ya coincidia exacto con
+   .about-page/.page-hero__title--nosotros (misma formula
+   header-height+space-2xl en ambas) - sin cambios ahi. font-weight y
+   line-height se declaran aqui explicitamente (antes dependian de
+   heredarlos de la clase base .page-hero__title) para que coincidan con
+   .page-hero__title--nosotros de forma explicita, no solo por
+   coincidencia de cascada. */
+.page-hero__title--contacto {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl));
+  z-index: 2;
+  background: var(--color-bg);
+  font-size: 48px;
+  font-weight: normal;
+  line-height: normal;
+}
+
+/* Franja opaca (mismo mecanismo que .services-layout::before en
+   Servicios): el contenido de la columna derecha desaparece al llegar a
+   la altura de la linea de "Contacto", no al llegar al header. Alto =
+   space-2xl (hasta donde empieza el titulo) + ~69px (texto del titulo a
+   48px tras la excepcion deliberada de tamaño + margin-top de la linea,
+   ajustado a 13px como en Servicios/Nosotros, + la linea). */
+.contact-page::before {
+  content: "";
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: calc(var(--space-2xl) + 69px);
+  background: var(--color-bg);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Figma original mide 64px (var(--text-display-md), heredado de la
+   clase base) y 187px de distancia titulo->statement (y=416 vs y=229) -
+   pero el usuario pidio igualar tanto el espacio (99px) como ahora
+   tambien la tipografia/tamaño (48px, line-height 0.9206) a los de
+   Nosotros, senalando que la diferencia entre ambas paginas era
+   demasiado grande tras unificar titulo/linea entre las dos (mismo
+   criterio que las excepciones deliberadas ya aplicadas: tamaño de
+   titulo, ancho de linea, espacio titulo->linea). Mismos valores
+   exactos que .page-hero__statement--nosotros. */
+.contact-page__content .page-hero__statement {
+  margin-top: 99px;
+  font-size: 48px;
+  line-height: 0.9206;
 }
 
 /* Figma (node 1:102/1:103): linea decorativa de 339px bajo "Contacto" -
    coincide numericamente con la de Servicios (tambien 339px) por
    coincidencia, no por compartir el mismo valor a proposito - cada
-   pagina tiene su propio nodo Figma. Antes ausente por completo. */
+   pagina tiene su propio nodo Figma. margin-top ajustado a 13px (era
+   25px) a peticion del usuario (2026-06-26): el espacio titulo->linea
+   debe coincidir con el de Servicios en las 3 paginas que usan este
+   patron (Servicios/Nosotros/Contacto), no solo el ancho de la linea. */
 .page-hero__title--contacto::after {
   content: "";
   display: block;
-  margin-top: 25px;
+  margin-top: 13px;
   width: 339px;
   height: 1px;
   background: var(--color-text-muted);
 }
 
 /* Imagen + cuerpo secundario de Contacto (Figma: node 1:133-1:137 imagen,
-   1132 x 479.97; node 1:131 cuerpo, Lorem ipsum). Mismo patron que
-   .manifesto__media: rectangulo simple, sin mascara decorativa - ya
-   estaba bien implementado (a ancho completo, sin grid de 2 columnas). */
+   1132 x 479.97; node 1:131 cuerpo, Lorem ipsum). La imagen ocupa casi
+   todo el ancho del FRAME completo (1132 de 1280), no solo el ancho de
+   la columna de contenido de .contact-page (que es mas estrecha, al
+   reservar 397px para "Contacto") - por eso "escapa" de su columna con
+   width/margin-left negativos, igual de ancha que si no hubiera columna
+   de titulo. Sin esto, la imagen se veria un 35% mas pequeña de lo que
+   marca Figma. */
 .contact-visual {
+  width: calc(100% + 397px);
+  margin-left: -397px;
   padding-block: var(--space-xl) 0;
 }
 
@@ -634,17 +792,31 @@
 .project-detail__media--span-2 { grid-column: span 2; }
 
 @media (max-width: 860px) {
-  .about-hero,
-  .contact-hero { grid-template-columns: 1fr; }
+  .about-page,
+  .contact-page { grid-template-columns: 1fr; }
+
+  /* En movil titulo de Nosotros/Contacto va apilado en 1 columna - el
+     sticky y la franja de mascara no tienen sentido en ese layout, se
+     desactivan (mismo criterio que .services-layout__title en Servicios). */
+  .page-hero__title--nosotros,
+  .page-hero__title--contacto { position: static; }
+  .about-page::before,
+  .contact-page::before { display: none; }
 
   /* Sin spec movil en Figma - accepted-deviation: en movil el cuerpo de
-     Nosotros y de Contacto vuelve a ocupar el ancho completo en vez de
-     solo una columna a la derecha (que no tendria sentido con el
-     titulo/statement ya apilados arriba en 1 columna). */
-  .manifesto__text,
+     Contacto vuelve a ocupar el ancho completo en vez de solo una
+     columna a la derecha (que no tendria sentido con el titulo/statement
+     ya apilados arriba en 1 columna); las imagenes tampoco necesitan
+     "escapar" de ninguna columna de titulo. */
   .contact-visual__body {
     margin-left: 0;
     max-width: none;
+  }
+
+  .manifesto__media-wrap,
+  .contact-visual {
+    width: auto;
+    margin-left: 0;
   }
 
   /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation,
