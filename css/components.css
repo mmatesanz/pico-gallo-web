@@ -126,6 +126,143 @@
   object-fit: cover;
 }
 
+/* ---------- Proyectos: scroll showcase (CR-03, peticion de cliente 2026-06-25) ----------
+   Peticion del cliente (ver client-feedback/projects-scroll-showcase-spec.md):
+   mientras se hace scroll en Proyectos, el titulo "Proyectos" queda fijo;
+   la columna de imagenes se desplaza de forma continua (sube/baja); la
+   columna de texto NO se desplaza, solo aparece/desaparece (crossfade)
+   mostrando el texto del proyecto que corresponde a la imagen visible en
+   ese momento. Referencia citada: koto.com, seccion "Our Work".
+
+   Misma tecnica que CR-02 (scroll pin + variables CSS actualizadas por
+   JS, sin librerias externas), pero con progreso CONTINUO de 0 a N-1
+   (N=numero de proyectos, --project-track-progress) en vez de 0-1, para
+   que las imagenes se vean desplazarse de forma fluida entre posiciones,
+   no a saltos.
+
+   IMPORTANTE: no se duplican ni renombran .project-entry/.project-entry__title/
+   etc. - son los MISMOS elementos ya afinados a pixel fidelity (ver
+   comentarios de arriba). Este bloque solo AÑADE el comportamiento de
+   scroll por encima, y el fallback (media query al final) neutraliza esas
+   reglas para volver exactamente al layout apilado de siempre. */
+.project-showcase {
+  position: relative;
+  height: calc(4 * 100vh);
+}
+
+.project-showcase__pin {
+  position: sticky;
+  top: var(--header-height);
+  height: calc(100vh - var(--header-height));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.project-showcase__list {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Cada .project-entry pasa de "fila apilada" a "panel superpuesto a
+   pantalla completa dentro del pin" - por eso se anula el padding-block
+   de 24px (#home-proyectos .project-entry) y el divider+margin-top:115px
+   del titulo (#home-proyectos .project-entry__title), que solo tenian
+   sentido cuando los proyectos estaban uno debajo de otro en flujo
+   normal. align-items:stretch y la columna de texto en flex-column
+   (reglas de mas arriba) siguen aplicando igual - el anclaje de la
+   descripcion al fondo de su columna no cambia. */
+#home-proyectos .project-showcase__list .project-entry {
+  position: absolute;
+  inset: 0;
+  padding-block: 0;
+}
+
+#home-proyectos .project-showcase__list .project-entry__title {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Columna de texto: no se desplaza (sin transform), solo crossfade.
+   JS anade/quita .is-active en el .project-entry segun cual sea el
+   proyecto activo (ver main.js, CR-03). */
+.project-showcase__list .project-entry > div:first-child {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.project-showcase__list .project-entry.is-active > div:first-child {
+  opacity: 1;
+}
+
+/* Columna de imagen: SOLO se anade el movimiento (translateY) - el
+   tamano/proporcion de la imagen no cambia, sigue siendo aspect-ratio:9/10
+   y la misma posicion en el grid de .project-entry (sin position:absolute
+   propio; el unico position:absolute de este sistema es el del
+   .project-entry padre, que ya agrupa los 4 paneles). Corregido 2026-06-25
+   (el usuario señalo que el tamano de la imagen habia cambiado respecto al
+   original - la version anterior de esta regla forzaba position:absolute;
+   inset:0;aspect-ratio:auto, haciendo que la imagen llenara todo el panel
+   en vez de mantener su tamano de siempre).
+   --item-index es la posicion estatica de cada proyecto (0,1,2,3);
+   --project-track-progress es el progreso continuo que pone JS. Con
+   item-index=0 y progress=0 -> translateY:0% (en su sitio). Con
+   item-index=1 y progress=0 -> translateY:100% (desplazada una altura
+   propia hacia abajo). A medida que progress avanza, cada imagen se
+   desplaza hacia arriba en multiplos de su propia altura. */
+.project-showcase__list .project-entry__media {
+  /* Corregido 2026-06-25 (la zona gris "Ver todos los proyectos" se veia
+     ~20% mas ancha que la imagen): .project-entry ahora es mucho mas alto
+     (panel a pantalla completa) y align-items:stretch estiraba la imagen
+     a esa altura - con aspect-ratio:9/10, eso hacia que el ANCHO se
+     calculara a partir de esa altura excesiva (mas estrecho de lo real),
+     en vez de al reves. align-self:start anula el stretch solo en esta
+     imagen: vuelve a tener el ancho de su columna de grid como referencia
+     (como antes) y la altura se deriva de ese ancho via aspect-ratio. */
+  align-self: start;
+  transform: translateY(calc((var(--item-index, 0) - var(--project-track-progress, 0)) * 100%));
+  will-change: transform;
+}
+
+.project-showcase__list .project-entry[data-project-index="0"] .project-entry__media { --item-index: 0; }
+.project-showcase__list .project-entry[data-project-index="1"] .project-entry__media { --item-index: 1; }
+.project-showcase__list .project-entry[data-project-index="2"] .project-entry__media { --item-index: 2; }
+.project-showcase__list .project-entry[data-project-index="3"] .project-entry__media { --item-index: 3; }
+
+/* Fallback documentado (mobile <=860px, mismo breakpoint que el resto del
+   sitio, y prefers-reduced-motion, mismo criterio que CR-02): se desactiva
+   el pin/scrub por completo y se vuelve EXACTAMENTE al layout apilado de
+   siempre - mismas reglas de #home-proyectos de mas arriba, sin pin, sin
+   crossfade, sin transform. El JS de main.js tampoco ejecuta el calculo
+   de progreso en estos casos. */
+@media (prefers-reduced-motion: reduce), (max-width: 860px) {
+  .project-showcase { height: auto; }
+  .project-showcase__pin {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+  }
+  .project-showcase__list { flex: none; min-height: 0; }
+  #home-proyectos .project-showcase__list .project-entry {
+    position: relative;
+    inset: auto;
+    padding-block: 24px;
+  }
+  #home-proyectos .project-showcase__list .project-entry__title {
+    border-top: 1px solid var(--color-text-muted);
+    margin-top: 115px;
+    padding-top: 11px;
+  }
+  .project-showcase__list .project-entry > div:first-child { opacity: 1; }
+  .project-showcase__list .project-entry__media {
+    align-self: stretch;
+    transform: none;
+  }
+}
+
 /* ---------- Botones ---------- */
 /* En el Figma este boton no ocupa el ancho completo del contenedor: se
    alinea con la columna de imagen de las fichas de proyecto, no con la
@@ -138,6 +275,7 @@
   justify-content: flex-end;
   width: calc((100% - 64px) * 1.9 / 2.9);
   margin-left: auto;
+  margin-top: 20px;
   padding: var(--space-sm) var(--space-md);
   background: var(--color-button-bg);
   font-size: var(--text-body-lg);

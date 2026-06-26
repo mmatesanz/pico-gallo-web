@@ -39,56 +39,120 @@
   </header>
 
   <main id="main">
-    <section class="page-hero container">
-      <h1 class="page-hero__title">Proyectos</h1>
-      <p class="projects-index-note">Esta vista reúne los proyectos con contenido completo (texto e imagen) extraído del Figma. El archivo original incluye un mosaico más amplio con proyectos adicionales (entre ellos Bobbejaanland, Slagharen y Parque de Atracciones de Madrid) cuyas imágenes aún no se han exportado — ver <code>handoff.md</code> para el detalle.</p>
-    </section>
+    <section class="projects-layout container">
+      <div class="projects-layout__title">
+        <h1 class="page-hero__title page-hero__title--proyectos">Proyectos</h1>
+      </div>
 
-    <section class="container">
-      <div class="project-list">
-        <article class="project-entry">
-          <div>
-            <h2 class="project-entry__title">108 Wanderlust</h2>
-            <p class="project-entry__category">Rebranding</p>
-            <p class="project-entry__description">Global rebranding of Wanderlust 108, the world-renowned mindful triathlon. The new branding is inspired by the meaning of 108, a number considered sacred that appears constantly in yoga, nature, and astrology. It is represented as an intertwined infinity form, symbolizing union and unity, and reflecting the essence of connection that defines Wanderlust 108.</p>
-          </div>
-          <div class="project-entry__media">
-            <img src="assets/images/proyecto-wanderlust.jpg" alt="Cartel de identidad visual del proyecto 108 Wanderlust" loading="lazy" />
-          </div>
-        </article>
+      <div class="project-mosaic">
+        <div class="project-mosaic__col">
+          <figure class="project-mosaic__item">
+            <a class="project-mosaic__frame" href="proyecto-slagharen.html">
+              <img src="assets/images/proyecto-slagharen-gold-rush.png" alt="Cartel ilustrado &quot;Gold Rush&quot; de la atracción de Slagharen, con una montaña rusa de madera y un pueblo del salvaje oeste" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Slagharen</span>
+                <span class="project-mosaic__overlay-meta">Países Bajos — Identidad Visual</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus. Potenti odio id eleifend lectus nec dui, inceptos at posuere neque. Aptent inceptos ligula gravida odio eget torquent diam quam auctor, congue leo scelerisque enim fames varius lacus per, magnis mus fusce risus mollis sollicitudin cursus nunc.</span>
+              </span>
+            </a>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-sweet-candy-studios.png" alt="Cartel morado con el logotipo &quot;Sweet Candy Studios&quot;" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Sweet Candy Studios</span>
+                <span class="project-mosaic__overlay-meta">España</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-tropical-islands.png" alt="Cartel ilustrado &quot;Tropical Islands&quot; con flamencos, palmeras y una cúpula geodésica" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Tropical Islands</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+          <figure class="project-mosaic__item">
+            <a class="project-mosaic__frame" href="proyecto-warner.html">
+              <img src="assets/images/proyecto-superman-acero.png" alt="Cartel de la atracción &quot;Superman, Atracción de Acero&quot; con el superhéroe volando sobre una ciudad" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Parque Warner Madrid</span>
+                <span class="project-mosaic__overlay-meta">España — Identidad Visual</span>
+                <span class="project-mosaic__overlay-desc">A lo largo de los años hemos desarrollado numerosos proyectos para el parque, incluyendo ilustraciones de atracciones, diseño gráfico y patrones para sus líneas de merchandising, así como la creación de logotipos para distintas tiendas. También diseñamos identidades visuales completas para espacios comerciales, abarcando tanto el concepto gráfico como el interiorismo. Nuestra colaboración incluyó además el desarrollo de productos especiales, como juegos y ediciones temáticas, que ampliaron la oferta del parque y reforzaron su universo visual.</span>
+              </span>
+            </a>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-rise-melbourne.png" alt="Cartel &quot;Rise Melbourne&quot; de Wanderlust con la ilustración de una bailarina al amanecer" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Rise Melbourne</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+        </div>
 
-        <article class="project-entry">
-          <div>
-            <h2 class="project-entry__title">Abu Dhabi Internacional Boat Show</h2>
-            <p class="project-entry__category">Rebranding</p>
-            <p class="project-entry__description">Rebranding del Abu Dhabi International Boat Show, el encuentro que define el estilo de vida marítimo en la región. Rediseñamos su identidad visual para fortalecer el prestigio del evento y reflejar la excelencia de un sector que reúne a las marcas más influyentes del mundo náutico.</p>
-          </div>
-          <div class="project-entry__media">
-            <img src="assets/images/proyecto-abudhabi.jpg" alt="Cartel de identidad visual del Abu Dhabi Internacional Boat Show" loading="lazy" />
-          </div>
-        </article>
-
-        <article class="project-entry">
-          <div>
-            <h2 class="project-entry__title">Parque Warner Madrid</h2>
-            <p class="project-entry__category">Merchandising</p>
-            <p class="project-entry__description">A lo largo de los años hemos desarrollado numerosos proyectos para el parque, incluyendo ilustraciones de atracciones, diseño gráfico y patrones para sus líneas de merchandising, así como la creación de logotipos para distintas tiendas. También diseñamos identidades visuales completas para espacios comerciales, abarcando tanto el concepto gráfico como el interiorismo. Nuestra colaboración incluyó además el desarrollo de productos especiales, como juegos y ediciones temáticas, que ampliaron la oferta del parque y reforzaron su universo visual.</p>
-          </div>
-          <div class="project-entry__media">
-            <img src="assets/images/proyecto-warner-merch.jpg" alt="Ilustración de merchandising para Parque Warner Madrid" loading="lazy" />
-          </div>
-        </article>
-
-        <article class="project-entry">
-          <div>
-            <h2 class="project-entry__title">DEVCON VI</h2>
-            <p class="project-entry__category">Diseño de Eventos</p>
-            <p class="project-entry__description">Event and graphic design for Devcon VI. The visual identity was built around a graphic language that reflects innovation, collaboration, and technology. Geometric motifs and clear compositions convey order and sophistication, while dynamic elements reinforce the energy and creative spirit of the Ethereum community.</p>
-          </div>
-          <div class="project-entry__media">
-            <img src="assets/images/proyecto-devcon.jpg" alt="Diseño de evento e identidad gráfica para DEVCON VI" loading="lazy" />
-          </div>
-        </article>
+        <div class="project-mosaic__col">
+          <figure class="project-mosaic__item">
+            <a class="project-mosaic__frame" href="proyecto-wanderlust.html">
+              <img src="assets/images/proyecto-barcelona-marathon.png" alt="Cartel del maratón de Barcelona con una corredora y el emblema circular &quot;100&quot;" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Wonderlust 108</span>
+                <span class="project-mosaic__overlay-meta">España — Identidad Visual</span>
+                <span class="project-mosaic__overlay-desc">Rebranding global de Wanderlust 108, el triatlón consciente reconocido a nivel mundial. El nuevo branding se inspira en el significado del 108, un número considerado sagrado que aparece constantemente en el yoga, la naturaleza y la astrología. Se representa como una forma de infinito que se entrelaza, simbolizando unión y unidad, y reflejando la esencia de conexión que define a Wanderlust 108.</span>
+              </span>
+            </a>
+          </figure>
+          <figure class="project-mosaic__item project-mosaic__item--crop">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-dcavi-bogota.png" alt="Ilustración isométrica colorida del primer piso de DCAVI Bogotá" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">DCAVI Bogotá</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-winds-of-change.png" alt="Cartel de cine &quot;Winds of Change&quot; con un velero visto desde arriba sobre el mar" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Winds of Change</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-arrecife-fachada.png" alt="Fotografía de la fachada de la tienda Arrecife" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Arrecife</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-prologo.png" alt="Cartel rojo &quot;Prólogo&quot; con la ilustración de un conejo" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Prólogo</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+          <figure class="project-mosaic__item">
+            <div class="project-mosaic__frame project-mosaic__frame--static">
+              <img src="assets/images/proyecto-terratile-recycling.png" alt="Gráfico de Terratile sobre reciclaje: 1 Terratile equivale a 5.12 kg de residuos reciclados" loading="lazy" />
+              <span class="project-mosaic__overlay">
+                <span class="project-mosaic__overlay-title">Terratile</span>
+                <span class="project-mosaic__overlay-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit praesent, imperdiet lectus molestie rhoncus euismod eget lacinia, nulla in elementum velit vitae commodo purus.</span>
+              </span>
+            </div>
+          </figure>
+        </div>
       </div>
     </section>
   </main>

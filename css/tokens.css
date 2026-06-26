@@ -13,12 +13,21 @@
   --color-focus: #ffffff;
 
   /* Tipografia
-     "Georgia" es fuente de sistema (sin CDN externo).
-     "Early Sans Variable" es la tipografia de marca del Figma; al no estar
-     disponible como web font libre, se usa un fallback sans neutro hasta
-     que el cliente facilite el archivo/licencia (ver design-notes.md). */
+     "Georgia" es fuente de sistema (sin CDN externo) - ya correcta, no
+     requiere @font-face.
+     "Early Sans Variable" es la tipografia de marca del Figma. Auditoria
+     2026-06-25 (TYPOGRAPHY_FOUNDATION_REPAIR, ver
+     client-feedback/typography-audit.md): el archivo de la fuente NO
+     existe en el repositorio (sin carpeta fonts/, sin .woff2/.woff/.ttf/.otf
+     en projects/pico-de-gallo/prototype/) - estado blocked-needs-font-file.
+     No se descarga ni se sustituye por una alternativa sin autorizacion.
+     Se declara "Early Sans Variable" como primer nombre del stack (no
+     rompe nada si no esta instalada/cargada - el navegador simplemente
+     pasa al siguiente nombre) para que la base quede preparada: en cuanto
+     el cliente facilite el archivo, basta con descomentar el @font-face de
+     abajo y rellenar la ruta, sin tocar el resto del CSS. */
   --font-display: Georgia, "Times New Roman", serif;
-  --font-body: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+  --font-body: "Early Sans Variable", "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
 
   /* Escala tipografica (clamp = fluido entre mobile y desktop).
      HT-01 (recalibrado 2026-06-24): el Figma de este proyecto es un frame
@@ -62,3 +71,28 @@
   --duration-fast: 150ms;
   --duration-base: 280ms;
 }
+
+/* ---------- Early Sans Variable (blocked-needs-font-file) ----------
+   Plantilla lista para activar en cuanto el cliente facilite el archivo
+   real de la fuente (TYPOGRAPHY_FOUNDATION_REPAIR, 2026-06-25). No
+   descomentar con una fuente distinta a la autorizada por el cliente.
+
+   Pasos para activarla:
+   1. Copiar el/los archivo(s) de fuente a projects/pico-de-gallo/prototype/assets/fonts/
+      (crear la carpeta si no existe).
+   2. Descomentar el bloque @font-face de abajo y ajustar "src" a la ruta real.
+   3. Si la fuente variable expone varios pesos via "font-variation-settings"
+      en vez de varios archivos, usar font-weight: 100 900; en vez de un
+      peso fijo.
+   No hace falta tocar --font-body ni ninguna otra regla: ya prioriza
+   "Early Sans Variable" en el stack (ver arriba).
+
+@font-face {
+  font-family: "Early Sans Variable";
+  src: url("../assets/fonts/early-sans-variable.woff2") format("woff2-variations"),
+       url("../assets/fonts/early-sans-variable.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+*/

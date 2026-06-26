@@ -1,19 +1,109 @@
-/* ---------- Home ---------- */
-/* Figma (node 1:744) define el Hero como un frame fijo de 1280x800, sin
-   spec responsive (no hay frames mobile/tablet). Se usa el valor exacto
-   en vez de "90vh + max-height:800px": ese enfoque fluido no garantizaba
-   alcanzar los 800px reales salvo en viewports con suficiente alto. */
-.hero-media {
-  height: 950px;
-  width: 100%;
+/* ---------- Home: hero scroll (CR-02, peticion de cliente 2026-06-25) ----------
+   Antes: imagen estatica de altura fija (950px, ver historico debajo).
+   Peticion del cliente (ver client-feedback/header-scroll-behavior-spec.md):
+   la imagen del hero reduce su tamano progresivamente con el scroll y se
+   reposiciona hacia la esquina superior izquierda (corregido 2026-06-25,
+   instruccion Z: el cliente pidio originalmente "inferior izquierda" pero
+   se corrigio a "superior izquierda"), dejando ver el texto principal
+   (antes .intro-statement, ahora tambien .hero-scroll__content).
+   Referencia citada por el cliente: rubioydelamo.com (no se pudo inspeccionar
+   su CSS/JS real en este entorno - sin navegador disponible - la
+   implementacion se basa en la descripcion escrita del cliente).
+
+   Tecnica ("scroll pin", sin librerias externas):
+   - .hero-scroll: alto 220vh, crea la distancia de scroll para la transicion.
+   - .hero-scroll__pin: position:sticky, queda fijo en el viewport durante
+     esa distancia (overflow:hidden para que media/content no se salgan).
+   - .hero-scroll__media / .hero-scroll__content: superpuestos (position:
+     absolute, inset:0) dentro del pin. JS (main.js) calcula un progreso
+     0-1 segun scrollY y lo expone como --hero-media-scale/--hero-content-opacity.
+   - scale() con transform-origin:left top logra "reducir tamano" y
+     "reposicionar a la esquina superior izquierda" con una sola propiedad:
+     el punto de origen queda fijo mientras la caja se encoge hacia el.
+     Nota: el header (.site-header, position:fixed, z-index:100) sigue
+     siempre por encima - la miniatura resultante queda visualmente debajo
+     de la barra del header, no detras ni tapandola. */
+.hero-scroll {
+  position: relative;
+  height: 220vh;
+}
+
+.hero-scroll__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   overflow: hidden;
 }
 
-.hero-media img {
+/* Corregido 2026-06-25: con transform-origin:left top puro, el borde
+   superior de la miniatura se queda siempre en y=0 - exactamente donde
+   esta el header (position:fixed, z-index:100, opaco tras el primer
+   scroll) - asi que el header tapaba el trozo de arriba de la imagen
+   minimizada. Se anade translateY(var(--header-height) * progreso) para
+   que, en el estado final (progreso=1), la miniatura baje exactamente la
+   altura del header y quede completa, debajo de el, sin recortarse. */
+.hero-scroll__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: left top;
+  transform: translateY(calc(var(--header-height) * var(--hero-progress, 0))) scale(var(--hero-media-scale, 1));
+  will-change: transform;
+}
+
+.hero-scroll__media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
+.hero-scroll__content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  opacity: var(--hero-content-opacity, 0);
+  transform: translateY(calc(16px * (1 - var(--hero-content-opacity, 0))));
+  pointer-events: none;
+}
+
+.hero-scroll.is-content-visible .hero-scroll__content {
+  pointer-events: auto;
+}
+
+/* Fallback documentado (mobile <=860px, mismo breakpoint que el resto del
+   sitio, y prefers-reduced-motion): se desactiva el pin/scrub y se vuelve
+   a un layout simple en flujo normal - imagen a altura fija razonable,
+   texto siempre visible debajo, sin transformaciones ni scroll-jacking.
+   El JS de main.js tampoco ejecuta el calculo de progreso en estos casos
+   (ver comentario en main.js), asi que esta media query es la unica
+   responsable del estado final - no depende de que JS no se ejecute. */
+@media (prefers-reduced-motion: reduce), (max-width: 860px) {
+  .hero-scroll { height: auto; }
+  .hero-scroll__pin { position: relative; height: auto; }
+  .hero-scroll__media {
+    position: relative;
+    inset: auto;
+    height: 70vh;
+    transform: none;
+  }
+  .hero-scroll__content {
+    position: relative;
+    inset: auto;
+    height: auto;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+/* Historico (pre-CR-02): Figma (node 1:744) definia el Hero como un frame
+   fijo de 1280x800, sin spec responsive. Ya no aplica tal cual porque el
+   comportamiento de scroll es una peticion de cliente posterior al diseno
+   estatico - el tamano inicial pasa a ser 100vh (pantalla completa) y se
+   reduce con el scroll en vez de mantenerse fijo en 950px. Conservado como
+   nota porque documenta una decision previa (950px en vez de los 800px
+   literales de Figma) que sigue siendo relevante si se revierte CR-02. */
 
 /* En Figma el bloque del statement (1:743, bottom y=1256) termina exactamente
    donde empieza el titulo "Proyectos" (1:792, top y=1256) - 0px de margen
@@ -151,18 +241,370 @@
   margin-top: var(--space-lg);
 }
 
-/* ---------- Proyectos (index) ---------- */
-.projects-index-note {
-  margin-top: var(--space-lg);
-  padding: var(--space-md);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  color: var(--color-text-soft);
-  font-size: var(--text-body);
-  max-width: 60ch;
+/* ---------- Proyectos (index) — mosaico real (2026-06-26) ----------
+   Figma (frame Proyectos 1:582, "Group 1" 1:609): la pagina de Proyectos
+   NO es una lista de fichas texto+imagen como Home - es un mosaico
+   asimetrico de 11 piezas en 2 columnas (5 a la izquierda, 6 a la
+   derecha), cada una con su propio alto real (sin aspect-ratio comun).
+   Reemplaza la version anterior, que reutilizaba por error el layout de
+   4 fichas de Home (ver client-feedback/projects-page-rebuild-spec.md).
+
+   El titulo "Proyectos" y el mosaico empiezan a la MISMA altura (no el
+   titulo arriba y el mosaico despues, como en el resto de paginas) -
+   por eso .projects-layout es un grid de 2 columnas en vez de un
+   .page-hero de ancho completo seguido de una seccion aparte. */
+.projects-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 22%) minmax(0, 1fr);
+  padding-top: calc(var(--header-height) + var(--space-2xl));
+  padding-bottom: var(--space-2xl);
 }
+
+/* Petición del cliente (2026-06-26): al hacer scroll, la columna
+   "Proyectos" se queda fija y es la columna de la derecha (el mosaico)
+   la que se mueve. `align-self:start` evita que el grid estire la caja
+   del titulo a la altura del mosaico (si no, "sticky" seguiria
+   funcionando pero la caja ocuparia visualmente toda esa altura).
+   `top` usa el mismo `calc(header-height + space-2xl)` que ya marca el
+   padding-top de `.projects-layout` - así el titulo se "fija" exactamente
+   en la posicion en la que ya estaba en reposo, conservando el espacio
+   inicial bajo el header en vez de saltar a quedar pegado al header en
+   cuanto empieza el scroll (corrección pedida por el cliente: "quiero
+   que se mantenga fijo también el espacio inicial que hay debajo del
+   header"). */
+.projects-layout__title {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl));
+}
+
+/* Figma (node 1:638): "Proyectos", Georgia Regular, 48px, blanco - igual
+   escalon que Servicios/Nosotros/Contacto (ya documentado en
+   typography-map.md como bug: esta pagina usaba 96px). Linea decorativa
+   (node 1:639/1:640): ancho fijo 230px (no 339px como en Servicios - cada
+   pagina tiene su propio ancho de linea, no es el mismo valor reutilizado). */
+.page-hero__title--proyectos {
+  display: inline-block;
+  font-size: 48px;
+  font-weight: normal;
+  line-height: normal;
+}
+
+.page-hero__title--proyectos::after {
+  content: "";
+  display: block;
+  margin-top: 13px;
+  width: 230px;
+  height: 1px;
+  background: var(--color-text-muted);
+}
+
+/* Figma: gap real entre columnas y entre piezas de cada columna es ~4px
+   en los 11 casos medidos (no var(--space-xl) ni otro token de espaciado
+   - es un valor propio de esta pagina, deliberadamente minimo, casi sin
+   separacion, como un muro de carteles). Margen derecho del mosaico
+   (~2.7% del ancho de referencia) tambien es real - el mosaico casi toca
+   el borde derecho del frame en Figma, asimetria ya documentada antes
+   para el teaser de Proyectos en Home (HOME-PROJECTS-LAYOUT-01). */
+.project-mosaic {
+  display: flex;
+  gap: 4px;
+  padding-right: 2.7%;
+}
+
+.project-mosaic__col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-mosaic__item {
+  margin: 0;
+}
+
+.project-mosaic__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Figma (node 1:622, "Proyecto_4" / DCAVI Bogotá): unica de las 11 piezas
+   compuesta con una mascara CSS interna (mask-image) en vez de ser una
+   imagen plana. El export estatico de Figma (download_assets y
+   get_screenshot, probados ambos) no respeta bien ese compositing y deja
+   un hueco en blanco en el resultado - confirmado descargando la capa
+   fuente sin componer (limpia, sin hueco) e inspeccionando la mascara en
+   si (un SVG con un solo <path> rectangular, sin silueta real, mismo
+   patron ya visto en .manifesto__media). Por eso esta pieza no usa
+   tamano natural como las otras 10 - se usa la capa fuente directamente
+   con aspect-ratio + object-fit:cover (recorte fiable, sin depender del
+   export ya compuesto). 482/478 = proporcion real del frame "Proyecto_4". */
+.project-mosaic__item--crop {
+  aspect-ratio: 482 / 478;
+}
+
+.project-mosaic__item--crop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Mosaico de Proyectos: hover (referencia koto.com/work,
+   2026-06-26) ---------- Petición del cliente: al pasar el cursor sobre
+   cada pieza, zoom-out sutil de la imagen + aparece la info del proyecto.
+   No hay ningún hover definido en Figma (herramienta estática) - esto es
+   una interacción nueva, no una traducción de un diseño existente.
+
+   Texto mostrado por pieza (decisión explícita del usuario, sin inventar
+   nada nuevo): las 3 piezas que SÍ corresponden a una página de detalle
+   ya construida (Slagharen, Superman→Parque Warner Madrid, maratón de
+   Barcelona→Wonderlust 108) muestran el título/país/categoría reales de
+   esa página y enlazan a ella. "Sweet Candy Studios" muestra su país real
+   (único dato confirmado, ya existía como pie de foto fijo - ahora pasa a
+   verse solo en el hover). Las 7 piezas restantes (Tropical Islands, Rise
+   Melbourne, DCAVI Bogotá, Winds of Change, Arrecife, Prólogo, Terratile)
+   no tienen página ni texto propio en Figma - el título es el nombre real
+   visible en el propio cartel/gráfico (no inventado), con un texto de
+   relleno (Lorem ipsum) como descripción, mismo criterio ya usado en
+   Slagharen/Bobbejaanland para contenido pendiente del cliente. */
+.project-mosaic__frame {
+  position: relative;
+  display: block;
+}
+
+.project-mosaic__frame img {
+  transition: transform 0.5s ease;
+}
+
+.project-mosaic__frame:hover img,
+.project-mosaic__frame:focus-visible img {
+  transform: scale(0.96);
+}
+
+.project-mosaic__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-sm);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.project-mosaic__frame:hover .project-mosaic__overlay,
+.project-mosaic__frame:focus-visible .project-mosaic__overlay {
+  opacity: 1;
+}
+
+.project-mosaic__overlay-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: normal;
+  color: var(--color-text);
+}
+
+.project-mosaic__overlay-meta {
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: normal;
+  color: var(--color-text-soft);
+}
+
+.project-mosaic__overlay-desc {
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-soft);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-mosaic__frame img { transition: none; }
+  .project-mosaic__overlay { transition: none; }
+}
+
+/* ---------- Paginas de detalle de proyecto (2026-06-26) ----------
+   Figma: 4 frames con la misma plantilla (Proyecto_1..4 = Slagharen,
+   Bobbejaanland, Warner, Wanderlust) - columna de texto a la izquierda
+   (titulo + pais + categoria + cuerpo) y galeria de imagenes a la
+   derecha. 3 de las 4 (Wanderlust/Bobbejaanland/Slagharen) comparten
+   exactamente la misma cuadricula de 10 piezas (1 banner + 2 + 3 + 2 + 2);
+   Warner tiene su propia cuadricula de 8 (1 banner + 3 + 1 banner + 3).
+   Mismo criterio de columnas/margenes ya usado en .projects-layout
+   (Proyectos): columna de texto ~26% (texto real empieza en x=42 de 1280,
+   galeria en x=333 de 1280 ≈ 26%), galeria con ~2.7% de margen derecho
+   (la galeria casi toca el borde derecho del frame, mismo patron que el
+   mosaico de Proyectos). */
+.project-detail {
+  display: grid;
+  grid-template-columns: minmax(180px, 26%) minmax(0, 1fr);
+  padding-top: calc(var(--header-height) + var(--space-2xl));
+  padding-bottom: var(--space-2xl);
+}
+
+/* Mismo efecto pedido por el cliente para la pagina indice de Proyectos
+   (.projects-layout__title) aplicado aqui: la columna de texto se queda
+   fija al hacer scroll y es la galeria la que se mueve. `top` usa el
+   mismo calc(header-height + space-2xl) que el padding-top de arriba,
+   para que se "fije" justo en la posicion en la que ya estaba en
+   reposo (conserva el espacio inicial bajo el header, no salta hacia
+   arriba). */
+.project-detail__intro {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl));
+}
+
+/* Figma: titulo Georgia 40px en Wanderlust/Bobbejaanland/Warner, pero
+   48px en Slagharen - inconsistencia real del propio archivo Figma (ya
+   hay precedentes similares documentados en typography-map.md), se
+   respeta literalmente por pagina en vez de forzar un valor uniforme. */
+.project-detail__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: normal;
+  line-height: normal;
+  color: var(--color-text);
+}
+
+.project-detail__title--lg { font-size: 48px; }
+
+.project-detail__country {
+  margin: 0;
+  margin-top: 8px;
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: normal;
+  color: var(--color-text);
+}
+
+.project-detail__tag {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: normal;
+  color: var(--color-text-muted);
+}
+
+/* Figma (nodo "Proyectos" > "Proyecto_2", presente en las 4 paginas,
+   x=42 y w=245 en las 4 - antes pasada por alto porque su frame
+   contenedor tiene height:0 en la metadata): linea horizontal de 1px,
+   245px de ancho, color #5E5E5E (var(--color-text-muted)) debajo del
+   pais/categoria y antes del cuerpo. Gap real medido en las 4 paginas:
+   14px desde la categoria hasta la linea, 31px desde la linea hasta el
+   cuerpo (14+31=45, el mismo total que se uso antes de encontrar la
+   linea, pero repartido en 2 huecos en vez de uno). */
+.project-detail__divider {
+  margin: 0;
+  margin-top: 14px;
+  margin-bottom: 31px;
+  width: 245px;
+  max-width: 100%;
+  height: 1px;
+  border: none;
+  background: var(--color-text-muted);
+}
+
+/* Figma: cuerpo a 16px/26px de interlineado en Bobbejaanland/Warner/
+   Slagharen, pero Wanderlust usa 14px/interlineado normal - misma
+   inconsistencia ya documentada para las fichas de Home en
+   typography-map.md ("varia ligeramente entre fichas"), aqui se repite
+   en las paginas de detalle y se respeta igual, literal por pagina. */
+.project-detail__body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--color-text-soft);
+}
+
+.project-detail__body p + p { margin-top: 1em; }
+
+.project-detail__body--sm {
+  font-size: 14px;
+  line-height: normal;
+}
+
+.project-detail__gallery {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding-right: 2.7%;
+}
+
+.project-detail__media {
+  margin: 0;
+}
+
+.project-detail__media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.project-detail__media--span-6 { grid-column: span 6; }
+.project-detail__media--span-3 { grid-column: span 3; }
+.project-detail__media--span-2 { grid-column: span 2; }
 
 @media (max-width: 860px) {
   .manifesto,
   .contact-layout { grid-template-columns: 1fr; }
+
+  /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation,
+     mismo criterio que .projects-layout: columna de texto apilada
+     arriba, galeria en cuadricula de 2 columnas en vez de 6 (las piezas
+     "span-6" pasan a ocupar las 2, las "span-3"/"span-2" 1 cada una). */
+  .project-detail {
+    grid-template-columns: 1fr;
+    padding-top: calc(var(--header-height) + var(--space-xl));
+  }
+
+  /* En movil texto y galeria van apilados en 1 columna (ver arriba) -
+     el "sticky" no tiene sentido en ese layout, se desactiva. */
+  .project-detail__intro {
+    position: static;
+    margin-bottom: var(--space-lg);
+  }
+
+  .project-detail__gallery {
+    grid-template-columns: repeat(2, 1fr);
+    padding-right: 0;
+  }
+
+  .project-detail__media--span-6 { grid-column: span 2; }
+  .project-detail__media--span-3,
+  .project-detail__media--span-2 { grid-column: span 1; }
+
+  /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation:
+     titulo apilado arriba, mosaico en 1 sola columna (las 2 columnas de
+     escritorio una detras de otra, no intercaladas), mismo criterio que
+     el resto del sitio para este tipo de fallback. */
+  .projects-layout {
+    grid-template-columns: 1fr;
+    padding-top: calc(var(--header-height) + var(--space-xl));
+  }
+
+  /* En movil el titulo y el mosaico van apilados en 1 columna (ver
+     arriba) - el "sticky" del titulo no tiene sentido en ese layout
+     (no hay 2 columnas independientes que recorrer), se desactiva y
+     vuelve al flujo normal. */
+  .projects-layout__title {
+    position: static;
+    margin-bottom: var(--space-lg);
+  }
+
+  .project-mosaic {
+    flex-direction: column;
+    padding-right: 0;
+  }
 }
