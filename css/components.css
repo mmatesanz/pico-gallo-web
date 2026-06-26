@@ -302,20 +302,88 @@
 
 .btn-primary:hover, .btn-primary:focus-visible { opacity: 0.85; }
 
-/* ---------- Servicios: filas de categoria ---------- */
+/* ---------- Servicios: layout de pagina + filas de categoria ---------- */
+/* Peticion del cliente (2026-06-26): "Servicios" (titulo de pagina) se
+   queda fijo SIEMPRE, en su propia columna a la izquierda, mientras se
+   hace scroll por las 3 filas. Antes "Servicios" vivia en una seccion
+   .page-hero separada, suelta del resto - ahora es hermano de las filas
+   dentro de un mismo grid de 2 columnas (mismo patron ya usado en
+   .projects-layout para "Proyectos"), para que su contenedor de sticky
+   abarque toda la altura de la pagina, no solo una franja inicial.
+   279px = el mismo ancho que antes tenia la columna 1 (vacia/margen) de
+   .service-row - se traslada aqui para que "Estrategia" etc. sigan
+   empezando exactamente en la misma posicion x que antes (ver nota de
+   alineacion mas abajo, en .service-row). */
+.services-layout {
+  display: grid;
+  grid-template-columns: 279px minmax(0, 1fr);
+  padding-top: calc(var(--header-height) + var(--space-2xl));
+  padding-bottom: var(--space-xl);
+}
+
+/* Correccion 2026-06-26 (señalada por el usuario): al hacer scroll hacia
+   abajo, los puntos de cada bloque de servicio (columna de cuerpo) seguian
+   subiendo visibles por detras del hueco bajo el header y de "Servicios"
+   hasta desaparecer solo al llegar al header (z-index:100) - el cliente
+   quiere que desaparezcan antes, justo al llegar a la altura de la linea
+   de "Servicios", no que se vean pasar por ahi. `position:fixed` (no
+   sticky - un pseudo-elemento de un grid container pasaria a ser el a su
+   vez un grid-item, descolocando las 2 columnas) crea una franja opaca de
+   ancho completo, pegada al viewport, justo debajo del header y hasta la
+   misma altura en la que se fijan "Estrategia"/el titulo de cada bloque
+   (header + space-2xl + 87px, ver nota en .service-row > div:first-child)
+   - cualquier contenido que suba por detras queda oculto ahi, antes de
+   llegar a esa altura, no en el borde del header.
+
+   Corregido otra vez el mismo dia (señalado por el usuario: el titulo de
+   fila y el de bloque TAMBIEN se veian pasar por encima de esta franja
+   al soltarse su propio sticky y subir en scroll normal hacia el header -
+   tenian z-index mayor que la franja, asi que se dibujaban por encima en
+   vez de ocultarse). z-index 3: por debajo de "Servicios" (4, que SI debe
+   verse siempre, su propia caja vive permanentemente dentro de esta misma
+   franja) pero por encima del titulo de fila (2) y de bloque (1), que asi
+   quedan ocultos al pasar por aqui en cuanto se sueltan - sin afectar a
+   cuando estan correctamente fijados mas abajo (260px desde arriba), fuera
+   del alcance de esta franja. */
+.services-layout::before {
+  content: "";
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: calc(var(--space-2xl) + 87px);
+  background: var(--color-bg);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Correccion 2026-06-26 (señalada por el usuario): al hacer scroll, la
+   columna del medio (titulo de fila) se veia pasar por encima de
+   "Servicios". Sin `background`, el contenedor sticky de "Servicios" es
+   transparente - cualquier contenido que pase por detras durante el
+   scroll se ve a traves de el. `z-index` mas alto que el resto de niveles
+   sticky de la pagina (titulo de fila, titulo de bloque) asegura que,
+   aunque algo llegara a coincidir en pantalla, "Servicios" se dibuje
+   siempre por encima, nunca al reves. */
+.services-layout__title {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl));
+  z-index: 4;
+  background: var(--color-bg);
+}
+
 /* Figma (frame Servicios 1:138): el diseñador piensa la pagina en 3
    columnas verticales reales -- col1 vacia/margen (alineada con "Servicios",
    x=98), col2 titulo+tagline de cada fila (x=351 en las 3 filas, sin
-   excepcion) y col3 cuerpo/descripciones (x=640 en las 3 filas). El grid
-   anterior (1fr/2fr, sin columna 1) dejaba el titulo+tagline pegado al
-   margen del contenedor, igual que "Servicios" -- no reproducia la
-   indentacion real. gap:0 porque los anchos de columna ya incluyen la
-   distancia real hasta el inicio de la siguiente (279px = 351-72 hasta
-   col2; 289px = 640-351 hasta col3, usando x=72 del Menu como margen real
-   de Figma, igual que en el resto de esta auditoria). */
+   excepcion) y col3 cuerpo/descripciones (x=640 en las 3 filas). Esa
+   columna 1 (279px) ahora la ocupa .services-layout (arriba) en vez de
+   estar vacia dentro de .service-row - por eso aqui quedan solo 2
+   columnas (289px titulo de fila, 1fr cuerpo) en vez de 3; el resultado
+   visual es identico, la columna vacia simplemente cambio de "dueño". */
 .service-row {
   display: grid;
-  grid-template-columns: 279px 289px minmax(0, 1fr);
+  grid-template-columns: 289px minmax(0, 1fr);
   gap: 0;
 }
 
@@ -334,15 +402,48 @@
 .service-row:nth-of-type(3) { margin-top: 42px; }
 
 /* Los 2 <div> hijos de .service-row (titulo+tagline, cuerpo) ocupan las
-   columnas 2 y 3; la columna 1 queda vacia a proposito (el margen real). */
-.service-row > div:first-child { grid-column: 2; }
+   2 columnas de .service-row (289px / 1fr) - la columna del margen real
+   ya no esta aqui, ahora es .services-layout quien la reserva (ver
+   arriba), por eso ya no hace falta saltarse una columna 1 vacia. */
+.service-row > div:first-child { grid-column: 1; }
+
+/* Peticion del cliente (2026-06-26): la columna de titulo de cada fila de
+   Servicios ("Estrategia", "Sistemas de Diseño", "Experiencias y
+   Ejecución") se queda fija al hacer scroll mientras la columna de cuerpo
+   (a la derecha) se desplaza. `align-self:start` evita que el grid
+   estire la caja a la altura de toda la fila; al estar contenida dentro
+   de cada `.service-row` (mucho mas alto que el titulo), el sticky se
+   suelta solo al llegar al final de esa fila, justo antes de que empiece
+   la siguiente - no hace falta JS para limitar el rango.
+
+   Corregido 2 veces el mismo dia, señalado por el usuario: este titulo
+   se veia pasar por encima de "Servicios". La 1a correccion (background+
+   z-index) no era suficiente porque el problema real no era de capas, era
+   de POSICION: con el mismo `top` que "Servicios", "Estrategia" se fijaba
+   a la misma altura que el TEXTO "Servicios", por encima de la linea
+   decorativa que hay debajo de el (.page-hero__title--md::after, 339px de
+   ancho, que llega justo hasta la "a" de "Estrategia" - por eso esta
+   columna SI cae dentro de su alcance horizontal). El `top` ahora suma
+   70px (distancia real en Figma entre el borde superior del texto
+   "Servicios" y esa linea, y=233-163) + 1px (la propia linea) + 16px de
+   aire, para que "Estrategia" se fije SIEMPRE por debajo de la linea, no
+   a la misma altura que "Servicios". El titulo de bloque de servicio
+   (mas adentro, fuera del alcance de esa linea) se alinea con este mismo
+   valor en vez de con "Servicios" directamente. */
+.service-row > div:first-child {
+  align-self: start;
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl) + 87px);
+  z-index: 2;
+  background: var(--color-bg);
+}
 /* Figma (1:198/1:197, 1:228/1:227, 1:225/1:224, las 3 filas con el mismo
    patron exacto): la columna de cuerpo NO empieza a la misma altura que la
    columna de titulo - empieza 32px mas abajo (titulo y=283/1340/2367,
    linea decorativa del primer grupo y=315/1372/2399 -> offset +32px en
    los 3 casos). Sin este margen, la grid alineaba ambas columnas al mismo
    borde superior y la linea quedaba mas alta de lo que marca Figma. */
-.service-row > div:last-child { grid-column: 3; margin-top: 32px; }
+.service-row > div:last-child { grid-column: 2; margin-top: 32px; }
 
 /* Figma (Servicios, nodos 1:198/1:228/1:225): titulo de fila 48px exacto,
    Georgia Regular, blanco, line-height normal. Re-auditado a fondo
@@ -419,6 +520,26 @@
    un error real, no de clamp. line-height:normal añadido 2026-06-24
    (heredaba 1.5 de body). */
 .service-group__title { font-size: 32px; font-family: var(--font-display); font-weight: normal; line-height: normal; }
+
+/* Peticion del cliente (2026-06-26): dentro de la columna de cuerpo, el
+   titulo de cada bloque de servicio (ej. "Estrategia de Marca") se queda
+   fijo arriba mientras sus propios puntos (`.service-group__items`) pasan
+   por debajo; al terminar esos puntos se suelta y el titulo del siguiente
+   bloque pasa a fijarse, y asi sucesivamente. Funciona con CSS puro (sin
+   JS): cada `.service-group` es su propio contenedor de bloque, así que
+   el sticky queda contenido dentro de sus limites y se suelta justo al
+   llegar al final de ese grupo. `background`+`z-index` evitan que el
+   texto de los puntos se vea pasar visualmente por detras/encima del
+   titulo fijo mientras hace scroll. Mismo `top` que el titulo de fila
+   (no el de "Servicios" directamente - corregido 2026-06-26, ver nota en
+   `.service-row > div:first-child`) para que ambos queden alineados a la
+   misma altura, por debajo de la linea decorativa de "Servicios". */
+.service-group__title {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl) + 87px);
+  z-index: 1;
+  background: var(--color-bg);
+}
 /* Figma: descripcion de grupo 16px exacto, blanco, line-height normal -
    el color soft (gris) actual no coincide (Figma no aplica gris a la
    descripcion, solo a los items de la lista). margin-top eliminado
@@ -519,7 +640,8 @@
 
 @media (max-width: 860px) {
   .project-entry,
-  .service-row {
+  .service-row,
+  .services-layout {
     grid-template-columns: 1fr;
     gap: var(--space-md);
   }
@@ -531,6 +653,22 @@
   .service-row > div:last-child {
     grid-column: 1;
   }
+
+  /* En movil titulo de pagina, titulo de fila y cuerpo van apilados en 1
+     columna - el sticky (de "Servicios", de cada fila y de cada bloque
+     de servicio) no tiene sentido en ese layout, se desactiva. */
+  .services-layout__title,
+  .service-row > div:first-child,
+  .service-group__title {
+    position: static;
+  }
+
+  .services-layout__title { margin-bottom: var(--space-lg); }
+
+  /* La franja opaca de .services-layout::before solo tiene sentido con
+     las 3 columnas fijas activas - en movil (todo apilado, sin sticky)
+     taparia contenido normal sin motivo. */
+  .services-layout::before { display: none; }
 
   /* La linea de 495px fijos (SRV-018) desbordaria en viewports estrechos. */
   .service-row > div:last-child .service-group:first-child::before {
