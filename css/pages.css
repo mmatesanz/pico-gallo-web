@@ -146,24 +146,59 @@
 }
 
 /* ---------- Nosotros ---------- */
-.manifesto {
+/* Figma (frame Nosotros 1:230, re-auditado 2026-06-26): titulo "Nosotros"
+   en una columna estrecha a la izquierda y el statement grande a la
+   derecha, EN LA MISMA FILA - no apilados como hace hoy .page-hero
+   (titulo arriba, statement debajo, mismo ancho). Mismo patron de
+   "titulo + frase grande en 2 columnas" ya identificado tambien en
+   Contacto (ST-01 en figma-vs-prototype-audit.md, pendiente ahi).
+   235px = distancia real en Figma entre el inicio del titulo (x=36) y el
+   inicio del statement (x=271). */
+.about-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--space-2xl);
-  align-items: start;
+  grid-template-columns: 235px minmax(0, 1fr);
+  padding-block: calc(var(--header-height) + var(--space-2xl)) var(--space-xl);
+}
+
+/* Figma (node 1:305): "Nosotros", Georgia Regular, 48px, blanco - mismo
+   escalon que Servicios/Proyectos (.page-hero__title sin modificador usa
+   96px, --text-display-xl, equivocado para esta pagina - hallazgo ya
+   documentado en typography-map.md). Linea decorativa (node 1:277): ancho
+   fijo 209px (no 339px de Servicios ni 230px de Proyectos - cada pagina
+   tiene su propio ancho de linea). Figma rota esa linea 0.26deg - tan
+   sutil que no se reproduce. */
+.page-hero__title--nosotros {
+  font-size: 48px;
+  font-weight: normal;
+  line-height: normal;
+}
+
+.page-hero__title--nosotros::after {
+  content: "";
+  display: block;
+  margin-top: 25px;
+  width: 209px;
+  height: 1px;
+  background: var(--color-text-muted);
+}
+
+/* El statement reutiliza .page-hero__statement (64px ya exacto tras
+   HT-01, var(--text-display-md)) - aqui es hermano del titulo en la
+   misma fila del grid, no apilado debajo, asi que se anula el
+   margin-top pensado para ese otro contexto (Servicios/Contacto/etc). */
+.about-hero .page-hero__statement {
+  margin-top: 0;
+}
+
+.manifesto {
   padding-block: var(--space-2xl);
 }
 
-.manifesto__text {
-  color: var(--color-text-soft);
-  font-size: var(--text-body-lg);
-  line-height: 1.8;
-}
-
-.manifesto__text p + p { margin-top: var(--space-md); }
-
-/* Imagen real (1203.73 x 651 en Figma, node 1:308-1:312). El "Clip path
-   group" del Figma es, tras inspeccionar el SVG de mascara real, un
+/* Imagen real (1203.73 x 651 en Figma, node 1:308-1:312) a todo el ancho
+   del contenedor - el grid de 2 columnas anterior (texto y imagen lado a
+   lado) no correspondia a Figma: la imagen ocupa todo el ancho y el
+   cuerpo de texto va DEBAJO en una columna propia, no al lado. El "Clip
+   path group" es, tras inspeccionar el SVG de mascara real, un
    rectangulo simple del tamano del frame contenedor (no una silueta
    decorativa) - basta aspect-ratio + object-fit: cover, sin mask-image. */
 .manifesto__media {
@@ -178,7 +213,71 @@
   object-fit: cover;
 }
 
-/* ---------- Contacto ---------- */
+/* Figma (node 1:306): el cuerpo NO es texto corrido en 4 parrafos largos -
+   son 8 grupos de lineas cortas con saltos de linea manuales dentro de
+   cada grupo y una linea en blanco entre grupos (cadencia poetica
+   deliberada, confirmada linea por linea via get_design_context). 16px
+   exacto, Early Sans Variable, color #989898 (--color-text-soft),
+   line-height normal (no el 1.8 generico de --text-body-lg, que no
+   corresponde a este texto). Columna derecha: el texto empieza en x=629
+   de 1280 (~49%) - margin-left:50% en un bloque sin width explicito
+   ocupa exactamente la mitad derecha del contenedor. Gap real medido
+   entre el final de la imagen y el inicio del texto: 67px
+   (y=1373 - (655+651)). */
+.manifesto__text {
+  margin-top: 67px;
+  margin-left: 50%;
+  color: var(--color-text-soft);
+  font-size: 16px;
+  line-height: normal;
+}
+
+.manifesto__text p { margin: 0; }
+.manifesto__text p + p { margin-top: 1.5em; }
+
+/* ---------- Contacto (re-auditada 2026-06-26, dos veces) ---------- */
+/* Figma (frame Contacto 1:55): titulo "Contacto" (x=98,y=229) y statement
+   Lorem ipsum (x=495,y=416) NO empiezan a la misma altura - a diferencia
+   de Nosotros (donde si estan alineados en la misma fila), aqui el
+   statement esta deliberadamente 187px mas abajo que el titulo, ademas
+   de a la derecha (confirmado visualmente en la captura de Figma: el
+   statement queda claramente por debajo del titulo+linea, no a su lado
+   a la misma altura). 397px = x=495 (inicio del statement) - x=98
+   (inicio del titulo) = ancho de la columna 1. El titulo de esta pagina
+   SI usa 96px (--text-display-xl, ya correcto - es la unica pagina de
+   las 4 cuyo titulo coincide con el token grande, confirmado en
+   typography-map.md), por eso no hace falta modificador de tamano aqui,
+   solo el wrapper de 2 columnas + la linea decorativa + el offset
+   vertical real del statement. */
+.contact-hero {
+  display: grid;
+  grid-template-columns: 397px minmax(0, 1fr);
+  padding-block: calc(var(--header-height) + var(--space-2xl)) var(--space-xl);
+}
+
+/* El statement reutiliza .page-hero__statement (64px ya exacto). Primera
+   correccion (2026-06-26): se anulo el margin-top a 0 asumiendo que debia
+   alinearse con el titulo, igual que en Nosotros - equivocado, señalado
+   por el usuario ("no has respetado el diseño de Figma"). Las coordenadas
+   reales muestran al statement 187px MAS ABAJO que el titulo (y=416 vs
+   y=229), no a la misma altura - corregido al valor exacto. */
+.contact-hero .page-hero__statement {
+  margin-top: 187px;
+}
+
+/* Figma (node 1:102/1:103): linea decorativa de 339px bajo "Contacto" -
+   coincide numericamente con la de Servicios (tambien 339px) por
+   coincidencia, no por compartir el mismo valor a proposito - cada
+   pagina tiene su propio nodo Figma. Antes ausente por completo. */
+.page-hero__title--contacto::after {
+  content: "";
+  display: block;
+  margin-top: 25px;
+  width: 339px;
+  height: 1px;
+  background: var(--color-text-muted);
+}
+
 .contact-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -186,41 +285,10 @@
   padding-block: var(--space-xl) var(--space-2xl);
 }
 
-.content-pending {
-  color: var(--color-text-soft);
-  font-size: var(--text-body-lg);
-  line-height: 1.8;
-  max-width: 56ch;
-}
-
-.content-pending__tag {
-  display: inline-block;
-  margin-bottom: var(--space-sm);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 0.25rem 0.75rem;
-}
-
-/* Statement grande junto al titulo de Contacto (Figma: Lorem ipsum, node
-   1:132). Se conserva el tamano/tipografia real (page-hero__statement)
-   para mostrar la escala correcta, pero en tono atenuado + tag, para no
-   presentar un placeholder como copy definitivo. */
-.page-hero__statement--pending {
-  color: var(--color-text-soft);
-}
-
-.page-hero__statement--pending .content-pending__tag {
-  display: block;
-  margin-bottom: var(--space-sm);
-}
-
 /* Imagen + cuerpo secundario de Contacto (Figma: node 1:133-1:137 imagen,
    1132 x 479.97; node 1:131 cuerpo, Lorem ipsum). Mismo patron que
-   .manifesto__media: rectangulo simple, sin mascara decorativa. */
+   .manifesto__media: rectangulo simple, sin mascara decorativa - ya
+   estaba bien implementado (a ancho completo, sin grid de 2 columnas). */
 .contact-visual {
   padding-block: var(--space-xl) 0;
 }
@@ -237,9 +305,25 @@
   object-fit: cover;
 }
 
+/* Figma (node 1:131): el cuerpo no ocupaba el ancho completo - empieza en
+   x=531 de 1280 (~41.5%) y termina en x=1199 (~93.7%), una columna a la
+   derecha, no a lo ancho de toda la imagen. 16px exacto, Early Sans
+   Variable, color #5e5e5e (--color-text-muted, NO --color-text-soft -
+   distinto del resto de cuerpos de texto de este sitio, que usan
+   #989898). Gap real imagen→texto: 112px. 2 parrafos identicos
+   (Lorem ipsum repetido tal cual en Figma) separados por una linea en
+   blanco. */
 .contact-visual__body {
-  margin-top: var(--space-lg);
+  margin-top: 112px;
+  margin-left: 41.5%;
+  max-width: 668px;
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: normal;
 }
+
+.contact-visual__body p { margin: 0; }
+.contact-visual__body p + p { margin-top: 1.5em; }
 
 /* ---------- Proyectos (index) — mosaico real (2026-06-26) ----------
    Figma (frame Proyectos 1:582, "Group 1" 1:609): la pagina de Proyectos
@@ -557,8 +641,19 @@
 .project-detail__media--span-2 { grid-column: span 2; }
 
 @media (max-width: 860px) {
-  .manifesto,
+  .about-hero,
+  .contact-hero,
   .contact-layout { grid-template-columns: 1fr; }
+
+  /* Sin spec movil en Figma - accepted-deviation: en movil el cuerpo de
+     Nosotros y de Contacto vuelve a ocupar el ancho completo en vez de
+     solo una columna a la derecha (que no tendria sentido con el
+     titulo/statement ya apilados arriba en 1 columna). */
+  .manifesto__text,
+  .contact-visual__body {
+    margin-left: 0;
+    max-width: none;
+  }
 
   /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation,
      mismo criterio que .projects-layout: columna de texto apilada
