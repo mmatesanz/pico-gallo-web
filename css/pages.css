@@ -11,21 +11,46 @@
    implementacion se basa en la descripcion escrita del cliente).
 
    Tecnica ("scroll pin", sin librerias externas):
-   - .hero-scroll: alto 220vh, crea la distancia de scroll para la transicion.
+   - .hero-scroll: alto = 100vh + distancia extra de scroll que dura la
+     transicion (ver nota 2026-06-28 mas abajo).
    - .hero-scroll__pin: position:sticky, queda fijo en el viewport durante
      esa distancia (overflow:hidden para que media/content no se salgan).
    - .hero-scroll__media / .hero-scroll__content: superpuestos (position:
      absolute, inset:0) dentro del pin. JS (main.js) calcula un progreso
      0-1 segun scrollY y lo expone como --hero-media-scale/--hero-content-opacity.
+     El calculo (scrollDistance = heroScroll.offsetHeight - innerHeight) es
+     independiente del valor exacto de la altura - se adapta solo.
    - scale() con transform-origin:left top logra "reducir tamano" y
      "reposicionar a la esquina superior izquierda" con una sola propiedad:
      el punto de origen queda fijo mientras la caja se encoge hacia el.
      Nota: el header (.site-header, position:fixed, z-index:100) sigue
      siempre por encima - la miniatura resultante queda visualmente debajo
-     de la barra del header, no detras ni tapandola. */
+     de la barra del header, no detras ni tapandola.
+
+   2026-06-28 (peticion del usuario): antes 220vh -> en viewports tipicos
+   eso son ~120vh (1000-1400px) de scroll extra antes de llegar a
+   "Proyectos", demasiado. Cambiado primero a 100vh + 200px, despues
+   reducido otra vez a 100vh + 100px (mismo dia, el usuario pidio aun
+   menos) - la distancia extra de scroll que dura la transicion pasa a
+   ser un valor fijo en vez de escalar con la altura de pantalla. No se
+   toca main.js - el calculo de progreso ya es generico (offsetHeight -
+   innerHeight), se adapta solo a la nueva altura. Mobile/prefers-reduced-
+   motion no se ven afectados: el fallback de mas abajo (@media) ya pone
+   height:auto y desactiva este mecanismo por completo, independientemente
+   del valor usado aqui.
+
+   Ajuste 2026-06-28 (mismo dia, otra vez): a 100px el encogido de imagen
+   se notaba demasiado rapido/brusco (el usuario senalo que antes, con mas
+   distancia de scroll, era mas gradual). Subido a 400px - sigue siendo
+   muchisimo menos que los 1000-1400px originales (no se reintroduce el
+   problema de "mucho espacio"), pero da mas recorrido de scroll para que
+   la transicion de escala/opacidad se note mas suave en vez de abrupta.
+
+   Ajuste 2026-06-28 (mismo dia, otra vez): el usuario pidio reducir un
+   30% el espacio entre el titular y "Proyectos". 400px * 0.7 = 280px. */
 .hero-scroll {
   position: relative;
-  height: 220vh;
+  height: calc(100vh + 280px);
 }
 
 .hero-scroll__pin {
@@ -95,6 +120,14 @@
     transform: none;
     pointer-events: auto;
   }
+
+  /* Sin spec movil en Figma para la caja estrecha/alineada a la derecha
+     (2026-06-28) - accepted-deviation, mismo criterio que el resto del
+     sitio: en movil vuelve a ancho completo e izquierda. */
+  .intro-statement h1 {
+    max-width: none;
+    margin-left: 0;
+  }
 }
 
 /* Historico (pre-CR-02): Figma (node 1:744) definia el Hero como un frame
@@ -117,13 +150,30 @@
 /* font-size literal (no clamp): 48px exacto en Figma (1:743, cambio de
    marca 2026-06-26 - antes 64px). Solo se usa en index.html, seguro
    hardcodear sin tocar el token --text-display-md compartido con otras
-   paginas. */
+   paginas.
+
+   Re-verificado 2026-06-28 (peticion del usuario - "han cambiado la
+   alineacion... y el espacio que ocupa"): el texto en si no cambio (sigue
+   siendo "Somos el punto exacto..."), pero su caja si. Figma (frame
+   "Intro" 1:742, 1276px de ancho): el texto ya no ocupa el ancho completo
+   del bloque empezando a la izquierda - ahora es una caja de 735px
+   (57.6% del frame) que arranca en x=501 y termina en x=1236, solo 40px
+   antes del borde derecho del frame. Es decir: alineado a la derecha,
+   bastante mas estrecho que antes (70ch ~ todo el ancho del contenedor).
+   `margin-left:auto` empuja la caja al borde derecho de `.intro-statement
+   .container` (72px de margen estandar del sitio, no los 40px exactos de
+   Figma - se acepta esa diferencia de ~28px por mantener el mismo sistema
+   de `--content-padding` que el resto del sitio en vez de un margen suelto
+   solo para este bloque). Sin spec movil en Figma: reset a ancho completo
+   e izquierda en el fallback de mas abajo (@media), mismo criterio que el
+   resto del sitio. */
 .intro-statement h1 {
   font-family: var(--font-display);
   font-weight: normal;
   font-size: 48px;
   line-height: 1.25;
-  max-width: 70ch;
+  max-width: 735px;
+  margin-left: auto;
 }
 
 .section { padding-block: var(--space-2xl); }
@@ -174,15 +224,23 @@
    96px, --text-display-xl, equivocado para esta pagina - hallazgo ya
    documentado en typography-map.md).
 
-   Linea decorativa (node 1:277): Figma define un ancho propio (209px) y
-   una rotacion de 0.26deg (tan sutil que no se reproduce) distintos de
-   Servicios/Contacto (339px) - pero el usuario pidio explicitamente
-   (2026-06-26) que el ancho de esta linea y el espacio titulo->linea
-   coincidan con los de Servicios, como decision de consistencia visual
-   entre paginas (no una correccion de fidelidad a Figma, una excepcion
-   deliberada igual que el tamaño de titulo de Contacto). 339px y 13px =
-   mismos valores exactos que .page-hero__title--md::after en
-   servicios.html. */
+   Linea decorativa (node 1:277 > 1:278 > "Vector 1" 1:279): documentada
+   el 2026-06-23 como 209px con rotacion de 0.26deg (tan sutil que no se
+   reproduce) - por eso el 2026-06-26 el usuario pidio igualarla a la de
+   Servicios/Contacto (339px) como decision de consistencia visual entre
+   paginas.
+
+   Re-verificado 2026-06-28 via Figma MCP (get_metadata + get_screenshot,
+   nodo 1:277): el ancho real actual es **884px**, no 209px - x=332
+   (justo donde termina el texto "Nosotros") hasta x=1216, el mismo
+   margen derecho de contenido que usa el header (72+1144). Ya no es un
+   underline corto bajo la palabra: es una linea larga hasta el margen
+   derecho. A peticion explicita del usuario (2026-06-28: "quiero que la
+   longitud de la linea sea igual en Figma y el Prototipo"), esta vez
+   prevalece la fidelidad exacta a Figma sobre la excepcion de
+   consistencia del 2026-06-26 - solo para el ANCHO; el margin-top
+   (13px, tambien parte de esa excepcion) no se ha tocado porque la
+   peticion fue especificamente sobre la longitud de la linea. */
 .page-hero__title--nosotros {
   align-self: start;
   position: sticky;
@@ -198,7 +256,7 @@
   content: "";
   display: block;
   margin-top: 13px;
-  width: 339px;
+  width: 884px;
   height: 1px;
   background: var(--color-text-muted);
 }
@@ -207,14 +265,17 @@
    de la columna derecha desaparece al llegar a la altura de la linea de
    "Nosotros", no al llegar al header. Alto = space-2xl (hasta donde
    empieza el titulo) + ~69px (texto del titulo a 48px + margin-top de la
-   linea, ya ajustado a 13px como en Servicios, + la linea). */
+   linea, ya ajustado a 13px como en Servicios, + la linea).
+   +10px (2026-06-28, peticion del usuario): el texto debe ocultarse 10px
+   por debajo de la linea, no exactamente al llegar a ella - solo en
+   Nosotros, no se toca el mecanismo equivalente de Contacto. */
 .about-page::before {
   content: "";
   position: fixed;
   top: var(--header-height);
   left: 0;
   right: 0;
-  height: calc(var(--space-2xl) + 69px);
+  height: calc(var(--space-2xl) + 69px + 10px);
   background: var(--color-bg);
   z-index: 1;
   pointer-events: none;
@@ -232,16 +293,16 @@
   margin-top: 99px;
 }
 
-/* Contenido actualizado 2026-06-26 (Figma revisado por el cliente, nodo
-   1:307): el statement grande ya NO es "Somos el punto exacto..." (64px) -
-   ahora es un texto distinto y mas largo, "Pico de Gallo es una
-   consultora de marca...", a 48px (no 64px) con line-height 92.055%
-   (valor literal de Figma, mas apretado que "normal" - no se redondea a
-   "normal" porque esta vez Figma especifica un numero concreto, a
-   diferencia del resto de titulos de este sitio). */
+/* Re-verificado 2026-06-28 via Figma MCP (get_design_context, nodo
+   1:307, archivo WEB_PDG_V2 Dev Mode): el Figma actual especifica este
+   texto a 32px Lora, line-height "normal" (estilo nombrado "Subtitulo
+   Blanco" en el propio archivo) - NO 48px/92.055% como se documento el
+   2026-06-26. El cliente parece haber reducido el tamaño en una revision
+   posterior del archivo (no es un error de la auditoria anterior, es un
+   cambio de Figma despues de esa fecha). Corregido a 32px/normal. */
 .page-hero__statement--nosotros {
-  font-size: 48px;
-  line-height: 0.9206;
+  font-size: 32px;
+  line-height: normal;
 }
 
 /* Parrafo nuevo bajo el statement (Figma, nodo 96:435): "Descubrimos la
@@ -295,18 +356,20 @@
   object-fit: cover;
 }
 
-/* Texto nuevo bajo la imagen (Figma, nodo 96:436): "Somos el ingrediente
-   que le da caracter a cada idea." No existia antes. 64px Georgia
-   blanco, line-height 92.055% (mismo valor literal que el statement de
-   arriba, ver nota en .page-hero__statement--nosotros). Gap real
-   imagen->texto: 25px (y=1358 - (682+651)). */
+/* Texto bajo la imagen (Figma, nodo 96:436): "Somos el ingrediente que
+   le da caracter a cada idea." Re-verificado 2026-06-28 via Figma MCP
+   (get_design_context): 32px Lora blanco, line-height "normal" - NO
+   64px/92.055% como se documento el 2026-06-26 (mismo cambio posterior
+   de Figma que en .page-hero__statement--nosotros, ver nota ahi). Gap
+   real imagen->texto sin cambios: 25px (y=1358 - (682+651)), ese calculo
+   no depende del tamaño de este texto. */
 .manifesto__statement {
   margin: 0;
   margin-top: 25px;
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: 64px;
-  line-height: 0.9206;
+  font-size: 32px;
+  line-height: normal;
   color: var(--color-text);
 }
 
@@ -321,7 +384,14 @@
    columna que el resto del contenido (ya no hay desplazamiento a la
    derecha) - se quita el margin-left:50% que tenia antes. Gap real
    texto-de-arriba->cuerpo: ~75px (estimado, no se puede medir el alto
-   real de .manifesto__statement sin navegador). */
+   real de .manifesto__statement sin navegador).
+   NOTA 2026-06-28: este estimado se calculo cuando .manifesto__statement
+   media 64px; ahora mide 32px (ver nota ahi), por lo que su altura
+   renderizada es menor y este gap podria ya no ser el correcto. No se
+   recalcula a ciegas sin poder medir en navegador (Playwright MCP
+   conectado pero sin herramientas expuestas en esta sesion) - queda
+   marcado como pendiente de revision visual real antes de dar la
+   seccion por cerrada al 100%. */
 .manifesto__text {
   margin-top: 75px;
   color: var(--color-text-soft);
@@ -388,14 +458,17 @@
    la altura de la linea de "Contacto", no al llegar al header. Alto =
    space-2xl (hasta donde empieza el titulo) + ~69px (texto del titulo a
    48px tras la excepcion deliberada de tamaño + margin-top de la linea,
-   ajustado a 13px como en Servicios/Nosotros, + la linea). */
+   ajustado a 13px como en Servicios/Nosotros, + la linea).
+   +10px (2026-06-28, peticion del usuario, mismo cambio aplicado antes
+   en Nosotros): el texto debe ocultarse 10px por debajo de la linea, no
+   exactamente al llegar a ella. */
 .contact-page::before {
   content: "";
   position: fixed;
   top: var(--header-height);
   left: 0;
   right: 0;
-  height: calc(var(--space-2xl) + 69px);
+  height: calc(var(--space-2xl) + 69px + 10px);
   background: var(--color-bg);
   z-index: 1;
   pointer-events: none;
@@ -403,17 +476,23 @@
 
 /* Figma original mide 64px (var(--text-display-md), heredado de la
    clase base) y 187px de distancia titulo->statement (y=416 vs y=229) -
-   pero el usuario pidio igualar tanto el espacio (99px) como ahora
-   tambien la tipografia/tamaño (48px, line-height 0.9206) a los de
-   Nosotros, senalando que la diferencia entre ambas paginas era
-   demasiado grande tras unificar titulo/linea entre las dos (mismo
-   criterio que las excepciones deliberadas ya aplicadas: tamaño de
-   titulo, ancho de linea, espacio titulo->linea). Mismos valores
-   exactos que .page-hero__statement--nosotros. */
+   pero el usuario pidio igualar tanto el espacio (99px) como la
+   tipografia/tamaño a los de Nosotros, senalando que la diferencia entre
+   ambas paginas era demasiado grande tras unificar titulo/linea entre
+   las dos (mismo criterio que las excepciones deliberadas ya aplicadas:
+   tamaño de titulo, ancho de linea, espacio titulo->linea). Mismos
+   valores exactos que .page-hero__statement--nosotros - actualizado
+   2026-06-28 a 32px/normal junto con esa regla (ver su nota: el Figma de
+   Nosotros cambio de 48px/92.055% a 32px/normal despues del 2026-06-26).
+   Esta regla de Contacto NO se ha re-auditado de forma independiente
+   contra su propio nodo Figma (1:132) - solo se mantiene igualada a
+   Nosotros porque asi lo pidio el usuario explicitamente. Pendiente:
+   confirmar que el nodo 1:132 de Contacto tambien sigue en 32px si se
+   audita Contacto por separado. */
 .contact-page__content .page-hero__statement {
   margin-top: 99px;
-  font-size: 48px;
-  line-height: 0.9206;
+  font-size: 32px;
+  line-height: normal;
 }
 
 /* Figma (node 1:102/1:103): linea decorativa de 339px bajo "Contacto" -
@@ -797,6 +876,16 @@
   .page-hero__title--contacto { position: static; }
   .about-page::before,
   .contact-page::before { display: none; }
+
+  /* Sin spec movil en Figma (accepted-deviation, igual criterio que el
+     resto del sitio): la linea de Nosotros mide 884px en Figma (frame
+     fijo de escritorio, ver nota en .page-hero__title--nosotros::after),
+     mas ancha que cualquier viewport movil - se limita a max-width:100%
+     para que no provoque scroll horizontal de pagina. La de Contacto
+     (339px) no necesita este tope, cabe en moviles >=360px. */
+  .page-hero__title--nosotros::after {
+    max-width: 100%;
+  }
 
   /* Sin spec movil en Figma - accepted-deviation: en movil el cuerpo de
      Contacto vuelve a ocupar el ancho completo en vez de solo una

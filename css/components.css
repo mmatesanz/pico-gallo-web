@@ -167,12 +167,18 @@
 
 /* Cada .project-entry pasa de "fila apilada" a "panel superpuesto a
    pantalla completa dentro del pin" - por eso se anula el padding-block
-   de 24px (#home-proyectos .project-entry) y el divider+margin-top:115px
-   del titulo (#home-proyectos .project-entry__title), que solo tenian
-   sentido cuando los proyectos estaban uno debajo de otro en flujo
-   normal. align-items:stretch y la columna de texto en flex-column
-   (reglas de mas arriba) siguen aplicando igual - el anclaje de la
-   descripcion al fondo de su columna no cambia. */
+   de 24px (#home-proyectos .project-entry), que solo tenia sentido
+   cuando los proyectos estaban uno debajo de otro en flujo normal.
+   align-items:stretch y la columna de texto en flex-column (reglas de
+   mas arriba) siguen aplicando igual - el anclaje de la descripcion al
+   fondo de su columna no cambia.
+   2026-06-28 (peticion del usuario): la linea sobre el titulo (Figma
+   1:776/1:781/1:786/1:791) SI debe verse tambien en este modo panel -
+   se habia anulado por error de criterio al construir este efecto
+   (border-top:none/margin-top:0/padding-top:0), pero el fallback movil
+   de mas abajo ya la restauraba correctamente. Se igualan ambos modos:
+   mismos valores que la version apilada/movil (border-top 1px,
+   margin-top 115px, padding-top 11px). */
 #home-proyectos .project-showcase__list .project-entry {
   position: absolute;
   inset: 0;
@@ -180,9 +186,9 @@
 }
 
 #home-proyectos .project-showcase__list .project-entry__title {
-  border-top: none;
-  margin-top: 0;
-  padding-top: 0;
+  border-top: 1px solid var(--color-text-muted);
+  margin-top: 115px;
+  padding-top: 11px;
 }
 
 /* Columna de texto: no se desplaza (sin transform), solo crossfade.
@@ -370,11 +376,15 @@
    columna 1 (279px) ahora la ocupa .services-layout (arriba) en vez de
    estar vacia dentro de .service-row - por eso aqui quedan solo 2
    columnas (289px titulo de fila, 1fr cuerpo) en vez de 3; el resultado
-   visual es identico, la columna vacia simplemente cambio de "dueño". */
+   visual es identico, la columna vacia simplemente cambio de "dueño".
+   El gap literal de Figma entre col2 y col3 es 0 (col3 empieza en x=640,
+   justo donde acaba col2: 351+289=640, sin hueco). 2026-06-28 (peticion
+   del usuario): se separan a proposito mas de lo que marca Figma - usa
+   --space-xl (64px) del sistema de tokens en vez de un valor suelto. */
 .service-row {
   display: grid;
   grid-template-columns: 289px minmax(0, 1fr);
-  gap: 0;
+  gap: 0 var(--space-xl);
 }
 
 /* Figma (frame Servicios 1:138, confirmado con captura de pantalla
