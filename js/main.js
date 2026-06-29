@@ -211,15 +211,4 @@
     }
   }
 
-  /* Toggle EN/ES decorativo: el Figma solo define el control visual,
-     sin contenido en ingles aprobado todavia. Se deja el estado activo
-     marcado y se evita prometer un cambio de idioma que no existe. */
-  document.querySelectorAll(".lang-toggle button").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      document.querySelectorAll(".lang-toggle button").forEach(function (b) {
-        b.setAttribute("aria-pressed", "false");
-      });
-      btn.setAttribute("aria-pressed", "true");
-    });
-  });
 })();

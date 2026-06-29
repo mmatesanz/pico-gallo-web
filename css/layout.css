@@ -134,7 +134,7 @@
   font-size: var(--text-nav);
 }
 
-.lang-toggle button[aria-pressed="true"] {
+.lang-toggle a[aria-current="true"] {
   text-decoration: underline;
 }
 
