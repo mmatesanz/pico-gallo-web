@@ -5,6 +5,13 @@
 }
 
 /* ---------- Header ---------- */
+/* 2026-06-29: se probaron dos arreglos sin poder verificarlos en
+   dispositivo real (transform:translateZ(0)+will-change, despues
+   position:sticky) para un reporte de que el header se desplazaba un
+   poco al hacer scroll en movil. El segundo intento rompio el header
+   (reportado por el usuario) - revertido a la version original, sin
+   ningun hack. Pendiente: diagnosticar con Playwright (cuando este
+   disponible en sesion) antes de volver a tocar esto a ciegas. */
 .site-header {
   position: fixed;
   inset: 0 0 auto 0;

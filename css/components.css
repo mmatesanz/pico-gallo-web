@@ -35,6 +35,16 @@
   padding-top: 100px;
 }
 
+/* Historial 2026-06-29: hubo una ronda de ajustes de espaciado solo para
+   tablet (padding-top/bottom de #home-proyectos reducidos 70%, margin-top
+   del titulo a 0, padding-top del primer proyecto a 0) pensados para el
+   layout EN FLUJO NORMAL (fallback sin pin) que tenia tablet en ese
+   momento. El mismo dia, el usuario pidio que Proyectos tuviera el mismo
+   efecto de panel fijo/crossfade que en escritorio tambien en tablet (ver
+   CR-03 mas abajo) - con el panel de vuelta, esos ajustes de flujo normal
+   ya no aplican (el panel no usa esos paddings/margins de la misma forma)
+   y se han retirado: tablet hereda exactamente el espaciado de escritorio
+   para Proyectos, sin overrides propios. */
 #home-proyectos .project-entry {
   border-top: none;
   padding-block: 24px;
@@ -237,12 +247,20 @@
 .project-showcase__list .project-entry[data-project-index="2"] .project-entry__media { --item-index: 2; }
 .project-showcase__list .project-entry[data-project-index="3"] .project-entry__media { --item-index: 3; }
 
-/* Fallback documentado (mobile <=860px, mismo breakpoint que el resto del
-   sitio, y prefers-reduced-motion, mismo criterio que CR-02): se desactiva
-   el pin/scrub por completo y se vuelve EXACTAMENTE al layout apilado de
-   siempre - mismas reglas de #home-proyectos de mas arriba, sin pin, sin
+/* Fallback documentado (mobile real <=860px y prefers-reduced-motion): se
+   desactiva el pin/scrub por completo y se vuelve al layout en flujo
+   normal - mismas reglas de #home-proyectos de mas arriba, sin pin, sin
    crossfade, sin transform. El JS de main.js tampoco ejecuta el calculo
-   de progreso en estos casos. */
+   de progreso en estos casos.
+
+   Historial 2026-06-29: este umbral estuvo ampliado a <=1279px (tablet
+   incluida) por el mismo motivo que CR-02 - el scroll-jacking se nota
+   brusco en tactil. El mismo dia, el usuario pidio explicitamente lo
+   contrario: quiere el mismo efecto de panel fijo/crossfade en tablet que
+   en escritorio. Revertido a <=860px (solo movil real) - en tablet,
+   Proyectos vuelve a comportarse exactamente igual que en escritorio, sin
+   overrides propios (ver nota de mas arriba sobre los ajustes de
+   espaciado retirados). */
 @media (prefers-reduced-motion: reduce), (max-width: 860px) {
   .project-showcase { height: auto; }
   .project-showcase__pin {
@@ -614,20 +632,62 @@
     grid-column: 1;
   }
 
-  /* En movil titulo de pagina, titulo de fila y cuerpo van apilados en 1
-     columna - el sticky (de "Servicios", de cada fila y de cada bloque
-     de servicio) no tiene sentido en ese layout, se desactiva. */
-  .services-layout__title,
-  .service-row > div:first-child,
-  .service-group__title {
+  /* En movil "Servicios" (titulo de pagina) sigue apilado en flujo normal -
+     su sticky no tiene sentido ahi (vive en su propia columna solo en
+     escritorio), se desactiva. El titulo de FILA ("Estrategia"/"Sistemas
+     de Diseño"/"Experiencias y Ejecucion") y el titulo de cada BLOQUE
+     (.service-group__title) SI mantienen su sticky en movil (peticion del
+     cliente 2026-06-29, ampliada el mismo dia: las 2 capas deben quedar
+     paradas, apiladas, igual que en escritorio/tablet, para las 3 filas) -
+     solo se les ajusta el `top` mas abajo, no se desactivan aqui. */
+  .services-layout__title {
     position: static;
   }
 
   .services-layout__title { margin-bottom: var(--space-lg); }
 
-  /* La franja opaca de .services-layout::before solo tiene sentido con
-     las 3 columnas fijas activas - en movil (todo apilado, sin sticky)
-     taparia contenido normal sin motivo. */
+  /* El offset de 87px+space-2xl del top de escritorio existe solo para no
+     fijarse a la misma altura que la linea decorativa bajo "Servicios"
+     (que en movil no esta fija - se desactivo arriba). En movil el titulo
+     de fila puede fijarse justo bajo el header, sin ese hueco. */
+  .service-row > div:first-child {
+    top: var(--header-height);
+  }
+
+  /* El titulo de bloque se apila justo debajo de la barra del titulo de
+     fila, sin hueco ni solape - --row-title-h es la altura real de esa
+     barra (medida por JS en main.js, heredada desde .service-row porque
+     .service-group__title es descendiente suyo). No puede ser un numero
+     fijo: "Estrategia" es 1 linea pero "Sistemas de Diseño"/"Experiencias
+     y Ejecucion" tienen <br> fijo (siempre 2 lineas) y las taglines tienen
+     longitudes distintas - la altura real cambia por fila y por ancho. */
+  .service-group__title {
+    top: calc(var(--header-height) + var(--row-title-h, 0px));
+  }
+
+  /* El ULTIMO bloque de cada fila comparte limite de contencion con el
+     titulo de fila (el final de la fila ES el final de su ultimo bloque),
+     pero al estar mas abajo en pantalla llega antes a ese limite y se
+     suelta antes - durante ese tramo de scroll pasa por detras/encima del
+     titulo de fila, todavia fijo, y se ve superpuesto. Probado: alargar el
+     contenedor del bloque (padding-bottom compensado con margin-bottom
+     negativo para no desplazar el resto de la pagina) para igualar ambos
+     limites - verificado con Playwright que NO elimina el solape (el
+     `top` efectivo de sticky en este motor no sigue el calculo teorico
+     padding-box una vez hay margin negativo de por medio). En vez de
+     perseguir un ajuste fino poco fiable, el ULTIMO bloque de cada fila
+     no se fija - se queda en flujo normal, igual que antes de esta
+     ampliacion. El titulo de fila (que es la pieza que pidio el cliente)
+     sigue fijo durante toda la fila sin excepcion; los demas bloques
+     (no el ultimo) siguen con su sticky "por turnos" normal. */
+  .service-row > div:last-child > .service-group:last-child .service-group__title {
+    position: static;
+  }
+
+  /* La franja opaca de .services-layout::before solo tenia sentido para
+     tapar contenido en el hueco header->260px de escritorio (relacionado
+     con el offset de arriba) - en movil titulo de fila y de bloque se
+     fijan apilados sin hueco que tapar entre ellos ni con el header. */
   .services-layout::before { display: none; }
 
   /* La linea de 495px fijos (SRV-018) desbordaria en viewports estrechos. */

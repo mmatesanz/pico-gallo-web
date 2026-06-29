@@ -34,10 +34,10 @@
    menos) - la distancia extra de scroll que dura la transicion pasa a
    ser un valor fijo en vez de escalar con la altura de pantalla. No se
    toca main.js - el calculo de progreso ya es generico (offsetHeight -
-   innerHeight), se adapta solo a la nueva altura. Mobile/prefers-reduced-
-   motion no se ven afectados: el fallback de mas abajo (@media) ya pone
-   height:auto y desactiva este mecanismo por completo, independientemente
-   del valor usado aqui.
+   innerHeight), se adapta solo a la nueva altura. Solo prefers-reduced-
+   motion desactiva este mecanismo por completo (ver @media al final);
+   movil real (<=860px) SI lo usa desde el 2026-06-29 (ver nota mas abajo),
+   solo con una interpretacion visual distinta para la imagen.
 
    Ajuste 2026-06-28 (mismo dia, otra vez): a 100px el encogido de imagen
    se notaba demasiado rapido/brusco (el usuario senalo que antes, con mas
@@ -47,16 +47,33 @@
    la transicion de escala/opacidad se note mas suave en vez de abrupta.
 
    Ajuste 2026-06-28 (mismo dia, otra vez): el usuario pidio reducir un
-   30% el espacio entre el titular y "Proyectos". 400px * 0.7 = 280px. */
+   30% el espacio entre el titular y "Proyectos". 400px * 0.7 = 280px.
+
+   Ajuste 2026-06-29 (vista movil): el mismo .hero-scroll (altura, pin,
+   sticky) ahora se reutiliza tambien en movil real (<=860px) - antes solo
+   aplicaba en escritorio/tablet. Ver @media (max-width:860px) mas abajo
+   para la interpretacion visual movil (fade de opacidad en vez de
+   escala/traslacion). */
+/* height en dos pasos (vh primero, dvh despues): dvh (altura de viewport
+   "dinamica", se ajusta cuando la barra de direccion del navegador
+   movil aparece/desaparece) tiene mejor soporte que cuando se escribio
+   esto por primera vez, pero algunos navegadores viejos no lo reconocen -
+   si no soportan dvh ignoran esa linea y se quedan con el vh de arriba,
+   nunca se quedan sin valor. Sin esto, en movil el 100vh inicial incluye
+   el alto de la barra de direccion (que tapa parte real de la pantalla),
+   asi que la imagen "a pantalla completa" en realidad no llenaba toda la
+   pantalla VISIBLE en el primer pintado en algunos navegadores. */
 .hero-scroll {
   position: relative;
   height: calc(100vh + 280px);
+  height: calc(100dvh + 280px);
 }
 
 .hero-scroll__pin {
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -96,14 +113,65 @@
   pointer-events: auto;
 }
 
-/* Fallback documentado (mobile <=860px, mismo breakpoint que el resto del
-   sitio, y prefers-reduced-motion): se desactiva el pin/scrub y se vuelve
-   a un layout simple en flujo normal - imagen a altura fija razonable,
-   texto siempre visible debajo, sin transformaciones ni scroll-jacking.
-   El JS de main.js tampoco ejecuta el calculo de progreso en estos casos
-   (ver comentario en main.js), asi que esta media query es la unica
-   responsable del estado final - no depende de que JS no se ejecute. */
-@media (prefers-reduced-motion: reduce), (max-width: 860px) {
+/* Vista movil (2026-06-29, sin spec de Figma para esto - peticion directa
+   del usuario): al cargar en vertical solo debe verse la imagen del hero
+   (a pantalla completa, no 70vh), y al hacer scroll debe desaparecer POR
+   COMPLETO de forma gradual (fade de opacidad), no encogerse/reposicionarse
+   como en escritorio. Se reutiliza el MISMO mecanismo de pin+progreso que
+   CR-02 (.hero-scroll/.hero-scroll__pin sin overrides aqui - heredan la
+   regla de escritorio de mas arriba: altura con scroll extra, sticky,
+   overflow:hidden) - main.js ya no excluye movil de este calculo (ver
+   nota en main.js). Solo cambia la INTERPRETACION visual del progreso
+   para la imagen: opacity en vez de scale+translate. El texto
+   (.hero-scroll__content) no se toca aqui - ya hereda de la regla base de
+   escritorio mas arriba (opacity:var(--hero-content-opacity,0), 0 al
+   cargar) que es exactamente "solo se ve la imagen al principio, el texto
+   aparece con el scroll" - el mismo comportamiento que ya tenia
+   escritorio, ahora tambien en movil. */
+@media (max-width: 860px) {
+  .hero-scroll__media {
+    transform: none;
+    opacity: calc(1 - var(--hero-progress, 0));
+  }
+
+  /* 2026-06-29 (peticion del usuario: la imagen no se ve completa en los
+     moviles principales). Foto real: 2160x1350 (ratio 1.6, paisaje). En
+     un viewport movil tipico (~390x844, ratio ~0.46) object-fit:cover
+     escala por ALTURA (cubre el alto exacto, sin recorte vertical) pero
+     solo deja visible ~29% del ANCHO de la foto (390/ (844*1.6) = 0.29) -
+     el resto se recorta a los lados. Con object-position por defecto
+     (50% 50%, centro), esa ventana de 29% cae en el 35.5%-64.5% del ancho
+     de la imagen - la persona que camina (sujeto principal, ver alt del
+     <img>) esta aproximadamente en el 20%-40% del ancho real de la foto,
+     asi que el centrado por defecto le recorta la cabeza y media figura,
+     dejando solo un fragmento de su brazo/torso visible (de ahi "no se ve
+     completa"). 30% horizontal centra la ventana de recorte en el
+     20%-44.5% del ancho, lo que cubre a la persona completa en vez del
+     centro geometrico de la foto (que cae entre dos de los tres carteles
+     de fondo, sin sujeto claro). No se toca en escritorio/tablet (cajas
+     mucho mas anchas, bastante mas cerca del ratio real de la foto, sin
+     este problema de recorte severo). */
+  .hero-scroll__media img {
+    object-position: 30% center;
+  }
+
+  /* Sin spec movil en Figma para la caja estrecha/alineada a la derecha
+     (2026-06-28) - accepted-deviation, mismo criterio que el resto del
+     sitio: en movil vuelve a ancho completo e izquierda. */
+  .intro-statement h1 {
+    max-width: none;
+    margin-left: 0;
+  }
+}
+
+/* Fallback de accesibilidad (prefers-reduced-motion, cualquier ancho):
+   gana en cascada sobre las reglas de arriba (escritorio y movil, misma
+   especificidad, pero esta va despues) - sin pin, sin scroll-jacking, sin
+   fade, imagen y texto siempre visibles en flujo normal. main.js respeta
+   el mismo guard y no ejecuta el calculo de progreso en absoluto cuando
+   prefers-reduced-motion esta activo (ver comentario ahi), asi que esta
+   media query es la unica responsable del estado final en ese caso. */
+@media (prefers-reduced-motion: reduce) {
   .hero-scroll { height: auto; }
   .hero-scroll__pin { position: relative; height: auto; }
   .hero-scroll__media {
@@ -111,6 +179,7 @@
     inset: auto;
     height: 70vh;
     transform: none;
+    opacity: 1;
   }
   .hero-scroll__content {
     position: relative;
@@ -120,10 +189,6 @@
     transform: none;
     pointer-events: auto;
   }
-
-  /* Sin spec movil en Figma para la caja estrecha/alineada a la derecha
-     (2026-06-28) - accepted-deviation, mismo criterio que el resto del
-     sitio: en movil vuelve a ancho completo e izquierda. */
   .intro-statement h1 {
     max-width: none;
     margin-left: 0;
@@ -866,8 +931,17 @@
 .project-detail__media--span-2 { grid-column: span 2; }
 
 @media (max-width: 860px) {
+  /* minmax(0, 1fr), no "1fr" a secas: un 1fr puro no evita que la pista
+     crezca para acomodar el max-content de un hijo de ancho fijo - aqui
+     la linea decorativa bajo "Nosotros" (.page-hero__title--nosotros::after,
+     width:884px) empujaba TODA la columna (y por tanto cada hijo de
+     .about-page) a 884px de ancho, con scroll horizontal y texto cortado
+     en cualquier viewport movil real. El max-width:100% de esa linea (mas
+     abajo) no evita esto porque resuelve el porcentaje contra el ancho
+     del propio H1, que es el que está creciendo - hay que cortar el
+     problema en la pista del grid, no en el hijo. */
   .about-page,
-  .contact-page { grid-template-columns: 1fr; }
+  .contact-page { grid-template-columns: minmax(0, 1fr); }
 
   /* En movil titulo de Nosotros/Contacto va apilado en 1 columna - el
      sticky y la franja de mascara no tienen sentido en ese layout, se

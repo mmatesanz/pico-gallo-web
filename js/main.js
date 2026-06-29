@@ -58,16 +58,29 @@
      --hero-content-opacity) que pages.css usa para interpolar
      transform/opacity - el JS no toca estilos directamente salvo esas 3
      variables y la clase is-content-visible (solo para pointer-events).
-     Si el usuario prefiere menos movimiento, o el viewport es de movil
-     (<=860px, mismo breakpoint que el resto del sitio), no se ejecuta
-     este calculo en absoluto: el fallback estatico de pages.css (media
-     query prefers-reduced-motion/max-width:860px) se encarga de mostrar
-     un layout simple sin transformaciones. */
+     Si el usuario prefiere menos movimiento (prefers-reduced-motion), no
+     se ejecuta este calculo en absoluto: el fallback estatico de pages.css
+     (media query prefers-reduced-motion, cualquier ancho) se encarga de
+     mostrar un layout simple sin transformaciones.
+
+     Historial 2026-06-29: este guard tambien excluia movil real (<=860px,
+     variable isMobileViewport) y, brevemente, tablet (<=1279px). El mismo
+     dia, el usuario pidio el efecto de escritorio en tablet (revertido) y
+     despues pidio EXPLICITAMENTE un efecto de scroll para movil tambien -
+     pero distinto al de escritorio: imagen a pantalla completa al cargar
+     y que desaparezca POR COMPLETO (fade) al hacer scroll, no que se
+     encoja/reposicione. Se quita la exclusion de movil aqui: el calculo
+     de progreso (--hero-progress) ya es el mismo para todos los anchos,
+     solo cambia como lo interpreta pages.css para .hero-scroll__media
+     (opacity en movil via @media max-width:860px, scale+translate en
+     escritorio/tablet). isMobileViewport se mantiene declarada porque
+     CR-03 (mas abajo) SI sigue excluyendo movil - no se ha pedido cambiar
+     el panel de Proyectos en movil. */
   var heroScroll = document.querySelector(".hero-scroll");
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var isMobileHeroViewport = window.matchMedia("(max-width: 860px)").matches;
+  var isMobileViewport = window.matchMedia("(max-width: 860px)").matches;
 
-  if (heroScroll && !prefersReducedMotion && !isMobileHeroViewport) {
+  if (heroScroll && !prefersReducedMotion) {
     var HERO_MIN_SCALE = 0.22;
     var heroTicking = false;
 
@@ -104,18 +117,19 @@
      .project-entry) no se desplaza, solo aparece/desaparece (crossfade)
      mostrando el proyecto activo. Referencia citada: koto.com ("Our
      Work"). Misma tecnica/guardas que CR-02 (prefers-reduced-motion,
-     mobile <=860px - se reutiliza isMobileHeroViewport, mismo breakpoint),
-     pero con un progreso CONTINUO (--project-track-progress, 0 a N-1, no
-     0-1) para que las imagenes se desplacen de forma fluida entre
-     posiciones, no a saltos. El indice activo (para el crossfade de
-     texto) si es discreto: se redondea al proyecto mas cercano. */
+     movil real <=860px - se reutiliza isMobileViewport, ver historial en
+     el comentario de CR-02 mas arriba), pero con un progreso CONTINUO
+     (--project-track-progress, 0 a N-1, no 0-1) para que las imagenes se
+     desplacen de forma fluida entre posiciones, no a saltos. El indice
+     activo (para el crossfade de texto) si es discreto: se redondea al
+     proyecto mas cercano. */
   var projectShowcase = document.querySelector(".project-showcase");
   var projectPin = projectShowcase ? projectShowcase.querySelector(".project-showcase__pin") : null;
   var projectEntries = projectShowcase
     ? Array.prototype.slice.call(projectShowcase.querySelectorAll(".project-entry"))
     : [];
 
-  if (projectShowcase && projectPin && projectEntries.length && !prefersReducedMotion && !isMobileHeroViewport) {
+  if (projectShowcase && projectPin && projectEntries.length && !prefersReducedMotion && !isMobileViewport) {
     var PROJECT_COUNT = projectEntries.length;
     var projectTicking = false;
 
@@ -146,6 +160,55 @@
     updateProjectProgress();
     window.addEventListener("scroll", onProjectScroll, { passive: true });
     window.addEventListener("resize", onProjectScroll);
+  }
+
+  /* Peticion del cliente (2026-06-29, ampliacion de CR-07): en movil, el
+     titulo de fila de Servicios ("Estrategia"/"Sistemas de Diseño"/
+     "Experiencias y Ejecucion") tambien queda fijo bajo el header (antes
+     solo el titulo de cada bloque, .service-group__title, quedaba fijo en
+     movil). Para que el titulo de bloque se fije justo debajo de la barra
+     del titulo de fila (apilados, sin solape ni hueco), necesita un offset
+     = altura real de esa barra - y esa altura NO es la misma en las 3
+     filas: "Estrategia" es una sola linea pero "Sistemas<br>de Diseño" y
+     "Experiencias<br>y Ejecucion" tienen un <br> fijo en el HTML (2 lineas
+     siempre), y las 3 taglines tienen longitudes distintas (la de la fila
+     3 es una frase larga que puede ocupar 2 lineas en viewports estrechos).
+     No hay un valor fijo en CSS que sirva para las 3 filas a la vez - se
+     mide con JS (offsetHeight real del bloque titulo+tagline) y se expone
+     como variable CSS (--row-title-h) en cada .service-row, heredada por
+     su .service-group__title (ver pages.css/components.css mobile).
+
+     El titulo de fila usa la tipografia Lora (@font-face local, ver
+     tokens.css) - si esta funcion corre antes de que esa fuente termine
+     de cargar, offsetHeight mide la altura con la fuente de fallback
+     (mas baja) y --row-title-h queda corto una vez Lora aplica,
+     desalineando el titulo de bloque unos px. Por eso se re-sincroniza
+     tambien en document.fonts.ready, no solo al cargar y al redimensionar.
+
+     El titulo del ULTIMO bloque de cada fila NO sigue este patron sticky
+     (ver `.service-group:last-child .service-group__title` en
+     components.css mobile): comparte limite de contencion con el propio
+     titulo de fila (el final de la fila es el final de ese bloque) y se
+     verifico con Playwright que se suelta antes, quedando superpuesto un
+     tramo de scroll - se prueba a corregir con padding/margin compensado
+     pero el sticky de este motor no sigue el calculo teorico una vez hay
+     margin negativo de por medio, asi que se deja en flujo normal en vez
+     de un ajuste poco fiable. */
+  var serviceRows = Array.prototype.slice.call(document.querySelectorAll(".service-row"));
+  if (serviceRows.length) {
+    var syncServiceRowTitleHeights = function () {
+      serviceRows.forEach(function (row) {
+        var titleBlock = row.querySelector(":scope > div:first-child");
+        if (titleBlock) {
+          row.style.setProperty("--row-title-h", titleBlock.offsetHeight + "px");
+        }
+      });
+    };
+    syncServiceRowTitleHeights();
+    window.addEventListener("resize", syncServiceRowTitleHeights);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(syncServiceRowTitleHeights);
+    }
   }
 
   /* Toggle EN/ES decorativo: el Figma solo define el control visual,
