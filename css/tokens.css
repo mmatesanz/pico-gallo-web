@@ -58,11 +58,7 @@
 
   /* Layout */
   --content-max: 1280px;
-  /* HT-01 (recalibrado 2026-06-24): igual que la escala tipografica de
-     arriba - antes el maximo (72px, igual al x=72 real de Figma) no se
-     alcanzaba hasta ~1800px de viewport; ahora se alcanza exactamente a
-     1280px (referencia del frame de Figma). */
-  --content-padding: clamp(1.25rem, 5.625vw, 4.5rem);
+  --content-padding: 50px;
   --header-height: 77px; /* Figma: top 26px + alto del lockup de logo 51px */
 
   /* Movimiento */

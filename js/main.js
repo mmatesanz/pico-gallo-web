@@ -132,6 +132,44 @@
   if (projectShowcase && projectPin && projectEntries.length && !prefersReducedMotion && !isMobileViewport) {
     var PROJECT_COUNT = projectEntries.length;
     var projectTicking = false;
+    var firstProjectMedia = projectEntries[0].querySelector(".project-entry__media");
+
+    /* Peticion cliente 2026-07-10: el boton "Ver todos los proyectos"
+       (.btn-bar) y las imagenes del carrusel (.project-entry__media)
+       deben compartir el mismo margen derecho. Ese margen sale de que la
+       imagen tiene un ancho propio via aspect-ratio, mas estrecho que su
+       columna de grid (1.9fr de 1fr/1.9fr, gap 64px = var(--space-xl) -
+       ver .project-entry en components.css) - es dinamico, varia segun
+       el alto de imagen resultante, que depende del alto real de
+       pantalla, asi que se mide en tiempo real en vez de hardcodear un
+       valor. Reducido despues un 20% mas a peticion del cliente (el
+       hueco completo quedaba demasiado grande).
+       Se calcula el ancho de la columna de imagen a partir del ancho
+       TOTAL de la ficha (entryRect.width), no midiendo la posicion
+       actual de la imagen - importante: si se midiera
+       "entryRect.right - mediaRect.right" en vez del ancho, el resultado
+       dependeria de donde este posicionada la imagen AHORA MISMO, y como
+       la imagen usa este mismo valor para reposicionarse (justify-self:
+       end + margin-right, ver components.css), cada recalculo iria
+       encogiendo el margen mas y mas (bucle inestable). Midiendo el
+       ANCHO en vez de la posicion, el resultado es siempre el mismo
+       hueco "natural" (columna menos imagen), sin importar donde este
+       colocada la imagen en ese momento - se expone como
+       --project-media-right-gap en :root, tanto .btn-bar como
+       .project-entry__media lo usan como margin-right. Las 4 fichas
+       miden lo mismo, basta medir la primera. */
+    var updateProjectMediaGap = function () {
+      if (!firstProjectMedia) return;
+      var entryRect = projectEntries[0].getBoundingClientRect();
+      var mediaRect = firstProjectMedia.getBoundingClientRect();
+      var mediaColumnWidth = (entryRect.width - 64) * 1.9 / 2.9;
+      var rawGap = Math.max(0, mediaColumnWidth - mediaRect.width);
+      // Peticion cliente 2026-07-10: el margen resultante quedaba
+      // demasiado grande - se reduce un 20% (se usa el 80% del hueco
+      // medido, no el hueco completo).
+      var gap = rawGap * 0.8;
+      document.documentElement.style.setProperty("--project-media-right-gap", gap.toFixed(2) + "px");
+    };
 
     var updateProjectProgress = function () {
       var rect = projectShowcase.getBoundingClientRect();
@@ -146,6 +184,7 @@
       projectEntries.forEach(function (entry, index) {
         entry.classList.toggle("is-active", index === activeIndex);
       });
+      updateProjectMediaGap();
 
       projectTicking = false;
     };

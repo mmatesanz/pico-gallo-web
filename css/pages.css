@@ -154,14 +154,6 @@
   .hero-scroll__media img {
     object-position: 30% center;
   }
-
-  /* Sin spec movil en Figma para la caja estrecha/alineada a la derecha
-     (2026-06-28) - accepted-deviation, mismo criterio que el resto del
-     sitio: en movil vuelve a ancho completo e izquierda. */
-  .intro-statement h1 {
-    max-width: none;
-    margin-left: 0;
-  }
 }
 
 /* Fallback de accesibilidad (prefers-reduced-motion, cualquier ancho):
@@ -189,10 +181,6 @@
     transform: none;
     pointer-events: auto;
   }
-  .intro-statement h1 {
-    max-width: none;
-    margin-left: 0;
-  }
 }
 
 /* Historico (pre-CR-02): Figma (node 1:744) definia el Hero como un frame
@@ -207,38 +195,42 @@
    donde empieza el titulo "Proyectos" (1:792, top y=1256) - 0px de margen
    propio entre ambos. Se reduce solo el padding-bottom (el padding-top se
    mantiene, separa el statement de la foto del hero, sin relacion con esto). */
+/* margin-left/right:50px pedido por el cliente 2026-07-10 - adicional al
+   padding-inline:100px que ya trae .container (regla sitewide), no lo
+   sustituye. Total efectivo: 150px a cada lado solo en este bloque. */
 .intro-statement {
   padding-top: var(--space-2xl);
   padding-bottom: var(--space-sm);
+  margin-left: 50px;
+  margin-right: 50px;
 }
 
-/* font-size literal (no clamp): 48px exacto en Figma (1:743, cambio de
-   marca 2026-06-26 - antes 64px). Solo se usa en index.html, seguro
-   hardcodear sin tocar el token --text-display-md compartido con otras
-   paginas.
-
-   Re-verificado 2026-06-28 (peticion del usuario - "han cambiado la
-   alineacion... y el espacio que ocupa"): el texto en si no cambio (sigue
-   siendo "Somos el punto exacto..."), pero su caja si. Figma (frame
-   "Intro" 1:742, 1276px de ancho): el texto ya no ocupa el ancho completo
-   del bloque empezando a la izquierda - ahora es una caja de 735px
-   (57.6% del frame) que arranca en x=501 y termina en x=1236, solo 40px
-   antes del borde derecho del frame. Es decir: alineado a la derecha,
-   bastante mas estrecho que antes (70ch ~ todo el ancho del contenedor).
-   `margin-left:auto` empuja la caja al borde derecho de `.intro-statement
-   .container` (72px de margen estandar del sitio, no los 40px exactos de
-   Figma - se acepta esa diferencia de ~28px por mantener el mismo sistema
-   de `--content-padding` que el resto del sitio en vez de un margen suelto
-   solo para este bloque). Sin spec movil en Figma: reset a ancho completo
-   e izquierda en el fallback de mas abajo (@media), mismo criterio que el
-   resto del sitio. */
+/* font-size literal (no clamp): 98px a peticion explicita del cliente
+   (2026-07-10, bajado desde 111px). Se abandona la caja estrecha
+   alineada a la derecha (735px, 57.6% del frame) de la revision anterior:
+   el cliente pide que el texto ocupe todo el ancho disponible del
+   contenedor, igual que el resto de paginas tras ampliar los margenes a
+   100px (ver client-feedback/home-full-bleed-spec.md). Solo se usa en
+   index.html, seguro hardcodear sin tocar el token --text-display-md
+   compartido con otras paginas. */
 .intro-statement h1 {
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: 48px;
+  font-size: 98px;
   line-height: 1.25;
-  max-width: 735px;
-  margin-left: auto;
+  /* Peticion cliente 2026-07-10: margen izquierdo/derecho de "unos 30px"
+     calculado de forma dinamica (no un valor fijo, escala con el ancho
+     real de pantalla via vw) - historial de ajustes solo sobre el
+     margen DERECHO: 2vw -> 2.2vw (+10%, tambien aplicado al izquierdo) ->
+     2.42vw (+10%) -> 2.662vw (+10%) -> 3.1944vw (+20%) -> 6.3888vw
+     (x2, este ultimo). El izquierdo se queda en 2.2vw, ya no son
+     simetricos. 6.3888vw da ~95.8px a 1500px de viewport (referencia
+     habitual de escritorio), ~81.8px a 1280px, ~122.7px a 1920px.
+     Adicional al margin-left/right:50px de .intro-statement (contenedor)
+     y al padding-inline:100px de .container (sitewide) - no los
+     sustituye. */
+  margin-left: 2.2vw;
+  margin-right: 6.3888vw;
 }
 
 .section { padding-block: var(--space-2xl); }
@@ -931,6 +923,22 @@
 .project-detail__media--span-2 { grid-column: span 2; }
 
 @media (max-width: 860px) {
+  /* A 111px (peticion cliente 2026-07-10, ver regla base de
+     .intro-statement h1 mas arriba), palabras largas del statement
+     ("ingrediente", "sensación", "conocido") no caben en el ancho de
+     columna movil (~390px de viewport tipico del sitio, columna util
+     ~327px tras el margen de --space-md) y desbordan la pagina - cada
+     palabra es una caja sin espacios internos, no puede encogerse por
+     debajo de su ancho renderizado. Se reduce a 56px en el fallback
+     movil, unico tamano que deja margen suficiente para la palabra mas
+     larga en el viewport de referencia del sitio (~390px). Igual que el
+     resto de fuentes de este archivo, no se usa clamp() (ver historial de
+     tokens.css: --content-padding paso de clamp a valor fijo el
+     2026-07-10). */
+  .intro-statement h1 {
+    font-size: 56px;
+  }
+
   /* minmax(0, 1fr), no "1fr" a secas: un 1fr puro no evita que la pista
      crezca para acomodar el max-content de un hijo de ancho fijo - aqui
      la linea decorativa bajo "Nosotros" (.page-hero__title--nosotros::after,
@@ -955,9 +963,18 @@
      resto del sitio): la linea de Nosotros mide 884px en Figma (frame
      fijo de escritorio, ver nota en .page-hero__title--nosotros::after),
      mas ancha que cualquier viewport movil - se limita a max-width:100%
-     para que no provoque scroll horizontal de pagina. La de Contacto
-     (339px) no necesita este tope, cabe en moviles >=360px. */
-  .page-hero__title--nosotros::after {
+     para que no provoque scroll horizontal de pagina.
+     Las de Contacto (339px), Servicios (.page-hero__title--md, 339px) y
+     Proyectos (230px) cabian en moviles >=360-375px mientras el margen
+     lateral fue 20-50px, pero con el margen ampliado a 100px (2026-07-10,
+     ver client-feedback/home-full-bleed-spec.md) la columna de contenido
+     baja de esos anchos en viewports pequenos y las lineas empezaban a
+     provocar scroll horizontal de pagina - mismo tope aplicado a las 4
+     por consistencia. */
+  .page-hero__title--nosotros::after,
+  .page-hero__title--contacto::after,
+  .page-hero__title--md::after,
+  .page-hero__title--proyectos::after {
     max-width: 100%;
   }
 
@@ -1005,9 +1022,14 @@
   /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation:
      titulo apilado arriba, mosaico en 1 sola columna (las 2 columnas de
      escritorio una detras de otra, no intercaladas), mismo criterio que
-     el resto del sitio para este tipo de fallback. */
+     el resto del sitio para este tipo de fallback.
+     minmax(0, 1fr), no "1fr" a secas: la linea decorativa de "Proyectos"
+     (.page-hero__title--proyectos::after, 230px) empujaba la pista a
+     230px+padding tras ampliar el margen lateral a 100px (2026-07-10,
+     ver client-feedback/home-full-bleed-spec.md), provocando scroll
+     horizontal en viewports estrechos. */
   .projects-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     padding-top: calc(var(--header-height) + var(--space-xl));
   }
 
@@ -1023,5 +1045,37 @@
   .project-mosaic {
     flex-direction: column;
     padding-right: 0;
+  }
+}
+
+/* ---------- Margenes horizontales ampliados a 100px, todas las paginas
+   (peticion cliente 2026-07-10, ver client-feedback/home-full-bleed-spec.md)
+   ----------
+   Validado primero solo en Home, extendido despues a el resto de paginas
+   (misma estructura header/main/footer en todas: un unico `.container` por
+   pagina dentro de `main`, mas el de `.site-footer`). El header queda
+   fuera: sigue usando `.container` global (--content-max/--content-padding),
+   sin tocar el token compartido para no afectarlo (lo que si paso en el
+   cambio anterior a 50px, ver historial de tokens.css). max-width:none
+   quita el tope de 1280px para que el contenido ocupe pantalla completa en
+   viewports anchos, con un margen fijo de 100px a cada lado. */
+main .container,
+.site-footer > .container {
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 100px;
+}
+
+/* A 100px fijo, viewports movil se quedan con muy poco ancho util (p.ej.
+   190px en 390px de pantalla): titulos de 48px (Servicios/Nosotros/
+   Contacto/Proyectos) dejan de caber en una linea y las lineas
+   decorativas de ancho fijo (230-339px) fuerzan scroll horizontal (ver
+   fix de grid-template-columns: minmax(0, 1fr) mas arriba). Se reduce a
+   --space-md (24px) por debajo de 860px, mismo breakpoint que el resto
+   del sitio. */
+@media (max-width: 860px) {
+  main .container,
+  .site-footer > .container {
+    padding-inline: var(--space-md);
   }
 }

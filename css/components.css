@@ -169,10 +169,14 @@
   overflow: hidden;
 }
 
+/* margin-left:100px pedido por el cliente 2026-07-10, solo version web
+   (escritorio/tablet) - el fallback movil/reduced-motion de mas abajo lo
+   resetea a 0. */
 .project-showcase__list {
   position: relative;
   flex: 1;
   min-height: 0;
+  margin-left: 100px;
 }
 
 /* Cada .project-entry pasa de "fila apilada" a "panel superpuesto a
@@ -193,6 +197,18 @@
   position: absolute;
   inset: 0;
   padding-block: 0;
+  /* Sin esto, la unica fila del grid (implicita, "auto") se dimensiona
+     por el contenido mas alto - incluida .project-entry__media, que es
+     precisamente el elemento al que luego queremos ponerle un
+     max-height:100% (peticion cliente 2026-07-10, tamano de Figma
+     767x868). Esto crea una referencia circular: el porcentaje de
+     max-height se resuelve contra el alto de la fila, pero la fila mide
+     lo que mida su contenido mas alto (868px), asi que el limite nunca
+     hace nada. grid-template-rows:100% fuerza la fila a ocupar
+     exactamente el alto de .project-entry (ya fijo via inset:0),
+     independiente del contenido - ahi si funciona el max-height del
+     hijo. */
+  grid-template-rows: 100%;
 }
 
 #home-proyectos .project-showcase__list .project-entry__title {
@@ -213,33 +229,63 @@
   opacity: 1;
 }
 
-/* Columna de imagen: SOLO se anade el movimiento (translateY) - el
-   tamano/proporcion de la imagen no cambia, sigue siendo aspect-ratio:9/10
-   y la misma posicion en el grid de .project-entry (sin position:absolute
-   propio; el unico position:absolute de este sistema es el del
-   .project-entry padre, que ya agrupa los 4 paneles). Corregido 2026-06-25
-   (el usuario señalo que el tamano de la imagen habia cambiado respecto al
-   original - la version anterior de esta regla forzaba position:absolute;
-   inset:0;aspect-ratio:auto, haciendo que la imagen llenara todo el panel
-   en vez de mantener su tamano de siempre).
+/* Columna de imagen: se anade el movimiento (translateY) y la misma
+   posicion en el grid de .project-entry (sin position:absolute propio;
+   el unico position:absolute de este sistema es el del .project-entry
+   padre, que ya agrupa los 4 paneles).
    --item-index es la posicion estatica de cada proyecto (0,1,2,3);
    --project-track-progress es el progreso continuo que pone JS. Con
    item-index=0 y progress=0 -> translateY:0% (en su sitio). Con
-   item-index=1 y progress=0 -> translateY:100% (desplazada una altura
-   propia hacia abajo). A medida que progress avanza, cada imagen se
-   desplaza hacia arriba en multiplos de su propia altura. */
+   item-index=1 y progress=0 -> translateY: una altura propia + 15px
+   hacia abajo. A medida que progress avanza, cada imagen se desplaza
+   hacia arriba en multiplos de (su propia altura + 15px) - el +15px
+   (peticion cliente 2026-07-10: espacio entre las imagenes de cada
+   proyecto) crea un hueco fijo de 15px entre una imagen y la siguiente
+   mientras se cruzan durante el scroll, en vez de tocarse borde con
+   borde. Funciona igual en las 4 porque las filas miden exactamente lo
+   mismo (ver nota de mas abajo). */
 .project-showcase__list .project-entry__media {
-  /* Corregido 2026-06-25 (la zona gris "Ver todos los proyectos" se veia
-     ~20% mas ancha que la imagen): .project-entry ahora es mucho mas alto
-     (panel a pantalla completa) y align-items:stretch estiraba la imagen
-     a esa altura - con aspect-ratio:9/10, eso hacia que el ANCHO se
-     calculara a partir de esa altura excesiva (mas estrecho de lo real),
-     en vez de al reves. align-self:start anula el stretch solo en esta
-     imagen: vuelve a tener el ancho de su columna de grid como referencia
-     (como antes) y la altura se deriva de ese ancho via aspect-ratio. */
-  align-self: start;
-  transform: translateY(calc((var(--item-index, 0) - var(--project-track-progress, 0)) * 100%));
+  /* Peticion cliente 2026-07-10: usar el tamano exacto especificado en
+     Figma Dev Mode para la imagen del carrusel (767x868). Probado tal
+     cual (width/height fijos) primero: se desbordaba por debajo del
+     panel en viewports bajos (~900px de alto, portatiles tipicos) porque
+     868px supera el alto real disponible de la fila (~711px en ese
+     viewport) - el panel recorta el sobrante (overflow:hidden) y la
+     imagen quedaba cortada por la barra "Ver todos los proyectos".
+     Corregido con max-height:100%: 868px sigue siendo el alto PREFERIDO
+     (se respeta tal cual en pantallas suficientemente altas), pero si la
+     fila disponible es mas baja, max-height la encoge. width:auto (en
+     vez de 767px fijo) es necesario para que aspect-ratio pueda derivar
+     el ancho a partir del alto ya encogido - con width fijo Y height
+     fijos a la vez, aspect-ratio se ignora por completo (spec: solo
+     actua si al menos una de las dos dimensiones es auto), y el ancho se
+     quedaba en 767px aunque el alto se hubiera encogido, deformando la
+     proporcion. */
+  width: auto;
+  height: 868px;
+  max-height: 100%;
+  aspect-ratio: 767 / 868;
+  /* Historial 2026-07-10: sin justify-self, un ancho definido (via
+     aspect-ratio) menor que el de la columna de grid se alinea por
+     defecto al INICIO (stretch se comporta como start cuando el tamano
+     ya es definido) - deja un hueco vacio a la derecha, dentro de la
+     propia columna, de tamano completo/variable. El cliente pidio luego
+     que el boton "Ver todos los proyectos" compartiera ese margen, pero
+     reducido un 20% (el hueco completo quedaba demasiado grande) - para
+     que la imagen tenga EXACTAMENTE el mismo margen que el boton (no
+     solo uno parecido), se ancla con justify-self:end (sin hueco propio)
+     y se reintroduce el mismo margen ya reducido via
+     --project-media-right-gap (main.js lo mide y expone; ver esa nota
+     para el porque no se puede medir la posicion actual de la imagen,
+     solo su ancho, o se crearia un bucle inestable). */
+  justify-self: end;
+  margin-right: var(--project-media-right-gap, 0px);
+  transform: translateY(calc((var(--item-index, 0) - var(--project-track-progress, 0)) * (100% + 15px)));
   will-change: transform;
+}
+
+.project-showcase__list .project-entry__media img {
+  object-fit: cover;
 }
 
 .project-showcase__list .project-entry[data-project-index="0"] .project-entry__media { --item-index: 0; }
@@ -269,7 +315,7 @@
     height: auto;
     overflow: visible;
   }
-  .project-showcase__list { flex: none; min-height: 0; }
+  .project-showcase__list { flex: none; min-height: 0; margin-left: 0; }
   #home-proyectos .project-showcase__list .project-entry {
     position: relative;
     inset: auto;
@@ -281,40 +327,73 @@
     padding-top: 11px;
   }
   .project-showcase__list .project-entry > div:first-child { opacity: 1; }
+  /* Aqui .project-entry vuelve a flujo normal (position:relative, alto
+     automatico segun contenido) - la fila YA NO tiene una altura externa
+     fija que darle a la imagen (a diferencia del modo panel/showcase de
+     escritorio), asi que height:100% no serviria (se resuelve como auto
+     contra un contenedor de alto indefinido, y la imagen perderia su
+     proporcion consistente entre las 4 fichas). Se restaura
+     aspect-ratio:9/10 (igual que la regla base compartida con
+     proyectos.html) para que el alto vuelva a derivarse del ancho, como
+     antes de la correccion de mas arriba (esa correccion es especifica
+     del modo panel de escritorio, con altura de fila fija). */
   .project-showcase__list .project-entry__media {
     align-self: stretch;
+    aspect-ratio: 9 / 10;
+    height: auto;
     transform: none;
   }
 }
 
 /* ---------- Botones ---------- */
-/* En el Figma este boton no ocupa el ancho completo del contenedor: se
-   alinea con la columna de imagen de las fichas de proyecto, no con la
-   columna de texto. Se calcula el ancho exacto de esa columna a partir del
-   mismo grid-template-columns/gap que usa .project-entry (1fr/1.9fr,
-   gap var(--space-xl)=64px), en vez de aproximarlo con un 65% fijo. */
+/* Peticion cliente 2026-07-10: el boton ya no se ancha para igualar la
+   columna de imagen (formula anterior: calc((100% - 64px) * 1.9/2.9),
+   pensada para cuando la imagen SI llenaba toda esa columna) - ahora que
+   la imagen tiene un ancho propio via aspect-ratio (767x868, mas
+   estrecha que la columna), el boton se ajusta a su propio texto con un
+   margen pequeno (padding) via width:fit-content.
+   El margen derecho de la imagen (hueco entre su borde derecho y el
+   borde derecho del contenedor, ver nota en .project-entry__media) es
+   dinamico - depende del alto de imagen resultante, que varia segun el
+   alto real de pantalla. Para que el boton tenga "el mismo margen"
+   (peticion cliente 2026-07-10) sin hardcodear un valor que solo
+   coincidiria a una altura de pantalla concreta, main.js mide ese hueco
+   en tiempo real (misma logica que ya mide --project-track-progress) y
+   lo expone como --project-media-right-gap en :root; margin-right lo
+   usa directamente, con 0 como fallback si JS no llega a ejecutarse
+   (movil/reduced-motion, donde el boton ya es width:100% de todas
+   formas). margin-left:auto sigue empujando el boton hacia la derecha,
+   dejando ese hueco como margin-right explicito antes del borde. */
 /* font-size literal: 20px exacto en Figma (1:800, cambio de marca
    2026-06-26 - antes var(--text-body-lg), 16-18px). Solo se usa en
    index.html, seguro hardcodear sin tocar el token compartido (body,
-   input/textarea). */
+   input/textarea).
+   Estilo re-verificado 2026-07-10 contra Figma Dev Mode (nodo 1:798-1:800):
+   el boton NO es una barra solida - fondo rgba(94,94,94,0) (el mismo
+   --color-button-bg pero con alpha 0, es decir transparente) y borde
+   1px solid blanco (--color-text). Antes usaba --color-button-bg como
+   fondo solido - corregido a contorno. Sin estado hover definido en
+   Figma (mockup estatico): se rellena con --color-button-bg al pasar el
+   raton/foco, para mantener affordance sin inventar un color nuevo. */
 .btn-bar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  width: calc((100% - 64px) * 1.9 / 2.9);
+  width: fit-content;
   margin-left: auto;
+  margin-right: var(--project-media-right-gap, 0px);
   margin-top: 20px;
   padding: var(--space-sm) var(--space-md);
-  background: var(--color-button-bg);
+  background: transparent;
+  border: 1px solid var(--color-text);
   font-size: 20px;
-  transition: background var(--duration-fast) var(--ease-standard);
+  transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 @media (max-width: 860px) {
   .btn-bar { width: 100%; }
 }
 
-.btn-bar:hover, .btn-bar:focus-visible { background: #707070; }
+.btn-bar:hover, .btn-bar:focus-visible { background-color: var(--color-button-bg); }
 
 /* ---------- Servicios: layout de pagina + filas de categoria ---------- */
 /* Peticion del cliente (2026-06-26): "Servicios" (titulo de pagina) se
@@ -617,10 +696,17 @@
 
 
 @media (max-width: 860px) {
+  /* minmax(0, 1fr), no "1fr" a secas (mismo criterio ya documentado en
+     pages.css para .about-page/.contact-page): un 1fr puro no evita que
+     la pista crezca para acomodar el max-content de un hijo de ancho fijo
+     - aqui la linea decorativa de "Servicios" (.page-hero__title--md::after,
+     339px) empujaba .services-layout a 339px+padding, provocando scroll
+     horizontal en viewports estrechos tras ampliar el margen lateral a
+     100px (2026-07-10, ver client-feedback/home-full-bleed-spec.md). */
   .project-entry,
   .service-row,
   .services-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-md);
   }
 
