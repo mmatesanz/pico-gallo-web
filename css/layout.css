@@ -177,11 +177,22 @@
    (~202-211px medidos, no 64px). Se usa column-gap (no "gap") para no
    afectar el espacio vertical hacia .site-footer__legal, que ya tiene su
    propio margin-top correcto. min() evita desbordar en viewports menores
-   a 1280px (entre el breakpoint mobile y el ancho de Figma). */
+   a 1280px (entre el breakpoint mobile y el ancho de Figma).
+   2026-07-13 (peticion del usuario): el footer se veia agrupado a la
+   izquierda con un hueco enorme a la derecha en pantallas anchas - las 3
+   columnas son max-content (se ajustan a su propio contenido) dentro de
+   un grid que, sin justify-content, alinea las pistas a la izquierda por
+   defecto y deja el resto del ancho del contenedor sin usar. Con
+   justify-content:space-between, el logo se ancla al margen izquierdo, la
+   columna Info al margen derecho, y el espacio libre (por encima del
+   column-gap minimo ya definido) se reparte entre las 3 columnas -
+   ocupando todo el ancho de la pagina sin tocar el contenido de cada
+   columna. */
 .site-footer__grid {
   display: grid;
   grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(0, max-content);
   column-gap: min(206px, 18vw);
+  justify-content: space-between;
 }
 
 /* Lockup real del Figma: icono + logotipo arriba, tagline debajo, sin

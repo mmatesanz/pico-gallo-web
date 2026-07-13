@@ -271,43 +271,25 @@
    (titulo arriba, statement debajo, mismo ancho). Mismo patron de
    "titulo + frase grande en 2 columnas" ya identificado tambien en
    Contacto (ST-01 en figma-vs-prototype-audit.md, pendiente ahi).
-   235px = distancia real en Figma entre el inicio del titulo (x=36) y el
-   inicio del statement (x=271).
-
-   Peticion del cliente (2026-06-26): mismo efecto que Servicios/Contacto -
-   "Nosotros" se queda fijo SIEMPRE (toda la pagina) y el contenido que
-   sube por scroll desaparece a la altura de la linea, no en el header.
-   .about-page envuelve TODO (statement + imagen + cuerpo), no solo el
-   hero como antes (.about-hero). */
+   260px = distancia real en Figma entre el inicio del titulo (x=72,
+   nodo 1:305, left:calc(50%-568px) de un frame de 1280) y el inicio del
+   statement (x=332, nodo 1:307, left:calc(50%-308px)).
+   2026-07-13 (re-verificado via Figma MCP get_design_context): el
+   cliente movio ambos elementos en una revision posterior del archivo
+   (title x=36->72, statement x=271->332, ver auditoria de 2026-06-26 mas
+   arriba) - la distancia entre ellos tambien cambio, de 235 a 260. Se
+   actualiza el valor para reflejar la version actual de Figma. */
 .about-page {
   display: grid;
-  grid-template-columns: 235px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   padding-top: calc(var(--header-height) + var(--space-2xl));
   padding-bottom: var(--space-xl);
 }
 
-/* Figma (node 1:305): "Nosotros", Georgia Regular, 48px, blanco - mismo
+/* Figma (node 1:305): "Nosotros", Lora Regular, 48px, blanco - mismo
    escalon que Servicios/Proyectos (.page-hero__title sin modificador usa
    96px, --text-display-xl, equivocado para esta pagina - hallazgo ya
-   documentado en typography-map.md).
-
-   Linea decorativa (node 1:277 > 1:278 > "Vector 1" 1:279): documentada
-   el 2026-06-23 como 209px con rotacion de 0.26deg (tan sutil que no se
-   reproduce) - por eso el 2026-06-26 el usuario pidio igualarla a la de
-   Servicios/Contacto (339px) como decision de consistencia visual entre
-   paginas.
-
-   Re-verificado 2026-06-28 via Figma MCP (get_metadata + get_screenshot,
-   nodo 1:277): el ancho real actual es **884px**, no 209px - x=332
-   (justo donde termina el texto "Nosotros") hasta x=1216, el mismo
-   margen derecho de contenido que usa el header (72+1144). Ya no es un
-   underline corto bajo la palabra: es una linea larga hasta el margen
-   derecho. A peticion explicita del usuario (2026-06-28: "quiero que la
-   longitud de la linea sea igual en Figma y el Prototipo"), esta vez
-   prevalece la fidelidad exacta a Figma sobre la excepcion de
-   consistencia del 2026-06-26 - solo para el ANCHO; el margin-top
-   (13px, tambien parte de esa excepcion) no se ha tocado porque la
-   peticion fue especificamente sobre la longitud de la linea. */
+   documentado en typography-map.md). */
 .page-hero__title--nosotros {
   align-self: start;
   position: sticky;
@@ -319,45 +301,69 @@
   line-height: normal;
 }
 
-.page-hero__title--nosotros::after {
-  content: "";
-  display: block;
-  margin-top: 13px;
+/* Linea decorativa (node 1:277/1:278, "Proyecto_2"): re-verificado
+   2026-07-13 via Figma MCP get_design_context - NO es un ::after pegado
+   debajo de "Nosotros" (asi estaba antes, error heredado de una
+   auditoria previa que solo confirmo el ANCHO, no la posicion). La linea
+   real vive en la columna de CONTENIDO (x=332, la misma columna que el
+   statement, no x=72 donde esta el titulo) y a media altura del titulo
+   (y=331, con el titulo empezando en y=292 - 39px por debajo del inicio
+   del titulo, no debajo de todo su bloque de texto). Por eso ahora es un
+   elemento propio (.about-page__divider, primer hijo de
+   .about-page__content) en vez de un pseudo-elemento del <h1>: necesita
+   vivir en la otra columna del grid, algo que un ::after del titulo no
+   puede hacer (queda siempre dentro de la caja de su propio elemento).
+   884px de ancho: confirmado sin cambios en esta revision (x=332 a
+   x=1216). max-width:100% por seguridad en viewports que no lleguen a
+   884px (aunque el fallback movil de mas abajo ya neutraliza todo esto).
+
+   position:sticky + mismo `top` que el titulo (+39px, su propio
+   margin-top): sin esto, la linea queda escondida SIEMPRE detras de la
+   franja opaca de .about-page::before (z-index:1) - esa franja cubre una
+   banda fija bajo el header pensada para ocultar el CONTENIDO que sube
+   por scroll (statement/parrafo intro), pero la linea, al vivir ahora en
+   la columna de contenido (no ya dentro de la caja del <h1>), cae DENTRO
+   de esa banda incluso en scroll=0, antes de que el usuario haga scroll.
+   Se trata igual que el titulo (mismo `top`, mismo z-index): queda fija
+   junto a "Nosotros" durante todo el scroll de la pagina, tal y como se
+   ve siempre unida a el en el diseño estatico de Figma. */
+.about-page__divider {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-2xl) + 39px);
+  z-index: 2;
+  margin-top: 39px;
   width: 884px;
+  max-width: 100%;
   height: 1px;
   background: var(--color-text-muted);
 }
 
 /* Franja opaca (mismo mecanismo que en Servicios/Contacto): el contenido
-   de la columna derecha desaparece al llegar a la altura de la linea de
+   de la columna derecha desaparece al llegar a la altura del titulo
    "Nosotros", no al llegar al header. Alto = space-2xl (hasta donde
-   empieza el titulo) + ~69px (texto del titulo a 48px + margin-top de la
-   linea, ya ajustado a 13px como en Servicios, + la linea).
-   +10px (2026-06-28, peticion del usuario): el texto debe ocultarse 10px
-   por debajo de la linea, no exactamente al llegar a ella - solo en
-   Nosotros, no se toca el mecanismo equivalente de Contacto. */
+   empieza el titulo) + ~57px (una linea de texto a 48px/line-height
+   normal) + 10px de aire, igual que antes - ya no suma el margen/alto de
+   la linea decorativa (2026-07-13: la linea se movio fuera de la columna
+   del titulo, ver nota en .about-page__divider, asi que ya no forma
+   parte del bloque que este fondo opaco necesita cubrir). */
 .about-page::before {
   content: "";
   position: fixed;
   top: var(--header-height);
   left: 0;
   right: 0;
-  height: calc(var(--space-2xl) + 69px + 10px);
+  height: calc(var(--space-2xl) + 57px + 10px);
   background: var(--color-bg);
   z-index: 1;
   pointer-events: none;
 }
 
-/* El bloque de texto (statement + parrafo intro) va DEBAJO de la linea de
-   "Nosotros" (no al lado del titulo, en la misma fila) y, al hacer
-   scroll, se oculta justo ahi - no antes ni despues (en el header). Base
-   69px = mismo alto del bloque titulo+linea usado para calcular
-   .about-page::before (ver nota ahi, ajustado tras igualar el espacio
-   titulo->linea al de Servicios) - empieza exactamente donde acaba la
-   linea, dentro del alcance de la franja. +30px adicionales (2026-06-26,
-   pedido por el usuario) de aire extra entre la linea y el statement. */
+/* El statement empieza justo debajo de .about-page__divider (su hermano
+   anterior en el flujo normal, ver nota de mas arriba) - 45px replica el
+   espacio real medido en Figma entre la linea (y=331) y el inicio del
+   statement (y=377): 377 - 331 - 1(alto de la propia linea) = 45. */
 .about-page__content .page-hero__statement {
-  margin-top: 99px;
+  margin-top: 45px;
 }
 
 /* Re-verificado 2026-06-28 via Figma MCP (get_design_context, nodo
@@ -394,17 +400,31 @@
 }
 
 /* La imagen del manifiesto ocupa casi todo el ancho del FRAME completo
-   (1203.73 de 1280), no solo el ancho de la columna de contenido de
-   .about-page (mas estrecha, al reservar 235px para "Nosotros") - por
-   eso este wrapper (solo la imagen, no el resto de .manifesto) "escapa"
-   de su columna con width/margin-left negativos, igual de ancha que si
-   no hubiera columna de titulo. Mismo mecanismo que .contact-visual en
+   (1203.73 de 1280 - margen real ~36-40px a cada lado, node 1:308-1:312),
+   NO solo el ancho de la columna de contenido de .about-page (mas
+   estrecha, al reservar 260px para "Nosotros") - por eso este wrapper
+   (solo la imagen, no el resto de .manifesto) "escapa" de su columna con
+   width/margin-left negativos. Mismo mecanismo que .contact-visual en
    Contacto - aqui aislado en su propio wrapper porque .manifesto ahora
    tambien contiene texto (.manifesto__statement/__text) que SI debe
-   quedarse dentro del ancho normal de la columna, no a ancho completo. */
+   quedarse dentro del ancho normal de la columna, no a ancho completo.
+
+   2026-07-13 (re-verificado via Figma MCP): el margen real de la imagen
+   en Figma (36-40px de un frame de 1280, ~2.9%) es justo la MITAD del
+   margen del titulo/texto (72px, x=72) - no coincide con el margen actual
+   del sitio (100px, ver "Margenes horizontales ampliados a 100px" en este
+   mismo archivo). Se replica la misma proporcion (mitad del margen
+   estandar) en vez del valor en pixeles literal de Figma (36px), que ya
+   no corresponde al margen real del sitio: bleed objetivo = 50px (mitad
+   de 100px) a cada lado, en vez de los 100px de main .container.
+   Formula: el wrapper vive dentro de .about-page__content, que empieza en
+   (100px margen + 260px columna titulo) = 360px desde el borde de
+   viewport y termina en (100% - 100px margen). Para que la imagen llegue
+   a 50px de cada borde: margin-left = 50 - 360 = -310px; width = 100% +
+   (360-50) + (100-50) = 100% + 360px. */
 .manifesto__media-wrap {
-  width: calc(100% + 235px);
-  margin-left: -235px;
+  width: calc(100% + 360px);
+  margin-left: -310px;
 }
 
 /* Imagen real (1203.73 x 651 en Figma, node 1:308-1:312). El "Clip path
@@ -424,15 +444,16 @@
 }
 
 /* Texto bajo la imagen (Figma, nodo 96:436): "Somos el ingrediente que
-   le da caracter a cada idea." Re-verificado 2026-06-28 via Figma MCP
-   (get_design_context): 32px Lora blanco, line-height "normal" - NO
-   64px/92.055% como se documento el 2026-06-26 (mismo cambio posterior
-   de Figma que en .page-hero__statement--nosotros, ver nota ahi). Gap
-   real imagen->texto sin cambios: 25px (y=1358 - (682+651)), ese calculo
-   no depende del tamaño de este texto. */
+   le da caracter a cada idea." 32px Lora blanco, line-height "normal".
+   2026-07-13 (re-verificado via Figma MCP get_design_context, con
+   Playwright ya disponible para medir en navegador real): el cliente
+   volvio a mover este texto en una revision posterior de Figma (y=1358 ->
+   y=1400, imagen sin cambios en 682+651=1333) - el gap real ahora es 67px
+   (1400-1333), no 25px. Confirmado visualmente comparando capturas de
+   Figma vs. el prototipo renderizado. */
 .manifesto__statement {
   margin: 0;
-  margin-top: 25px;
+  margin-top: 67px;
   font-family: var(--font-display);
   font-weight: normal;
   font-size: 32px;
@@ -449,18 +470,14 @@
    anterior de Figma este texto empezaba en x=629 de 1280 (~49%, mitad
    derecha) - en la version actual del cliente empieza en x=290, la MISMA
    columna que el resto del contenido (ya no hay desplazamiento a la
-   derecha) - se quita el margin-left:50% que tenia antes. Gap real
-   texto-de-arriba->cuerpo: ~75px (estimado, no se puede medir el alto
-   real de .manifesto__statement sin navegador).
-   NOTA 2026-06-28: este estimado se calculo cuando .manifesto__statement
-   media 64px; ahora mide 32px (ver nota ahi), por lo que su altura
-   renderizada es menor y este gap podria ya no ser el correcto. No se
-   recalcula a ciegas sin poder medir en navegador (Playwright MCP
-   conectado pero sin herramientas expuestas en esta sesion) - queda
-   marcado como pendiente de revision visual real antes de dar la
-   seccion por cerrada al 100%. */
+   derecha) - se quita el margin-left:50% que tenia antes.
+   2026-07-13: la NOTA de 2026-06-28 (pendiente de revision visual real)
+   queda resuelta - medido en navegador (Playwright) comparando contra la
+   captura de Figma: el gap real texto-de-arriba->cuerpo es ~28px (no
+   75px, ese valor sobrestimaba bastante el alto real de una sola linea
+   de .manifesto__statement a 32px/line-height normal). */
 .manifesto__text {
-  margin-top: 75px;
+  margin-top: 28px;
   color: var(--color-text-soft);
   font-size: 16px;
   line-height: normal;
@@ -986,13 +1003,13 @@
 
   /* minmax(0, 1fr), no "1fr" a secas: un 1fr puro no evita que la pista
      crezca para acomodar el max-content de un hijo de ancho fijo - aqui
-     la linea decorativa bajo "Nosotros" (.page-hero__title--nosotros::after,
-     width:884px) empujaba TODA la columna (y por tanto cada hijo de
-     .about-page) a 884px de ancho, con scroll horizontal y texto cortado
-     en cualquier viewport movil real. El max-width:100% de esa linea (mas
-     abajo) no evita esto porque resuelve el porcentaje contra el ancho
-     del propio H1, que es el que está creciendo - hay que cortar el
-     problema en la pista del grid, no en el hijo. */
+     la linea decorativa de Nosotros (.about-page__divider, width:884px)
+     empujaba TODA la columna (y por tanto cada hijo de .about-page) a
+     884px de ancho, con scroll horizontal y texto cortado en cualquier
+     viewport movil real - su propio max-width:100% (ver esa clase) no
+     evita esto porque resuelve el porcentaje contra el ancho de la pista
+     del grid, que es la que está creciendo - hay que cortar el problema
+     ahi, no en el hijo. */
   .about-page,
   .contact-page { grid-template-columns: minmax(0, 1fr); }
 
@@ -1006,17 +1023,16 @@
 
   /* Sin spec movil en Figma (accepted-deviation, igual criterio que el
      resto del sitio): la linea de Nosotros mide 884px en Figma (frame
-     fijo de escritorio, ver nota en .page-hero__title--nosotros::after),
-     mas ancha que cualquier viewport movil - se limita a max-width:100%
-     para que no provoque scroll horizontal de pagina.
+     fijo de escritorio, ver nota en .about-page__divider - ya tiene su
+     propio max-width:100% definido siempre, no solo en movil), mas ancha
+     que cualquier viewport movil.
      Las de Contacto (339px), Servicios (.page-hero__title--md, 339px) y
      Proyectos (230px) cabian en moviles >=360-375px mientras el margen
      lateral fue 20-50px, pero con el margen ampliado a 100px (2026-07-10,
      ver client-feedback/home-full-bleed-spec.md) la columna de contenido
      baja de esos anchos en viewports pequenos y las lineas empezaban a
-     provocar scroll horizontal de pagina - mismo tope aplicado a las 4
+     provocar scroll horizontal de pagina - mismo tope aplicado a las 3
      por consistencia. */
-  .page-hero__title--nosotros::after,
   .page-hero__title--contacto::after,
   .page-hero__title--md::after,
   .page-hero__title--proyectos::after {
