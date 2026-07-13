@@ -236,20 +236,30 @@
 .section { padding-block: var(--space-2xl); }
 
 /* font-weight:normal es necesario porque <h2> tiene bold por defecto del
-   navegador (base.css solo resetea margin, no font-weight) y Figma usa
-   Georgia:Regular, no bold, en "Servicios" (1:735, 96px exacto). Solo se
-   usa en index.html, seguro hardcodear el tamano sin tocar el token. */
+   navegador (base.css solo resetea margin, no font-weight). El tamano
+   base (78px) viene de Figma Dev Mode (nodo 1:734, "Servicios" en Home,
+   texto 1:735: Lora Regular 78px) - ya no se usa tal cual en index.html:
+   peticion del cliente 2026-07-11, "Servicios" debe tener el mismo
+   estilo/tamano que "Proyectos", asi que ahora lleva tambien la clase
+   .section__heading--lg (48px, ver mas abajo), igual que el h2 de
+   Proyectos - una decision explicita del cliente que se aparta a
+   proposito del tamano literal de Figma para esta seccion en concreto.
+   La regla base (78px) queda sin uso real por ahora, pero se conserva
+   por si se necesita en el futuro sin el modificador --lg. Solo se usa
+   en index.html, seguro hardcodear el tamano sin tocar el token. */
 .section__heading {
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: 96px;
+  font-size: 78px;
   margin-bottom: var(--space-lg);
 }
 
 /* En el Figma de Home, el titulo "Proyectos" (node 1:792) usa 48px exacto
-   (cambio de marca 2026-06-26 - antes 72px), distinto del titulo
-   "Servicios" (node 1:735, 96px, sin cambios) aunque ambos comparten
-   .section__heading. Modificador Home-especifico, no toca la regla base. */
+   (cambio de marca 2026-06-26 - antes 72px). Desde 2026-07-11 tambien lo
+   usa "Servicios" (peticion del cliente, ver nota de arriba) - antes
+   este modificador era exclusivo de Proyectos, distinto del tamano base
+   de Servicios (78px); ahora ambos h2 de Home comparten
+   .section__heading--lg. */
 .section__heading--lg {
   font-size: 48px;
 }

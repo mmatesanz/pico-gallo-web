@@ -201,6 +201,60 @@
     window.addEventListener("resize", onProjectScroll);
   }
 
+  /* Peticion cliente 2026-07-10: mismo mecanismo de carrusel que
+     Proyectos (CR-03, arriba) aplicado a Servicios - "Servicios" fijo,
+     3 slides (Estrategia/Sistemas de Diseño/Experiencia y Ejecución) en
+     crossfade segun el scroll. Bloque deliberadamente independiente del
+     de Proyectos (variables, selectores y nombres de funcion propios) -
+     ningun estado compartido entre los 2 carruseles, para que un cambio
+     futuro en uno no pueda afectar al otro por accidente. A diferencia
+     de Proyectos, aqui no hay columna de imagen con desplazamiento
+     continuo, asi que el indice activo (para el crossfade) se calcula
+     con un simple redondeo, sin necesitar una variable de progreso
+     continuo para eso.
+     2026-07-11 (peticion del cliente: indicar el avance del scroll en el
+     carrusel): se añade --service-scroll-progress (0 a 1, sin redondear)
+     solo para alimentar la barra visual .service-showcase__progress-bar
+     - no tiene relacion con --project-track-progress de Proyectos (esa
+     anima la imagen; esta unicamente es un indicador visual de scroll). */
+  var serviceShowcase = document.querySelector(".service-showcase");
+  var servicePin = serviceShowcase ? serviceShowcase.querySelector(".service-showcase__pin") : null;
+  var serviceEntries = serviceShowcase
+    ? Array.prototype.slice.call(serviceShowcase.querySelectorAll(".service-entry"))
+    : [];
+
+  if (serviceShowcase && servicePin && serviceEntries.length && !prefersReducedMotion && !isMobileViewport) {
+    var SERVICE_COUNT = serviceEntries.length;
+    var serviceTicking = false;
+
+    var updateServiceProgress = function () {
+      var rect = serviceShowcase.getBoundingClientRect();
+      var scrollableDistance = serviceShowcase.offsetHeight - servicePin.offsetHeight;
+      var rawProgress = scrollableDistance > 0 ? (-rect.top) / scrollableDistance : 0;
+      rawProgress = Math.max(0, Math.min(1, rawProgress));
+
+      var activeIndex = Math.min(SERVICE_COUNT - 1, Math.round(rawProgress * (SERVICE_COUNT - 1)));
+
+      serviceEntries.forEach(function (entry, index) {
+        entry.classList.toggle("is-active", index === activeIndex);
+      });
+      serviceShowcase.style.setProperty("--service-scroll-progress", rawProgress.toFixed(4));
+
+      serviceTicking = false;
+    };
+
+    var onServiceScroll = function () {
+      if (!serviceTicking) {
+        serviceTicking = true;
+        window.requestAnimationFrame(updateServiceProgress);
+      }
+    };
+
+    updateServiceProgress();
+    window.addEventListener("scroll", onServiceScroll, { passive: true });
+    window.addEventListener("resize", onServiceScroll);
+  }
+
   /* Peticion del cliente (2026-06-29, ampliacion de CR-07): en movil, el
      titulo de fila de Servicios ("Estrategia"/"Sistemas de Diseño"/
      "Experiencias y Ejecucion") tambien queda fijo bajo el header (antes

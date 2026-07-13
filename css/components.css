@@ -1,3 +1,11 @@
+/* Clase generica, sin uso hasta 2026-07-11: peticion del cliente de
+   trasladar el vector horizontal que Figma pone justo debajo de
+   "Servicios" en Home (nodo 1:737, linea de ancho completo bajo el
+   titulo, antes de que empiece el contenido) - usada en index.html/
+   en/index.html entre el <h2> y .service-showcase__list. --color-border
+   coincide con el mismo tono ya usado para separadores horizontales de
+   ancho completo en este componente (ver .service-link-row border-top,
+   mismo rol visual). */
 .divider {
   border: none;
   border-top: 1px solid var(--color-border);
@@ -345,6 +353,42 @@
   }
 }
 
+/* Fallback documentado (movil real <=860px y prefers-reduced-motion):
+   mismo criterio que el bloque equivalente de Proyectos de aqui arriba -
+   se desactiva el pin/scrub del carrusel de Servicios y vuelve al layout
+   en flujo normal (lista apilada de las 3 categorias, sin crossfade). El
+   JS de main.js tampoco calcula el indice activo en estos casos (mismo
+   guard !isMobileViewport && !prefersReducedMotion que ya usa
+   Proyectos). */
+@media (prefers-reduced-motion: reduce), (max-width: 860px) {
+  .service-showcase { height: auto; }
+  .service-showcase__pin {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+  }
+  .service-showcase__list { flex: none; min-height: 0; }
+  #home-servicios .service-showcase__list .service-entry {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+  }
+  #home-servicios .service-showcase__list .service-link-row {
+    border-top: 1px solid var(--color-border);
+    padding-block: var(--space-lg);
+    height: auto;
+  }
+  #home-servicios .service-showcase__list .service-entry:first-child .service-link-row {
+    border-top: none;
+  }
+  /* Sin scroll-jacking aqui (lista apilada normal), el concepto de
+     "avance dentro del carrusel" no aplica - main.js tampoco actualiza
+     --service-scroll-progress en este modo (mismo guard que el resto del
+     carrusel), asi que la barra se queda fija en 0% si no se oculta. */
+  .service-showcase__progress { display: none; }
+}
+
 /* ---------- Botones ---------- */
 /* Peticion cliente 2026-07-10: el boton ya no se ancha para igualar la
    columna de imagen (formula anterior: calc((100% - 64px) * 1.9/2.9),
@@ -673,26 +717,200 @@
   line-height: normal;
 }
 
-/* ---------- Link de servicios en Home ---------- */
+/* ---------- Carrusel de Servicios en Home ---------- */
+/* Peticion cliente 2026-07-10: mismo mecanismo que el carrusel de
+   Proyectos (.project-showcase/.project-entry, ver mas arriba) - pin
+   fijo con "Servicios" siempre visible mientras 3 slides (Estrategia /
+   Sistemas de Diseño / Experiencia y Ejecución) hacen crossfade segun el
+   scroll. Deliberadamente NO se reutilizan las clases de Proyectos
+   (.project-showcase, .project-entry, etc.) ni su bloque de JS: son
+   nombres y logica totalmente independientes (.service-showcase,
+   .service-entry, updateServiceProgress en main.js) para que un cambio
+   futuro en cualquiera de los 2 carruseles no pueda afectar al otro por
+   accidente - peticion explicita del cliente de no afectar nada mas.
+   Solo se replica el PATRON (sticky pin + track de N*100vh + crossfade
+   por scroll), no las clases en si.
+   A diferencia de Proyectos (que tiene una columna de imagen con
+   translateY continuo), Servicios no tiene imagen - cada slide es solo
+   texto, así que basta un crossfade de opacidad por indice activo (sin
+   variable de progreso continuo tipo --project-track-progress, que solo
+   hacia falta para animar la imagen). */
+.service-showcase {
+  position: relative;
+  height: calc(3 * 100vh);
+}
+
+.service-showcase__pin {
+  position: sticky;
+  top: var(--header-height);
+  height: calc(100vh - var(--header-height));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Peticion cliente 2026-07-11: espacio de unos 30px entre el vector
+   (.divider, ver mas arriba) y el contenido que viene despues
+   (.service-showcase__list). Escopado a #home-servicios en vez de
+   modificar la regla generica .divider (compartida potencialmente con
+   otros usos futuros de esa clase, que no deberian heredar este espacio
+   especifico de Servicios). */
+#home-servicios .divider {
+  margin-bottom: 30px;
+}
+
+/* Peticion cliente 2026-07-11: reducir el alto de esta lista a la mitad.
+   Antes flex:1 (crecia para ocupar todo el espacio restante del pin
+   despues de "Servicios"/divider/barra de progreso); ahora flex-basis
+   fijo al 50% del alto del pin (que es definido, .service-showcase__pin
+   tiene su propio height:calc(100vh - header-height)), en vez de un
+   crecimiento variable. flex-grow/shrink en 0 para que no vuelva a
+   estirarse ni encogerse por el espacio disponible. */
+.service-showcase__list {
+  position: relative;
+  flex: 0 0 50%;
+  min-height: 0;
+}
+
+/* Peticion cliente 2026-07-11: indicar el avance del scroll dentro del
+   carrusel de Servicios (3 slides). Se elige una barra de progreso fina
+   y continua en vez de puntos discretos (uno por slide): la peticion
+   habla de "el avance que hacemos con el scroll", no de "en que slide
+   estamos" - una barra que se llena de 0 a 100% representa mejor un
+   avance continuo que 3 puntos que solo tienen 3 estados posibles.
+   Colocada en el HTML DESPUES de .service-showcase__list (no justo
+   despues del .divider, donde se puso primero) - peticion del cliente:
+   asi no quedan las 2 lineas finas (divider + barra) seguidas, una
+   pegada a la otra, con el mismo aspecto y sin nada en medio.
+   Aislado del resto del sitio: clases y variable CSS exclusivas de este
+   carrusel (--service-scroll-progress, ver main.js), no relacionadas con
+   --project-track-progress de Proyectos (esa es para animar la imagen,
+   esta es solo para el indicador visual). overflow:hidden en el
+   contenedor + width en la barra interior, mismo patron ya usado en
+   .divider/.service-link-row para lineas finas (1px, --color-border).
+   margin-top: 30px (peticion cliente 2026-07-11, antes var(--space-sm)
+   =16px) - mismo espacio de 30px que ya separa el divider del contenido
+   mas arriba, esta vez entre el final del texto del slide y la barra. */
+.service-showcase__progress {
+  height: 2px;
+  margin-top: 30px;
+  margin-bottom: var(--space-lg);
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.service-showcase__progress-bar {
+  height: 100%;
+  width: calc(var(--service-scroll-progress, 0) * 100%);
+  background: var(--color-text);
+}
+
+/* Cada .service-entry pasa de "fila apilada" a "panel superpuesto a
+   pantalla completa dentro del pin", igual que .project-entry en
+   Proyectos - por eso se anula el border-top/padding-block de
+   .service-link-row (pensados para la lista apilada, ver mas abajo), y
+   se cruza por opacidad segun la clase .is-active que pone main.js. */
+#home-servicios .service-showcase__list .service-entry {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+#home-servicios .service-showcase__list .service-entry.is-active {
+  opacity: 1;
+}
+
+#home-servicios .service-showcase__list .service-link-row {
+  border-top: none;
+  padding-block: 0;
+  height: 100%;
+}
+
+/* Peticion cliente 2026-07-10: cada apartado debe incluir el contenido
+   real que el diseñador definio en Figma (nodo 1:687, "Home") para esta
+   seccion - 11 textos titulo+descripcion (194:631, 198:721-732) que no
+   estaban agrupados dentro del frame "Servicios" (1:734) en Figma, pero
+   se posicionan junto a el (x=726-728, misma altura que cada fila) y
+   coinciden EXACTAMENTE con el titulo/.service-group__desc ya existentes
+   en servicios.html - se copia ese mismo texto para no duplicar contenido
+   con variaciones. display:block -> grid (2 columnas: titulo de fila /
+   items) SOLO afecta a esta clase, exclusiva de index.html/en/index.html
+   (no se usa en servicios.html, que tiene su propio .service-row/
+   .service-group sin relacion). border-top/padding-block (fila apilada)
+   se anulan dentro del carrusel de escritorio (regla de arriba) y se
+   restauran en el fallback movil/reduced-motion (mas abajo), donde
+   vuelve a ser una lista apilada normal. */
 .service-link-row {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-xl);
+  align-items: start;
   padding-block: var(--space-lg);
   border-top: 1px solid var(--color-border);
 }
 
-.service-link-row:first-of-type { border-top: none; }
+/* Sin :first-of-type aqui (retirado 2026-07-10): desde que cada fila vive
+   dentro de su propio .service-entry (para el crossfade del carrusel),
+   ":first-of-type" ya no identifica "la primera fila real" - cada
+   .service-link-row es hijo unico (por tanto "first-of-type") de un
+   .service-entry distinto, asi que matchearia las 3, no solo la primera.
+   El caso "sin borde en la primera fila" ahora se resuelve de forma
+   explicita en el fallback movil/reduced-motion, con
+   .service-entry:first-child .service-link-row (ver mas abajo) - en el
+   modo carrusel de escritorio el borde ya se anula siempre (ver regla
+   #home-servicios .service-showcase__list .service-link-row de mas
+   arriba), asi que ahi no hace falta ningun caso especial. */
 
-/* font-size literal: 72px exacto en Figma (teaser de Servicios en Home,
-   1:736/1:738/1:740). Solo se usa en index.html, seguro hardcodear. */
+/* font-size literal: re-verificado 2026-07-10 contra Figma Dev Mode
+   (teaser de Servicios en Home, nodos 1:736/1:738/1:740) - 48px exacto,
+   no 72px como decia el comentario anterior (desactualizado). Color
+   #989898 (--color-text-soft) ya coincidia. Solo se usa en index.html,
+   seguro hardcodear. */
 .service-link-row__title {
   font-family: var(--font-display);
-  font-size: 72px;
+  font-size: 48px;
   color: var(--color-text-soft);
   transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .service-link-row:hover .service-link-row__title,
 .service-link-row:focus-visible .service-link-row__title { color: var(--color-text); }
+
+/* Figma (nodos 194:631, 198:721-732): items apilados sin gap propio entre
+   ellos - cada caja de texto (titulo+descripcion) termina exactamente
+   donde empieza la siguiente, en las 11 repeticiones, sin excepcion. La
+   separacion visual sale solo del line-height natural de las 2 lineas
+   (titulo 32px + descripcion 16px), no de un margen añadido. */
+.service-link-row__items {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Figma: titulo de item Lora Regular 32px, color #989898 (--color-text-soft,
+   igual que el titulo de fila) - a diferencia de .service-group__title en
+   servicios.html (blanco): esta es una version condensada/teaser del
+   mismo contenido, con jerarquia visual mas discreta. Clase nueva y
+   exclusiva de este teaser para no alterar .service-group__title (usada
+   en servicios.html). */
+.service-link-row__item-title {
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 32px;
+  line-height: normal;
+  color: var(--color-text-soft);
+}
+
+/* Figma: descripcion de item Libre Franklin Regular 16px, mismo color
+   #989898 que el titulo (a diferencia de .service-group__desc en
+   servicios.html, que es blanco) - clase nueva, no reutiliza esa. */
+.service-link-row__item-desc {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: normal;
+  color: var(--color-text-soft);
+  margin-top: 0;
+}
 
 
 @media (max-width: 860px) {
@@ -705,7 +923,8 @@
      100px (2026-07-10, ver client-feedback/home-full-bleed-spec.md). */
   .project-entry,
   .service-row,
-  .services-layout {
+  .services-layout,
+  .service-link-row {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-md);
   }
