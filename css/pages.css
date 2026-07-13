@@ -926,10 +926,41 @@
    para que se "fije" justo en la posicion en la que ya estaba en
    reposo (conserva el espacio inicial bajo el header, no salta hacia
    arriba). */
+/* Peticion cliente 2026-07-13: el boton "Ver todos los proyectos" (antes
+   solo en Home) se traslada a cada pagina de proyecto individual,
+   alineado al margen izquierdo del texto (a diferencia de .btn-bar en
+   Home, que se alinea a la derecha - ver .project-detail__cta mas abajo
+   para el override) y anclado a la zona INFERIOR de esta columna, no
+   pegado al final del cuerpo de texto. display:flex column + min-height
+   dinamico (basado en 100vh, no en un valor fijo - "de forma dinamica
+   en funcion de la pantalla") consiguen esto: min-height reserva el
+   mismo alto que tendria la columna hasta el borde inferior de la
+   pantalla (100vh menos el offset superior de arriba, menos el mismo
+   padding-bottom simetrico que ya usa la pagina, --space-2xl) y el boton
+   (ultimo hijo del flex) usa margin-top:auto para consumir el hueco
+   sobrante y quedar pegado abajo. Si el cuerpo de texto es mas largo que
+   ese alto (proyectos con descripciones extensas), min-height no lo
+   recorta - la columna crece con el contenido y el boton simplemente
+   queda justo debajo del texto, sin superponerse a la galeria vecina
+   (mismo comportamiento de sticky ya existente, sin cambios). */
 .project-detail__intro {
   align-self: start;
   position: sticky;
   top: calc(var(--header-height) + var(--space-2xl));
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height) - var(--space-2xl) - var(--space-2xl));
+}
+
+/* Override sobre .btn-bar (mismo boton visual que en Home: contorno,
+   20px, fondo transparente) - ahi se alinea a la derecha (margin-left:
+   auto) para acompañar la columna de imagen; aqui se alinea a la
+   izquierda, con el mismo margen que el resto del texto de la columna
+   (0, ya que .project-detail__intro no tiene padding propio). */
+.project-detail__cta {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: auto;
 }
 
 /* Cambio de marca 2026-06-26: re-verificado en las 6 paginas de detalle
@@ -1147,10 +1178,18 @@
   }
 
   /* En movil texto y galeria van apilados en 1 columna (ver arriba) -
-     el "sticky" no tiene sentido en ese layout, se desactiva. */
+     el "sticky" no tiene sentido en ese layout, se desactiva. Se resetea
+     tambien el min-height dinamico de la regla base (pensado para anclar
+     el boton "Ver todos los proyectos" al fondo de la pantalla en el
+     layout de 2 columnas con sticky) - en movil, sin sticky, ese hueco
+     dejaria un espacio vacio enorme antes de la galeria si el texto es
+     corto. Con min-height:0 el boton simplemente queda justo debajo del
+     texto (margin-top:auto de .project-detail__cta no tiene hueco que
+     consumir), igual que el resto del contenido apilado. */
   .project-detail__intro {
     position: static;
     margin-bottom: var(--space-lg);
+    min-height: 0;
   }
 
   /* Peticion cliente 2026-07-13: "no pueden quedar huecos vacios entre
