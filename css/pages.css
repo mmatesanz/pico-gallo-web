@@ -1200,6 +1200,15 @@
     min-height: 0;
   }
 
+  /* Peticion cliente 2026-07-13: 20px de espacio entre la descripcion y
+     el boton "Ver todos los proyectos" en movil (ajustado de 10px a 20px
+     el mismo dia) - sin min-height dinamico (regla de arriba) el
+     margin-top:auto de la regla base no tiene hueco que consumir y el
+     boton quedaba pegado directamente al texto. */
+  .project-detail__cta {
+    margin-top: 20px;
+  }
+
   /* Peticion cliente 2026-07-13: "no pueden quedar huecos vacios entre
      imagenes" en la galeria movil. Encontrado el mobile mockup real en
      Figma (con node-id equivocado en la URL que dio el cliente, pero
