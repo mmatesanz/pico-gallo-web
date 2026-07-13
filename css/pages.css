@@ -764,6 +764,29 @@
   object-fit: cover;
 }
 
+/* Rediseño 2026-07-13 (Figma node 1:582, 13 piezas en vez de las 11
+   anteriores): las nuevas imagenes "portada" vienen explicitamente
+   recortadas en Figma dentro de cajas de tamano fijo (object-cover +
+   size-full sobre el nodo), no como imagenes con proporcion natural -
+   por eso ya no basta con width:100%/height:auto (regla generica de
+   arriba). Se generalizan aqui los dos formatos reales medidos en el
+   frame: cuadrado (mismo ancho que alto de columna) y vertical 3:4
+   (475/633, igual proporcion en las 5 piezas verticales del frame). */
+.project-mosaic__item--square {
+  aspect-ratio: 1 / 1;
+}
+
+.project-mosaic__item--portrait {
+  aspect-ratio: 475 / 633;
+}
+
+.project-mosaic__item--square img,
+.project-mosaic__item--portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ---------- Mosaico de Proyectos: hover (referencia koto.com/work,
    2026-06-26; rediseñado 2026-07-13 a petición del cliente) ----------
    Petición original del cliente: al pasar el cursor sobre cada pieza,
@@ -915,7 +938,8 @@
 
 .project-detail__country {
   margin: 0;
-  margin-top: 8px;
+  margin-top: 45px;
+  margin-bottom: 8px;
   font-family: var(--font-body);
   font-size: 20px;
   line-height: normal;
@@ -955,6 +979,18 @@
    ya no hace falta - Wanderlust tambien es 16px/26px ahora). */
 .project-detail__body {
   margin: 0;
+  /* Peticion cliente 2026-07-13: separacion de "unos 25px" entre el
+     cuerpo de texto y la galeria, medida en devtools sobre el viewport
+     de referencia (1280px, el mismo frame de Figma del que salen el
+     resto de medidas de esta pagina - ver comentario de .project-detail
+     mas arriba). Como margen derecho, no bottom/top: la columna de
+     texto y la galeria son vecinas horizontales en la misma fila de
+     grid, asi que el hueco entre ambas es un margen a la derecha del
+     texto, no vertical. En vw (no %) para que escale con el ancho real
+     de pantalla en vez de con el 26% de la columna de texto (un % aqui
+     se calcularia sobre ese 26%, no sobre los 1280px de referencia, y
+     saldria un valor mucho mas pequeno del pedido). 25/1280*100 = 1.953vw. */
+  margin-right: 1.953vw;
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 26px;
