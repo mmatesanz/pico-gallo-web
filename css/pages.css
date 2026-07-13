@@ -704,6 +704,20 @@
 
 .project-mosaic__item {
   margin: 0;
+  /* Peticion cliente 2026-07-13: el texto del hover (.project-mosaic__caption,
+     ver mas abajo) debe quedar justo debajo de su propia imagen, sin
+     solaparse con la pieza siguiente (antes: con solo 4px de gap entre
+     piezas, el texto quedaba pintado por encima de la imagen de abajo).
+     Al pasar el hover, esta pieza gana un margen inferior que empuja el
+     resto de la columna hacia abajo, abriendo hueco real para el texto;
+     transition sincronizada con la del propio .project-mosaic__caption. */
+  margin-bottom: 0;
+  transition: margin-bottom 0.4s ease;
+}
+
+.project-mosaic__item:has(.project-mosaic__frame:hover),
+.project-mosaic__item:has(.project-mosaic__frame:focus-visible) {
+  margin-bottom: 28px;
 }
 
 .project-mosaic__item img {
@@ -734,10 +748,22 @@
 }
 
 /* ---------- Mosaico de Proyectos: hover (referencia koto.com/work,
-   2026-06-26) ---------- Petición del cliente: al pasar el cursor sobre
-   cada pieza, zoom-out sutil de la imagen + aparece la info del proyecto.
-   No hay ningún hover definido en Figma (herramienta estática) - esto es
-   una interacción nueva, no una traducción de un diseño existente.
+   2026-06-26; rediseñado 2026-07-13 a petición del cliente) ----------
+   Petición original del cliente: al pasar el cursor sobre cada pieza,
+   zoom-out sutil de la imagen + aparece la info del proyecto. No hay
+   ningún hover definido en Figma (herramienta estática) - esto es una
+   interacción nueva, no una traducción de un diseño existente.
+
+   Cambio 2026-07-13: el cliente ya no quiere la descripción superpuesta
+   sobre la imagen (antes .project-mosaic__overlay, con fondo degradado +
+   titulo/subtitulo/descripcion encima de la foto). Ahora solo título
+   (izquierda) y subtítulo (derecha) aparecen DEBAJO de la imagen -  no
+   hay descripción en este nuevo formato. Se posiciona con
+   position:absolute/top:100% (no en flujo normal) para no empujar la
+   siguiente fila del mosaico, que solo tiene 4px de gap entre piezas -
+   se solapa transitoriamente con la pieza de abajo mientras dura el
+   hover, mismo criterio ya usado por el overlay anterior (pointer-events:
+   none salvo en hover/focus).
 
    Texto mostrado por pieza (decisión explícita del usuario, sin inventar
    nada nuevo): las 3 piezas que SÍ corresponden a una página de detalle
@@ -747,10 +773,8 @@
    (único dato confirmado, ya existía como pie de foto fijo - ahora pasa a
    verse solo en el hover). Las 7 piezas restantes (Tropical Islands, Rise
    Melbourne, DCAVI Bogotá, Winds of Change, Arrecife, Prólogo, Terratile)
-   no tienen página ni texto propio en Figma - el título es el nombre real
-   visible en el propio cartel/gráfico (no inventado), con un texto de
-   relleno (Lorem ipsum) como descripción, mismo criterio ya usado en
-   Slagharen/Bobbejaanland para contenido pendiente del cliente. */
+   no tienen subtítulo propio en Figma - solo título, sin dato a la
+   derecha. */
 .project-mosaic__frame {
   position: relative;
   display: block;
@@ -765,54 +789,65 @@
   transform: scale(0.96);
 }
 
-.project-mosaic__overlay {
+.project-mosaic__caption {
   position: absolute;
-  inset: 0;
+  /* 98%, no 100%: la imagen se escala a 0.96 en hover (scale hacia el
+     centro), asi que su borde inferior VISIBLE queda un 2% de la altura
+     del frame por encima del borde inferior real de la caja (que no se
+     mueve, el transform no afecta el layout). Anclar aqui al 100% dejaba
+     ese 2% como hueco extra encima del texto (espacio superior mas
+     grande que el inferior) - con 98% el texto queda pegado al borde
+     visible de la imagen ya encogida, e invierte la asimetria pedida por
+     el cliente 2026-07-13 sin tocar padding-top/margin-bottom. */
+  top: 98%;
+  /* left/right: 2%, no 0 - mismo motivo que el top:98% de mas arriba: el
+     scale(0.96) del hover encoge la imagen tambien en horizontal, dejando
+     un margen visible del 2% del ancho del frame a cada lado. Anclar a
+     0/0 alineaba el padding-inline (10px, ver mas abajo) contra el borde
+     SIN escalar del frame, no contra el borde real de la imagen ya
+     encogida - el resultado eran ~0.6px de margen real en vez de 10px.
+     Con 2%/2% el 10px de padding-inline se mide desde el borde visible de
+     la imagen, igual en cualquier pieza sin importar su ancho. */
+  left: 2%;
+  right: 2%;
+  z-index: 2;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: var(--space-sm);
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent 65%);
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding-top: 4px;
+  padding-inline: 10px;
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transform: translateY(-6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
   pointer-events: none;
 }
 
-.project-mosaic__frame:hover .project-mosaic__overlay,
-.project-mosaic__frame:focus-visible .project-mosaic__overlay {
+.project-mosaic__frame:hover .project-mosaic__caption,
+.project-mosaic__frame:focus-visible .project-mosaic__caption {
   opacity: 1;
+  transform: translateY(0);
 }
 
-.project-mosaic__overlay-title {
+.project-mosaic__caption-title {
   font-family: var(--font-display);
   font-size: 20px;
   line-height: normal;
   color: var(--color-text);
 }
 
-.project-mosaic__overlay-meta {
-  margin-top: 4px;
+.project-mosaic__caption-subtitle {
   font-family: var(--font-body);
   font-size: 13px;
   line-height: normal;
   color: var(--color-text-soft);
-}
-
-.project-mosaic__overlay-desc {
-  margin-top: 6px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--color-text-soft);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
+  text-align: right;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .project-mosaic__frame img { transition: none; }
-  .project-mosaic__overlay { transition: none; }
+  .project-mosaic__caption { transition: none; }
+  .project-mosaic__item { transition: none; }
 }
 
 /* ---------- Paginas de detalle de proyecto (2026-06-26) ----------

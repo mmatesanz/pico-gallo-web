@@ -138,6 +138,12 @@
   aspect-ratio: 9 / 10;
 }
 
+.project-entry__media a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .project-entry__media img {
   width: 100%;
   height: 100%;
@@ -205,6 +211,13 @@
   position: absolute;
   inset: 0;
   padding-block: 0;
+  /* Los 4 paneles ocupan el mismo inset:0 y se cruzan por opacidad -
+     sin esto, el ultimo del DOM (data-project-index="3") queda siempre
+     por encima en el orden de pintado y se come los clics de los 3
+     paneles anteriores, aunque no sean el activo visible. Solo el panel
+     .is-active debe recibir clics (titulo e imagen enlazan a su
+     proyecto). */
+  pointer-events: none;
   /* Sin esto, la unica fila del grid (implicita, "auto") se dimensiona
      por el contenido mas alto - incluida .project-entry__media, que es
      precisamente el elemento al que luego queremos ponerle un
@@ -231,6 +244,10 @@
 .project-showcase__list .project-entry > div:first-child {
   opacity: 0;
   transition: opacity 0.4s ease;
+}
+
+#home-proyectos .project-showcase__list .project-entry.is-active {
+  pointer-events: auto;
 }
 
 .project-showcase__list .project-entry.is-active > div:first-child {
@@ -368,7 +385,7 @@
     height: auto;
     overflow: visible;
   }
-  .service-showcase__list { flex: none; min-height: 0; }
+  .service-showcase__list { flex: none; min-height: 0; margin-left: 0; }
   #home-servicios .service-showcase__list .service-entry {
     position: relative;
     inset: auto;
@@ -458,6 +475,18 @@
   padding-bottom: var(--space-xl);
 }
 
+/* Peticion usuario 2026-07-13: separar .services-layout__rows (columna 2,
+   donde viven las 3 .service-row) de la columna de "Servicios" con ~100px
+   de aire adicional a la izquierda. clamp(), no un 100px fijo: el valor
+   se calcula dinamicamente segun el ancho de viewport (8vw), con 100px
+   como techo (pantallas de escritorio normales/anchas) y 24px como piso
+   (mismo valor que --space-md, el margen reducido que ya usa el resto del
+   sitio por debajo de 860px) - asi no hace falta un breakpoint propio ni
+   queda un hueco fijo desproporcionado en moviles estrechos. */
+.services-layout__rows {
+  padding-left: clamp(24px, 8vw, 100px);
+}
+
 /* Correccion 2026-06-26 (señalada por el usuario): al hacer scroll hacia
    abajo, los puntos de cada bloque de servicio (columna de cuerpo) seguian
    subiendo visibles por detras del hueco bajo el header y de "Servicios"
@@ -521,10 +550,15 @@
    El gap literal de Figma entre col2 y col3 es 0 (col3 empieza en x=640,
    justo donde acaba col2: 351+289=640, sin hueco). 2026-06-28 (peticion
    del usuario): se separan a proposito mas de lo que marca Figma - usa
-   --space-xl (64px) del sistema de tokens en vez de un valor suelto. */
+   --space-xl (64px) del sistema de tokens en vez de un valor suelto.
+   2026-07-13 (peticion del usuario): la columna de titulo de fila
+   ("Estrategia"/"Sistemas de Diseño"/"Experiencias y Ejecución") ocupa
+   mas espacio horizontal (289px -> 420px) - la lista de items sigue
+   mostrandose exactamente igual (una sola columna apilada, sin
+   reagrupar), solo cambia el ancho reservado para esta columna. */
 .service-row {
   display: grid;
-  grid-template-columns: 289px minmax(0, 1fr);
+  grid-template-columns: 420px minmax(0, 1fr);
   gap: 0 var(--space-xl);
 }
 
@@ -583,7 +617,14 @@
    columna de titulo - empieza 32px mas abajo (titulo y=283/1340/2367,
    linea decorativa del primer grupo y=315/1372/2399 -> offset +32px en
    los 3 casos). Sin este margen, la grid alineaba ambas columnas al mismo
-   borde superior y la linea quedaba mas alta de lo que marca Figma. */
+   borde superior y la linea quedaba mas alta de lo que marca Figma.
+
+   2026-07-13: se probo repartir los .service-group en 2 columnas para
+   llenar el hueco a la derecha, pero el usuario pidio revertirlo - los
+   items de cada bloque de servicio deben seguir mostrandose exactamente
+   como antes (lista apilada de grupos, uno debajo de otro). El ancho se
+   soluciona ensanchando las columnas (ver .service-row y los tamanos de
+   fuente de mas abajo), no cambiando como se agrupa el contenido. */
 .service-row > div:last-child { grid-column: 2; margin-top: 32px; }
 
 /* Figma (Servicios, nodos 1:198/1:228/1:225): titulo de fila 48px exacto,
@@ -660,7 +701,12 @@
    600 anteriores no coincidian con Figma (Georgia + Regular) y eso si era
    un error real, no de clamp. line-height:normal añadido 2026-06-24
    (heredaba 1.5 de body). */
-.service-group__title { font-size: 32px; font-family: var(--font-display); font-weight: normal; line-height: normal; }
+/* 2026-07-13 (peticion del usuario): +4px sobre el tamano exacto de
+   Figma (32px) para que la columna de cuerpo ocupe mas espacio, sin
+   cambiar el orden/agrupacion de la informacion (sigue siendo 1 sola
+   columna apilada, ver nota de mas arriba en
+   `.service-row > div:last-child`). */
+.service-group__title { font-size: 36px; font-family: var(--font-display); font-weight: normal; line-height: normal; }
 
 /* Peticion del cliente (2026-06-26): dentro de la columna de cuerpo, el
    titulo de cada bloque de servicio (ej. "Estrategia de Marca") se queda
@@ -688,7 +734,9 @@
    sin parrafo en blanco entre ellas (a diferencia del hueco antes del
    primer item, que si tiene 1 linea en blanco) - el unico espacio es el
    propio interlineado, no un margen extra. */
-.service-group__desc { color: var(--color-text); font-size: 16px; line-height: normal; }
+/* 2026-07-13 (peticion del usuario): +2px sobre el tamano exacto de
+   Figma (16px), mismo motivo que .service-group__title de mas arriba. */
+.service-group__desc { color: var(--color-text); font-size: 18px; line-height: normal; }
 
 /* Figma: cada item ocupa su propia linea, sin excepcion (lista vertical
    simple, no texto que fluye en chips). display:flex + flex-wrap:wrap
@@ -711,9 +759,12 @@
    posicionar el guion) y la regla ::before con content:"—" (no tiene
    respaldo en Figma - se hizo visible en todas las lineas al arreglar
    SRV-021, antes quedaba disimulado por el layout de flex-wrap roto). */
+/* 2026-07-13 (peticion del usuario): +2px sobre el tamano exacto de
+   Figma (16px), mismo motivo que .service-group__title/__desc de mas
+   arriba. */
 .service-group__items li {
   color: var(--color-text-muted);
-  font-size: 16px;
+  font-size: 18px;
   line-height: normal;
 }
 
@@ -766,10 +817,16 @@
    tiene su propio height:calc(100vh - header-height)), en vez de un
    crecimiento variable. flex-grow/shrink en 0 para que no vuelva a
    estirarse ni encogerse por el espacio disponible. */
+/* margin-left:100px pedido por el usuario 2026-07-13: mismo margen
+   izquierdo que usa el carrusel de Proyectos (.project-showcase__list,
+   ver nota de mas arriba), solo version web (escritorio/tablet) - el
+   fallback movil/reduced-motion de mas abajo lo resetea a 0 igual que
+   hace el de Proyectos. */
 .service-showcase__list {
   position: relative;
   flex: 0 0 50%;
   min-height: 0;
+  margin-left: 100px;
 }
 
 /* Peticion cliente 2026-07-11: indicar el avance del scroll dentro del
@@ -877,14 +934,14 @@
 .service-link-row:hover .service-link-row__title,
 .service-link-row:focus-visible .service-link-row__title { color: var(--color-text); }
 
-/* Figma (nodos 194:631, 198:721-732): items apilados sin gap propio entre
-   ellos - cada caja de texto (titulo+descripcion) termina exactamente
-   donde empieza la siguiente, en las 11 repeticiones, sin excepcion. La
-   separacion visual sale solo del line-height natural de las 2 lineas
-   (titulo 32px + descripcion 16px), no de un margen añadido. */
+/* Peticion usuario 2026-07-13: 20px de interlineado entre cada item
+   (titulo+descripcion) apilado dentro de esta columna - antes sin gap
+   propio (ver historial Figma en el comentario retirado), la separacion
+   salia solo del line-height natural de las 2 lineas de cada item. */
 .service-link-row__items {
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }
 
 /* Figma: titulo de item Lora Regular 32px, color #989898 (--color-text-soft,
