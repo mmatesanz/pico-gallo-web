@@ -372,12 +372,31 @@
     font-size: var(--text-heading);
   }
 
+  /* Figma (Home Mobile, nodo 165:4 "Pie de Pagina"): Index e Info van
+     lado a lado en 2 columnas (no apiladas en 1 columna como antes), y
+     el orden vertical real es Index+Info -> Legal -> Logo (el logo es
+     lo ULTIMO del footer en movil, no lo primero como en el grid de
+     escritorio/tablet). column-gap generico (--space-lg) en vez del
+     column-gap dinamico de escritorio (min(206px,18vw), pensado para 3
+     columnas de ancho variable): aqui son solo 2 columnas iguales. */
   .site-footer__grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-lg);
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-lg);
+    row-gap: var(--space-lg);
+  }
+
+  /* align-items:center (no flex-end, a diferencia de escritorio): en el
+     Figma movil el bloque del logo queda centrado dentro del contenedor
+     (32px de margen a cada lado, medido sobre el nodo 165:20 dentro del
+     frame de 390px), no pegado al margen derecho. */
+  .site-footer__logo {
+    grid-column: 1 / -1;
+    align-items: center;
+    order: 3;
   }
 
   .site-footer__legal {
     grid-column: 1 / -1;
+    order: 2;
   }
 }

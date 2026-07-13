@@ -341,14 +341,43 @@
     overflow: visible;
   }
   .project-showcase__list { flex: none; min-height: 0; margin-left: 0; }
+  /* Bug encontrado 2026-07-13 (auditoria de version movil): grid-template-rows:100%
+     (regla base de escritorio, linea ~232 mas arriba - fuerza la unica
+     fila explicita a ocupar el 100% de .project-entry para que el
+     max-height:100% de la imagen funcione dentro del panel de altura
+     fija) no se reseteaba aqui. En movil .project-entry vuelve a
+     alto automatico (inset:auto), asi que ese 100% se resolvia contra
+     un alto indefinido - la fila implicita donde cae la imagen (2a fila,
+     fuera de la unica pista explicita) colapsaba a 0, y con ella la
+     imagen entera. grid-template-rows:none restaura el dimensionado
+     automatico normal (cada fila mide su propio contenido). */
   #home-proyectos .project-showcase__list .project-entry {
     position: relative;
     inset: auto;
     padding-block: 24px;
+    grid-template-rows: none;
+  }
+  /* Bug encontrado 2026-07-13 (auditoria de version movil): en el HTML el
+     bloque de texto (titulo/categoria/descripcion) va ANTES que
+     .project-entry__media - en escritorio no se nota porque son 2
+     columnas lado a lado (el orden del DOM no afecta el orden visual),
+     pero al apilarse en 1 sola columna en movil (ver @media generico mas
+     abajo) el orden del DOM SI pasa a ser el orden visual, e invertia el
+     de Figma (imagen primero, texto despues). order:-1 en la imagen la
+     adelanta visualmente sin tocar el HTML. */
+  #home-proyectos .project-showcase__list .project-entry__media {
+    order: -1;
   }
   #home-proyectos .project-showcase__list .project-entry__title {
     border-top: 1px solid var(--color-text-muted);
-    margin-top: 115px;
+    /* 40px (antes 115px, valor pensado para el modo panel de escritorio
+       donde el titulo no va debajo de la imagen sino en su propia
+       columna): gap real medido en Figma (Home Mobile, nodos 165:90/165:91
+       y equivalentes) entre el borde inferior de la imagen y esta linea
+       divisoria, ~40-49px segun el proyecto - nunca antes visible en
+       movil real porque .project-entry__media medía 0 de alto (ver bug
+       de mas arriba, ya corregido). */
+    margin-top: 40px;
     padding-top: 11px;
   }
   .project-showcase__list .project-entry > div:first-child { opacity: 1; }
@@ -362,48 +391,59 @@
      proyectos.html) para que el alto vuelva a derivarse del ancho, como
      antes de la correccion de mas arriba (esa correccion es especifica
      del modo panel de escritorio, con altura de fila fija). */
+  /* Bug encontrado 2026-07-13 (auditoria de version movil): justify-self:end
+     y margin-right:var(--project-media-right-gap) (regla base, pensada
+     para el hueco fijo junto al boton en el modo panel de escritorio) no
+     se reseteaban aqui. Con .project-entry en 1 sola columna en movil
+     (ver @media mas abajo en este archivo, "grid-template-columns:
+     minmax(0,1fr)" generico), un grid item con justify-self:end no se
+     estira a la anchura de esa columna - se dimensiona por su propio
+     contenido, y como ni el div ni su <img> tienen un ancho propio
+     (width:auto en la regla base), colapsaba a 0x0 y las 4 imagenes de
+     Proyectos desaparecian por completo en movil. */
   .project-showcase__list .project-entry__media {
     align-self: stretch;
+    justify-self: stretch;
+    width: 100%;
+    margin-right: 0;
     aspect-ratio: 9 / 10;
     height: auto;
+    /* max-height:100% (regla base) resuelve a 0 aqui: la fila
+       (.project-entry) tiene alto automatico segun su contenido, y ese
+       contenido incluye esta misma imagen - un porcentaje de altura
+       contra un contenedor sin alto definido colapsa a 0 en vez de
+       "sin limite". Sin sentido en movil de todas formas (esa regla
+       existia solo para no desbordar la fila de ALTURA FIJA del panel
+       de escritorio). */
+    max-height: none;
     transform: none;
   }
-}
 
-/* Fallback documentado (movil real <=860px y prefers-reduced-motion):
-   mismo criterio que el bloque equivalente de Proyectos de aqui arriba -
-   se desactiva el pin/scrub del carrusel de Servicios y vuelve al layout
-   en flujo normal (lista apilada de las 3 categorias, sin crossfade). El
-   JS de main.js tampoco calcula el indice activo en estos casos (mismo
-   guard !isMobileViewport && !prefersReducedMotion que ya usa
-   Proyectos). */
-@media (prefers-reduced-motion: reduce), (max-width: 860px) {
-  .service-showcase { height: auto; }
-  .service-showcase__pin {
-    position: relative;
-    top: auto;
-    height: auto;
-    overflow: visible;
+  /* Peticion cliente 2026-07-13: "Proyectos" debe quedar fijo (pegado bajo
+     el header) mientras se hace scroll por las 4 fichas apiladas, hasta
+     que se pase la ultima - no es el mismo mecanismo que el pin de
+     escritorio (ahi TODO el bloque, titulo+imagen, se queda fijo y hace
+     crossfade; aqui en movil la lista de fichas SI se desplaza con el
+     scroll, solo el titulo se queda). position:sticky en el propio <h2>
+     (no en .project-showcase__pin, que se dejo en position:relative/alto
+     automatico mas arriba para que las fichas fluyan con su alto real) -
+     su contenedor de referencia para el sticky sigue siendo ese mismo pin
+     (h2 + lista, sin el boton "Ver todos los proyectos", que es hermano
+     FUERA de .project-showcase en el HTML): el titulo se suelta justo
+     cuando el alto de ese contenedor se agota, es decir, justo al pasar
+     la ultima ficha (DEVCON VI) - ningun calculo extra en JS, es el
+     comportamiento nativo de sticky contra un contenedor de alto mayor
+     que el propio elemento.
+     z-index+background: sin esto, al quedar "pegado", el contenido de
+     las fichas que sigue moviendose por debajo (position:relative, sin
+     z-index propio) pintaria POR ENCIMA del titulo (orden del DOM, ambos
+     en el mismo contexto de apilamiento) en vez de detras. */
+  #home-proyectos .project-showcase__pin > .section__heading {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 2;
+    background: var(--color-bg);
   }
-  .service-showcase__list { flex: none; min-height: 0; margin-left: 0; }
-  #home-servicios .service-showcase__list .service-entry {
-    position: relative;
-    inset: auto;
-    opacity: 1;
-  }
-  #home-servicios .service-showcase__list .service-link-row {
-    border-top: 1px solid var(--color-border);
-    padding-block: var(--space-lg);
-    height: auto;
-  }
-  #home-servicios .service-showcase__list .service-entry:first-child .service-link-row {
-    border-top: none;
-  }
-  /* Sin scroll-jacking aqui (lista apilada normal), el concepto de
-     "avance dentro del carrusel" no aplica - main.js tampoco actualiza
-     --service-scroll-progress en este modo (mismo guard que el resto del
-     carrusel), asi que la barra se queda fija en 0% si no se oculta. */
-  .service-showcase__progress { display: none; }
 }
 
 /* ---------- Botones ---------- */
@@ -967,6 +1007,165 @@
   line-height: normal;
   color: var(--color-text-soft);
   margin-top: 0;
+}
+
+/* Fallback documentado (solo prefers-reduced-motion, CUALQUIER ancho): se
+   desactiva el pin/scrub del carrusel de Servicios y vuelve al layout en
+   flujo normal (lista apilada de las 3 categorias, con sus sub-items
+   completos, sin crossfade). El JS de main.js tampoco calcula el indice
+   activo en este caso (guard !prefersReducedMotion en main.js).
+
+   Peticion cliente 2026-07-13: a diferencia de este caso (accesibilidad,
+   cualquier ancho), el carrusel de Servicios en MOVIL REAL (<=860px) debe
+   comportarse igual que en escritorio/tablet - mismo pin+crossfade+barra
+   de progreso, solo con estilos distintos (ver el @media (max-width:860px)
+   de mas abajo, que ya NO desactiva el pin, solo ajusta margen y oculta
+   los sub-items). Por eso este bloque ya no incluye "(max-width:860px)"
+   en la media query (antes lo hacia, ver historial mas abajo).
+
+   Bug encontrado 2026-07-13 (auditoria de version movil): este bloque
+   vivia ANTES de las reglas base de arriba (.service-showcase,
+   #home-servicios .service-showcase__list .service-entry, etc.) - con
+   igual especificidad en ambos lados, ganaba la regla que aparece
+   DESPUES en el CSS sin importar la media query, asi que en movil real
+   se aplicaban las reglas de escritorio (pin sticky, opacity:0,
+   position:absolute) en vez de este fallback, dejando la lista de
+   Servicios invisible. Movido a este punto (justo despues de las reglas
+   base que sobreescribe) para que la cascada resuelva correctamente. */
+@media (prefers-reduced-motion: reduce) {
+  .service-showcase { height: auto; }
+  .service-showcase__pin {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+  }
+  .service-showcase__list { flex: none; min-height: 0; margin-left: 0; }
+  #home-servicios .service-showcase__list .service-entry {
+    position: relative;
+    inset: auto;
+    opacity: 1;
+  }
+  #home-servicios .service-showcase__list .service-link-row {
+    border-top: 1px solid var(--color-border);
+    padding-block: var(--space-lg);
+    height: auto;
+  }
+  #home-servicios .service-showcase__list .service-entry:first-child .service-link-row {
+    border-top: none;
+  }
+  /* Sin scroll-jacking aqui (lista apilada normal), el concepto de
+     "avance dentro del carrusel" no aplica - main.js tampoco actualiza
+     --service-scroll-progress en este modo (mismo guard que el resto del
+     carrusel), asi que la barra se queda fija en 0% si no se oculta. */
+  .service-showcase__progress { display: none; }
+}
+
+/* Peticion cliente 2026-07-13: SOLO estilos para movil real (<=860px) -
+   el pin/scroll/barra de progreso permanecen activos (igual
+   comportamiento de scroll que escritorio/tablet, ver JS en main.js).
+
+   Correccion sobre el intento anterior (flex:1 1 auto + overflow-y:auto
+   en .service-link-row): con las 3 categorias comprimidas dentro de un
+   pin de ALTO FIJO (calc(100vh - header), pensado para el viewport alto
+   de escritorio), la que mas sub-items tiene ("Sistemas de Diseño", 4
+   items) seguia sin caber entera y necesitaba scroll interno - el
+   cliente pide expresamente que NO se corte ningun texto, ni con scroll
+   interno: cada slide debe medir lo que necesite su propio contenido.
+   Eso es incompatible con el modelo de escritorio (los 3 paneles
+   superpuestos via position:absolute+inset:0, todos del mismo alto fijo,
+   crossfade por opacidad) - aqui en movil el panel INACTIVO se saca del
+   flujo por completo (display:none, no solo opacity:0) y el ACTIVO vuelve
+   a flujo normal (position:relative, alto automatico segun su contenido).
+   El pin (sticky) ya no fuerza una altura fija - crece o se encoge con
+   cada categoria activa. Se pierde el crossfade (fundido) de escritorio
+   al cambiar de categoria en movil (cambio instantaneo en su lugar) -
+   aceptado: el cliente prioriza ver el texto completo sobre conservar esa
+   transicion. */
+@media (max-width: 860px) {
+  .service-showcase__pin { height: auto; }
+
+  /* Peticion cliente 2026-07-13: reducir el espacio entre "Servicios" y
+     el primer servicio del carrusel - en movil, con la pantalla mas baja,
+     el hueco pensado para escritorio (--space-lg=40px bajo el titulo +
+     30px bajo la linea = 71px) se nota excesivo. Escopado a
+     #home-servicios (no toca el mismo margin-bottom en "Proyectos", que
+     usa la misma clase .section__heading pero no se ha pedido tocar).
+     Reducido de nuevo 2026-07-13 (16px+16px, ver mas abajo): con el pin
+     ahora a alto automatico (ver mas arriba, "Sistemas de Diseño" ya no
+     se recorta), la categoria con mas sub-items sigue sin caber entera
+     en 1 sola pantalla en moviles mas bajos (viewport ~667px, iPhone SE y
+     similares) - cada px que se libera aqui es un px mas de la
+     transicion completa visible sin tener que scrollear dentro del
+     propio slide. */
+  #home-servicios .section__heading {
+    margin-bottom: var(--space-xs);
+  }
+  #home-servicios .divider {
+    margin-bottom: var(--space-xs);
+  }
+
+  /* margin-left:100px (regla base, pensada para el ancho generoso de
+     escritorio/tablet) no cabe en un viewport movil - el contenido ya
+     tiene su propio padding lateral via .container. flex:0 0 50% (regla
+     base, tambien pensada para el viewport alto de escritorio) ya no
+     aplica: con el pin en alto automatico, la lista debe medir lo que
+     mida su contenido, no un porcentaje del pin. */
+  .service-showcase__list {
+    margin-left: 0;
+    flex: none;
+    min-height: 0;
+  }
+
+  #home-servicios .service-showcase__list .service-entry {
+    position: relative;
+    inset: auto;
+    display: none;
+  }
+
+  #home-servicios .service-showcase__list .service-entry.is-active {
+    display: block;
+  }
+
+  /* Peticion cliente 2026-07-13 (correccion sobre el intento anterior,
+     que ocultaba los sub-items por completo): en movil la informacion de
+     cada servicio (.service-link-row__items) SI debe verse, pero debajo
+     del nombre de la categoria - no al lado, en 2 columnas, como en
+     escritorio/tablet (ahi no cabe: cada columna quedaria demasiado
+     estrecha). 1 sola columna, el titulo de fila ocupa toda la fila y
+     los items pasan a la fila de abajo (grid-auto-flow: row, orden del
+     DOM). height:auto (no 100%) + overflow visible: el alto del slide
+     activo ya no viene impuesto por el pin, sino por su propio contenido -
+     nada que recortar ni que desplazar internamente. */
+  #home-servicios .service-showcase__list .service-link-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-md);
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Peticion cliente 2026-07-13: en movil, .service-link-row__title baja
+     de 48px (tamano compartido con escritorio/tablet) a 42px. */
+  #home-servicios .service-showcase__list .service-link-row__title {
+    font-size: 42px;
+    /* De inline (span) a block: necesario para que el vector de abajo
+       (::after) se dibuje como una linea de ancho completo bajo el
+       titulo, no pegado al final del texto. */
+    display: block;
+  }
+
+  /* Peticion cliente 2026-07-13: incluir el vector (misma linea fina que
+     ya separa "Servicios" del carrusel, ver .divider) debajo de CADA
+     servicio del carrusel - entre el nombre de la categoria y su lista
+     de sub-items. Como ::after del titulo (no un <hr> nuevo en el HTML)
+     para no duplicar este marcado por breakpoint. */
+  #home-servicios .service-showcase__list .service-link-row__title::after {
+    content: "";
+    display: block;
+    margin-top: var(--space-sm);
+    height: 1px;
+    background: var(--color-border);
+  }
 }
 
 

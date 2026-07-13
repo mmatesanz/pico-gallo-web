@@ -1033,8 +1033,43 @@
      resto de fuentes de este archivo, no se usa clamp() (ver historial de
      tokens.css: --content-padding paso de clamp a valor fijo el
      2026-07-10). */
+  /* Bug encontrado 2026-07-13 (peticion cliente: el statement se corta en
+     movil): .intro-statement traia margin-left/right:50px PROPIO (pensado
+     para sumarse al padding-inline:50px de .container en pantallas anchas,
+     "150px a cada lado" segun el comentario de la regla base) y su h1
+     tenia ADEMAS su propio margin-left:2.2vw/margin-right:6.3888vw - los
+     3 margenes se acumulan (nunca se reseteaban para movil: un intento
+     anterior de resetearlos en el otro @media(max-width:860px) de mas
+     arriba en este archivo no ganaba la cascada, por quedar ANTES que
+     estas reglas base con la misma especificidad - movido aqui, que ya
+     esta despues de ambas). Con los 3 margenes acumulados quedaba una
+     columna de solo ~156px utiles en un viewport de 390px - con eso,
+     casi cada palabra del statement ("ingrediente", "sensación",
+     "conocido") ocupaba su propia linea a 56px, 12 lineas * 70px de
+     interlineado = 840px de texto, mas alto que el propio pin (100dvh)
+     con overflow:hidden, asi que las ultimas lineas quedaban recortadas.
+     Se resetean aqui los 3 margenes (el ancho disponible pasa a depender
+     solo del padding-inline:50px de .container, igual que el resto de
+     paginas en movil) y se reduce el padding-top (heredaba
+     --space-2xl=96px, pensado para dejar aire bajo un header mucho mas
+     ancho) - con mas ancho util, el texto envuelve en menos lineas y
+     cabe entero sin recortarse. */
+  .intro-statement {
+    margin-left: 0;
+    margin-right: 0;
+    padding-top: var(--space-lg);
+  }
+
+  /* 40px (bajado de 56px): con el ancho util ya liberado de mas arriba,
+     56px seguia dejando muchas palabras largas en su propia linea. 40px
+     es el mayor tamano que, combinado con ese ancho, mantiene el bloque
+     de texto completo dentro del alto del pin (100dvh) en el viewport de
+     referencia del sitio (~390x844) sin recortarse por el overflow:hidden
+     del pin. */
   .intro-statement h1 {
-    font-size: 56px;
+    font-size: 40px;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   /* minmax(0, 1fr), no "1fr" a secas: un 1fr puro no evita que la pista

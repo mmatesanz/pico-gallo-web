@@ -223,7 +223,15 @@
     ? Array.prototype.slice.call(serviceShowcase.querySelectorAll(".service-entry"))
     : [];
 
-  if (serviceShowcase && servicePin && serviceEntries.length && !prefersReducedMotion && !isMobileViewport) {
+  /* Peticion cliente 2026-07-13: a diferencia de Proyectos (CR-03, que SI
+     sigue excluyendo movil real - ver isMobileViewport mas arriba), el
+     carrusel de Servicios debe tener el MISMO comportamiento de scroll en
+     movil que en escritorio/tablet (mismo pin + crossfade + barra de
+     progreso) - solo cambian los ESTILOS (ver el fallback de solo-ancho
+     en components.css, que ya no desactiva el pin, unicamente ajusta
+     margen y oculta los sub-items). Por eso aqui no se excluye movil con
+     isMobileViewport (solo prefers-reduced-motion, por accesibilidad). */
+  if (serviceShowcase && servicePin && serviceEntries.length && !prefersReducedMotion) {
     var SERVICE_COUNT = serviceEntries.length;
     var serviceTicking = false;
 
