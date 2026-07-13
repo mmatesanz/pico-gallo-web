@@ -708,6 +708,7 @@
    para el teaser de Proyectos en Home (HOME-PROJECTS-LAYOUT-01). */
 .project-mosaic {
   display: flex;
+  align-items: flex-start;
   gap: 4px;
   padding-right: 2.7%;
 }
@@ -816,22 +817,29 @@
    Melbourne, DCAVI Bogotá, Winds of Change, Arrecife, Prólogo, Terratile)
    no tienen subtítulo propio en Figma - solo título, sin dato a la
    derecha. */
+/* height:100% es necesario para que la imagen (width/height:100% +
+   object-fit:cover, ver .project-mosaic__item--square/--portrait img mas
+   abajo) pueda cubrir realmente la caja de su .project-mosaic__item: sin
+   esto el <a> queda con altura auto y el height:100% de la imagen no
+   tiene contra qué resolverse, así que la imagen cae a su relación de
+   aspecto natural en vez de recortarse - invisible cuando esa relación
+   coincide por casualidad con la de la caja (p.ej. Warner, 1600x2133 ≈
+   3:4), pero deja hueco negro real cuando no coincide (p.ej. Welt Vogel
+   Park, imagen casi cuadrada dentro de una caja --portrait). */
 .project-mosaic__frame {
   position: relative;
   display: block;
+  height: 100%;
 }
 
 .project-mosaic__frame img {
   transition: transform 0.5s ease;
 }
 
-/* .is-active (peticion cliente 2026-07-13): en movil real no hay raton
-   que dispare :hover - main.js anade esta clase con el primer tap sobre
-   la pieza para reproducir el mismo efecto (ver ese archivo para el
-   mecanismo completo, incluido el "segundo tap sigue el enlace"). En
-   escritorio/tablet nunca se añade (el guard de main.js excluye ese
-   ancho), asi que ahi el comportamiento sigue siendo:hover puro, sin
-   cambios. */
+/* .is-active ya no la añade ningun JS (el tap-to-hover de movil se quito
+   a peticion del cliente 2026-07-13, ver mobile override mas abajo que
+   fuerza el caption siempre visible) - el selector se deja por si se
+   reutiliza el patron en otra pieza, pero hoy solo aplica :hover puro. */
 .project-mosaic__frame:hover img,
 .project-mosaic__frame:focus-visible img,
 .project-mosaic__frame.is-active img {
@@ -1258,6 +1266,61 @@
   .project-mosaic {
     flex-direction: column;
     padding-right: 0;
+  }
+
+  /* Peticion cliente 2026-07-13: en movil se quita el efecto hover/tap
+     del mosaico de Proyectos (ver mas arriba, .project-mosaic__frame:hover
+     etc.) - el texto (titulo/subtitulo) se ve SIEMPRE debajo de su imagen,
+     sin necesitar tap previo, y el primer tap ya navega a la pagina del
+     proyecto (enlace normal, sin preventDefault - ver main.js).
+
+     El caption ya no puede ir position:absolute/top:98% (asi funciona en
+     escritorio, pensado para el hueco que deja el scale(0.96) del hover):
+     en movil no hay scale, asi que ese 98% cae DENTRO de la imagen todavia
+     a tamano completo (texto pintado sobre sus ultimos px) y un margen
+     fijo (28px) no basta para titulos que ocupan 2 lineas ("Abu Dhabi
+     Internacional Boat Show", "Parque de Atracciones Madrid"), que
+     entonces se solapan con la pieza siguiente. Solucion: sacar el caption
+     del position:absolute y dejarlo en flujo normal debajo de la imagen -
+     su alto pasa a depender del texto real (1 o 2 lineas) en vez de un
+     numero fijo adivinado, y por tanto SIEMPRE tiene su propio hueco. La
+     relacion de aspecto (cuadrado/vertical) se mueve del contenedor a la
+     imagen, ya que el contenedor ahora crece con el contenido (imagen +
+     texto), no al reves. */
+  .project-mosaic__item {
+    aspect-ratio: auto;
+    margin-bottom: 0;
+    transition: none;
+  }
+
+  .project-mosaic__frame {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-mosaic__item--square img {
+    aspect-ratio: 1 / 1;
+    height: auto;
+  }
+
+  .project-mosaic__item--portrait img {
+    aspect-ratio: 475 / 633;
+    height: auto;
+  }
+
+  .project-mosaic__frame:hover img,
+  .project-mosaic__frame:focus-visible img,
+  .project-mosaic__frame.is-active img {
+    transform: none;
+  }
+
+  .project-mosaic__caption {
+    position: static;
+    opacity: 1;
+    transform: none;
+    padding-top: 8px;
+    padding-bottom: 16px;
   }
 }
 
