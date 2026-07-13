@@ -733,7 +733,8 @@
 }
 
 .project-mosaic__item:has(.project-mosaic__frame:hover),
-.project-mosaic__item:has(.project-mosaic__frame:focus-visible) {
+.project-mosaic__item:has(.project-mosaic__frame:focus-visible),
+.project-mosaic__item:has(.project-mosaic__frame.is-active) {
   margin-bottom: 28px;
 }
 
@@ -824,8 +825,16 @@
   transition: transform 0.5s ease;
 }
 
+/* .is-active (peticion cliente 2026-07-13): en movil real no hay raton
+   que dispare :hover - main.js anade esta clase con el primer tap sobre
+   la pieza para reproducir el mismo efecto (ver ese archivo para el
+   mecanismo completo, incluido el "segundo tap sigue el enlace"). En
+   escritorio/tablet nunca se añade (el guard de main.js excluye ese
+   ancho), asi que ahi el comportamiento sigue siendo:hover puro, sin
+   cambios. */
 .project-mosaic__frame:hover img,
-.project-mosaic__frame:focus-visible img {
+.project-mosaic__frame:focus-visible img,
+.project-mosaic__frame.is-active img {
   transform: scale(0.96);
 }
 
@@ -864,7 +873,8 @@
 }
 
 .project-mosaic__frame:hover .project-mosaic__caption,
-.project-mosaic__frame:focus-visible .project-mosaic__caption {
+.project-mosaic__frame:focus-visible .project-mosaic__caption,
+.project-mosaic__frame.is-active .project-mosaic__caption {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1126,10 +1136,11 @@
     margin-left: 0;
   }
 
-  /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation,
-     mismo criterio que .projects-layout: columna de texto apilada
-     arriba, galeria en cuadricula de 2 columnas en vez de 6 (las piezas
-     "span-6" pasan a ocupar las 2, las "span-3"/"span-2" 1 cada una). */
+  /* Columna de texto apilada arriba, galeria en cuadricula de 2 columnas
+     en vez de 6 - mismo criterio que .projects-layout. El mapeo de
+     columnas de la galeria (span-6/span-3/span-2) SI tiene spec real en
+     Figma para movil, ver el comentario de .project-detail__gallery mas
+     abajo. */
   .project-detail {
     grid-template-columns: 1fr;
     padding-top: calc(var(--header-height) + var(--space-xl));
@@ -1142,17 +1153,48 @@
     margin-bottom: var(--space-lg);
   }
 
+  /* Peticion cliente 2026-07-13: "no pueden quedar huecos vacios entre
+     imagenes" en la galeria movil. Encontrado el mobile mockup real en
+     Figma (con node-id equivocado en la URL que dio el cliente, pero
+     localizable: frame "Proyecto_Slagharen" en movil, mal etiquetado
+     "Home Mobile" #2 en el panel de capas, node 165:167) - SI hay spec
+     movil, al contrario de lo que decia el comentario anterior de esta
+     regla (ya obsoleto, retirado).
+     El mapeo naive anterior (span-6->2 columnas, span-3 Y span-2 ->1
+     columna cada uno) podia dejar un hueco: con grid-auto-flow por
+     defecto (sparse), un span-6->2-columnas que cae justo despues de un
+     numero IMPAR de piezas de 1 columna empieza en una fila nueva sin
+     rellenar la celda suelta de la fila anterior - eso deja el hueco
+     que describe el cliente.
+     El Figma real de Slagharen (10 piezas: span-6,span-3,span-3,span-2,
+     span-2,span-2,span-3,span-3,span-3,span-3) NO usa un mapeo tan
+     simple - revela una regla mas precisa por contenido:
+       - span-6 (ancho completo en escritorio) -> ancho completo en movil.
+       - span-3 (mitad en escritorio, ya pensada en pareja) -> mitad en
+         movil TAMBIEN, en pareja (verificado: bolsa+patron, y las 2
+         parejas finales de Slagharen quedan exactamente asi en Figma).
+       - span-2 (un tercio en escritorio, 3 por fila - demasiado estrecho
+         en un telefono) -> ancho completo en movil, cada una en su
+         propia fila (verificado: los 3 carteles Apollo/Gold Rush/vaquero
+         de Slagharen, span-2 en escritorio, aparecen a ancho completo
+         y apilados en el Figma movil, no en trio ni en pareja).
+     grid-auto-flow:dense como red de seguridad adicional (no el
+     mecanismo principal): si en algun otro proyecto una secuencia
+     concreta de span-3 no vinera en pareja (numero impar), dense
+     recoloca la siguiente pieza que si encaje en la celda suelta en vez
+     de dejarla vacia - nunca deja un hueco intermedio sea cual sea el
+     orden real de cada proyecto. */
   .project-detail__gallery {
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-flow: dense;
     padding-right: 0;
   }
 
-  .project-detail__media--span-6 { grid-column: span 2; }
-  .project-detail__media--span-3,
-  .project-detail__media--span-2 { grid-column: span 1; }
+  .project-detail__media--span-6,
+  .project-detail__media--span-2 { grid-column: span 2; }
+  .project-detail__media--span-3 { grid-column: span 1; }
 
-  /* Sin spec movil en Figma (frame fijo de 1280px) - accepted-deviation:
-     titulo apilado arriba, mosaico en 1 sola columna (las 2 columnas de
+  /* Titulo apilado arriba, mosaico en 1 sola columna (las 2 columnas de
      escritorio una detras de otra, no intercaladas), mismo criterio que
      el resto del sitio para este tipo de fallback.
      minmax(0, 1fr), no "1fr" a secas: la linea decorativa de "Proyectos"

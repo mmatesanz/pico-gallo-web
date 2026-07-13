@@ -312,4 +312,50 @@
     }
   }
 
+  /* Peticion cliente 2026-07-13: el efecto hover del mosaico de Proyectos
+     (proyectos.html - escala de la imagen + caption debajo, ver
+     .project-mosaic__frame:hover en pages.css) se tiene que mantener
+     tambien en movil real, donde no hay raton que dispare :hover. Se
+     emula con tap, mismo patron usado en otros sitios para "preview antes
+     de navegar": el primer tap sobre una pieza SIN el efecto activo lo
+     activa (anade .is-active, ver pages.css) y NO sigue el enlace todavia
+     (preventDefault); un segundo tap sobre esa MISMA pieza, ya activa,
+     sigue el enlace con normalidad (no se intercepta). Tocar fuera de
+     cualquier pieza (u otra pieza distinta) desactiva la que estuviera
+     abierta. Reutiliza isMobileViewport (<=860px, mismo umbral que el
+     resto del sitio) - en escritorio/tablet este bloque no hace nada, el
+     :hover nativo del CSS sigue intacto sin JS de por medio. Las piezas
+     sin pagina de detalle (.project-mosaic__frame--static, un <div>, no
+     un <a>) no tienen enlace que seguir - el mismo listener simplemente
+     alterna .is-active en cada tap, sin necesitar el "segundo tap". */
+  var mosaicFrames = Array.prototype.slice.call(document.querySelectorAll(".project-mosaic__frame"));
+  if (mosaicFrames.length && isMobileViewport) {
+    var deactivateAllMosaicFrames = function () {
+      mosaicFrames.forEach(function (frame) {
+        frame.classList.remove("is-active");
+      });
+    };
+
+    mosaicFrames.forEach(function (frame) {
+      frame.addEventListener("click", function (event) {
+        if (frame.classList.contains("is-active")) {
+          if (frame.tagName === "A") {
+            return;
+          }
+          frame.classList.remove("is-active");
+          return;
+        }
+        event.preventDefault();
+        deactivateAllMosaicFrames();
+        frame.classList.add("is-active");
+      });
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest(".project-mosaic__frame")) {
+        deactivateAllMosaicFrames();
+      }
+    });
+  }
+
 })();

@@ -356,20 +356,71 @@
 
   .menu-toggle { display: inline-flex; }
 
+  /* Figma (Home Mobile, nodo 165:129 "Menu Mobile", node-id=165-139):
+     al abrir el menu movil, TODO el panel (no solo la lista de links)
+     pasa a fondo blanco con texto/logo negro - invertido respecto al
+     tema oscuro del resto del sitio. .lang-toggle vive normalmente fuera
+     del flujo fijo (regla generica de arriba lo oculta del todo en
+     movil, ver "display:none"), pero en Figma "EN ES" SI aparece dentro
+     de este panel, debajo de los links - por eso aqui el fixed/inset se
+     mueve al propio <nav> (contenedor comun de la lista Y del selector
+     de idioma), no solo a .site-nav__links como antes: asi ambos quedan
+     apilados dentro del mismo panel con un solo flex-column, sin tocar
+     el HTML (el idioma no esta anidado dentro del <ul>). */
   body.nav-open .site-nav {
-    display: flex;
-  }
-
-  body.nav-open .site-nav__links {
     display: flex;
     position: fixed;
     inset: var(--header-height) 0 0 0;
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: #fff;
+    color: #000;
     flex-direction: column;
-    padding: var(--space-xl) var(--content-padding);
-    gap: var(--space-md);
-    font-size: var(--text-heading);
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: var(--space-2xl);
+    gap: var(--space-xl);
+  }
+
+  /* Header (logo+hamburger) tambien pasa a negro sobre blanco, igual que
+     el panel que abre debajo (Figma: "Logo_PDG_Negro", lineas del icono
+     en negro) - filter:invert(1) es el mismo truco ya usado en
+     .site-header.is-on-light para el mismo logo (blanco por defecto). El
+     wordmark ("PICO DE GALLO") no aparece en el Figma del menu abierto,
+     solo el icono - se oculta aqui, solo en movil y solo con el menu
+     abierto (en el resto de contextos el logo completo se queda igual). */
+  body.nav-open .site-header {
+    background: #fff;
+    color: #000;
+  }
+
+  body.nav-open .site-header__logo {
+    filter: invert(1);
+  }
+
+  body.nav-open .site-header__logo .logo-word {
+    display: none;
+  }
+
+  /* 36px/Lora explicito (Figma, nodos 165:158-161) - var(--text-heading)
+     (pensado para escritorio/tablet) resuelve mucho mas pequeno a este
+     ancho de viewport. Gap casi nulo entre items: en Figma la distancia
+     entre el inicio de una linea y la siguiente (~41-45px) coincide con
+     el alto de linea normal de un texto de 36px - los 4 links van
+     pegados unos a otros con su propio interlineado, sin espacio extra
+     entre ellos (a diferencia del hueco mas grande antes de EN/ES, ver
+     gap:var(--space-xl) en el <nav> de arriba). */
+  body.nav-open .site-nav__links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    font-size: 36px;
+  }
+
+  /* .lang-toggle esta oculto sitewide en movil (regla generica de arriba);
+     aqui se reactiva SOLO con el menu abierto, centrado igual que los
+     links (Figma: "EN ES" centrado bajo la lista, 14px). */
+  body.nav-open .lang-toggle {
+    display: flex;
   }
 
   /* Figma (Home Mobile, nodo 165:4 "Pie de Pagina"): Index e Info van
