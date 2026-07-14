@@ -432,4 +432,46 @@
     window.addEventListener("resize", onServiceRowMediaScroll);
   }
 
+  /* Peticion cliente 2026-07-14: al volver a la pagina de Proyectos
+     (desde la ficha de un proyecto - nav, footer, boton "Ver todos los
+     proyectos" o el boton "atras" del navegador) la pagina debe quedar
+     donde estaba el proyecto pulsado, no en la parte de arriba. Los
+     enlaces del mosaico son navegacion normal (<a href>, sin SPA), asi
+     que un carga nueva de proyectos.html siempre empieza en scrollY:0
+     por defecto - sessionStorage es el unico sitio donde puede
+     persistir "que proyecto pulse" entre 2 cargas de pagina distintas.
+     Se guarda el href al pulsar (antes de que el navegador abandone la
+     pagina) y se consume UNA sola vez al cargar proyectos.html (se borra
+     nada mas leerlo): asi solo salta al proyecto justo despues de volver
+     de su ficha, no en cualquier visita futura a Proyectos.
+
+     `[href]` en el selector excluye a proposito los mosaicos "estaticos"
+     sin proyecto real (Sweet Candy Studios, Rise Melbourne - ver
+     .project-mosaic__frame--static en proyectos.html), que son <div>,
+     no <a>, y no participan de esta navegacion.
+
+     No hace falta esperar a que carguen las imagenes lazy antes de
+     hacer scrollIntoView: cada .project-mosaic__item ya reserva su
+     tamano final con aspect-ratio (ver pages.css), no hay salto de
+     layout pendiente que pueda desplazar el objetivo despues del
+     scroll. */
+  var PROJECT_LAST_VIEWED_KEY = "pdg:lastProjectHref";
+  var projectMosaicLinks = Array.prototype.slice.call(document.querySelectorAll(".project-mosaic__frame[href]"));
+  if (projectMosaicLinks.length) {
+    projectMosaicLinks.forEach(function (link) {
+      link.addEventListener("click", function () {
+        sessionStorage.setItem(PROJECT_LAST_VIEWED_KEY, link.getAttribute("href"));
+      });
+    });
+
+    var lastProjectHref = sessionStorage.getItem(PROJECT_LAST_VIEWED_KEY);
+    if (lastProjectHref) {
+      sessionStorage.removeItem(PROJECT_LAST_VIEWED_KEY);
+      var lastProjectLink = document.querySelector('.project-mosaic__frame[href="' + lastProjectHref + '"]');
+      if (lastProjectLink) {
+        lastProjectLink.scrollIntoView({ block: "center" });
+      }
+    }
+  }
+
 })();
