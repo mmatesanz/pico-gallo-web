@@ -831,32 +831,79 @@
   height: calc(3 * 100vh);
 }
 
+/* Peticion cliente 2026-07-14 (v1): reducir el alto de este pin - a
+   calc(100vh-header) quedaba mucho espacio vacio por debajo de la barra
+   de progreso (hasta ~236px en un viewport de 900px de alto), porque
+   .service-showcase__list solo ocupaba el 50% de esa altura y nada mas
+   rellenaba el resto. Primer intento (75vh + lista al 65%) SE RECORTABA
+   en viewports bajos (~768px): al ser la lista un % del pin y el pin un
+   % del viewport, en pantallas bajas ambos se encogen aunque el TEXTO no
+   se encoja con ellos. Segundo intento: pin a height:auto + lista a un
+   alto fijo (450px) - sin recortes, pero ya NO se calcula en funcion del
+   viewport (siempre el mismo alto, sin importar la pantalla).
+
+   Peticion cliente 2026-07-14 (v2): "sigue habiendo espacio perdido,
+   reducir unos 100px - las dimensiones tienen que calcularse en funcion
+   del dispositivo". Se combinan las dos ideas con max(): un SUELO fijo
+   (589px = la suma EXACTA medida de titulo(72)+su margen(24)+divisor(1)+
+   su margen(18)+lista minima(430)+margen superior de la barra(18)+barra
+   (2)+margen inferior(24), con los margenes ya recortados, ver mas
+   abajo) y una parte basada en 68vh que solo entra en juego (y hace
+   crecer el pin) en viewports altos donde 68vh-header supera ese suelo
+   (~980px de alto en adelante) - asi vuelve a depender del dispositivo
+   (mas alto en monitores grandes) sin arriesgar recortes en portatiles
+   normales, donde el suelo manda y el resultado es ~76px mas bajo que el
+   intento anterior (665px -> 589px).
+   Bug 2026-07-14 (corregido aqui): el primer calculo de este suelo
+   (571px) estaba mal sumado - 18px por debajo de lo que realmente
+   necesitan los hijos. Con el pin mas bajo que su contenido, flexbox
+   encogia lo unico sin min-height que lo protegiera (la barra de
+   progreso, min-content practicamente 0) para absorber esos 18px,
+   dejandola con 0px de alto - invisible, aunque seguia en el DOM. Ademas
+   de corregir el numero, .service-showcase__progress (ver mas abajo)
+   gana flex-shrink:0 como cinturon de seguridad, para que este tipo de
+   fallo no pueda volver a hacerla desaparecer en silencio. */
 .service-showcase__pin {
   position: sticky;
   top: var(--header-height);
-  height: calc(100vh - var(--header-height));
+  height: max(589px, calc(68vh - var(--header-height)));
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Peticion cliente 2026-07-11: espacio de unos 30px entre el vector
-   (.divider, ver mas arriba) y el contenido que viene despues
-   (.service-showcase__list). Escopado a #home-servicios en vez de
-   modificar la regla generica .divider (compartida potencialmente con
-   otros usos futuros de esa clase, que no deberian heredar este espacio
-   especifico de Servicios). */
-#home-servicios .divider {
-  margin-bottom: 30px;
+/* Peticion cliente 2026-07-14: margenes recortados (de 40px a 24px) para
+   ganar los ~100px pedidos sin tocar el tamano de texto - "Servicios"
+   (.section__heading, regla compartida con Proyectos, --space-lg=40px)
+   se escopa aqui solo para #home-servicios, igual que ya se hacia con
+   .divider un poco mas abajo, sin tocar Proyectos. */
+#home-servicios .section__heading {
+  margin-bottom: 24px;
 }
 
-/* Peticion cliente 2026-07-11: reducir el alto de esta lista a la mitad.
-   Antes flex:1 (crecia para ocupar todo el espacio restante del pin
-   despues de "Servicios"/divider/barra de progreso); ahora flex-basis
-   fijo al 50% del alto del pin (que es definido, .service-showcase__pin
-   tiene su propio height:calc(100vh - header-height)), en vez de un
-   crecimiento variable. flex-grow/shrink en 0 para que no vuelva a
-   estirarse ni encogerse por el espacio disponible. */
+/* Peticion cliente 2026-07-11: espacio entre el vector (.divider, ver mas
+   arriba) y el contenido que viene despues (.service-showcase__list).
+   Escopado a #home-servicios en vez de modificar la regla generica
+   .divider (compartida potencialmente con otros usos futuros de esa
+   clase, que no deberian heredar este espacio especifico de Servicios).
+   Reducido de 30px a 18px el 2026-07-14 (ver nota extensa en
+   .service-showcase__pin) para recuperar altura sin recortar contenido. */
+#home-servicios .divider {
+  margin-bottom: 18px;
+}
+
+/* Peticion cliente 2026-07-11: reducir el alto de esta lista - antes
+   flex:1 (crecia para ocupar todo el espacio restante del pin despues de
+   "Servicios"/divider/barra de progreso).
+   Peticion cliente 2026-07-14: flex:1 1 auto + min-height:430px (en vez
+   del alto fijo de 450px del intento anterior) - vuelve a crecer con el
+   espacio disponible del pin (que ahora SI depende del viewport, ver
+   .service-showcase__pin), pero sin bajar nunca de 430px, que sigue
+   dando margen sobre los 422px reales de "Sistemas de Diseño" (el slide
+   con mas sub-items, medido con los 4 items en flujo normal sin
+   comprimir) - la combinacion (pin con suelo 571px = header+430+footer,
+   lista flex+min-height) garantiza que nunca se recorta, en cualquier
+   alto de viewport, y crece en pantallas altas en vez de quedarse fija. */
 /* margin-left:100px pedido por el usuario 2026-07-13: mismo margen
    izquierdo que usa el carrusel de Proyectos (.project-showcase__list,
    ver nota de mas arriba), solo version web (escritorio/tablet) - el
@@ -864,8 +911,8 @@
    hace el de Proyectos. */
 .service-showcase__list {
   position: relative;
-  flex: 0 0 50%;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 430px;
   margin-left: 100px;
 }
 
@@ -887,11 +934,15 @@
    .divider/.service-link-row para lineas finas (1px, --color-border).
    margin-top: 30px (peticion cliente 2026-07-11, antes var(--space-sm)
    =16px) - mismo espacio de 30px que ya separa el divider del contenido
-   mas arriba, esta vez entre el final del texto del slide y la barra. */
+   mas arriba, esta vez entre el final del texto del slide y la barra.
+   Reducido a 18px/24px el 2026-07-14 (ver nota extensa en
+   .service-showcase__pin) para recuperar altura del pin sin recortar
+   contenido. */
 .service-showcase__progress {
   height: 2px;
-  margin-top: 30px;
-  margin-bottom: var(--space-lg);
+  flex-shrink: 0;
+  margin-top: 18px;
+  margin-bottom: 24px;
   background: var(--color-border);
   overflow: hidden;
 }
@@ -942,7 +993,15 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-xl);
-  align-items: start;
+  /* Peticion cliente 2026-07-14 (2a): stretch en vez de start - ambas
+     columnas (col1 con la imagen, .service-link-row__items con la
+     descripcion) pasan a ocupar la altura completa de la fila, requisito
+     para poder centrar su contenido en esa altura (ver
+     .service-link-row__items mas abajo) y que ese centro coincida con el
+     de la imagen (centrada en col1, ver .service-entry__media). Con
+     align-items:start cada columna medía solo su propio contenido y sus
+     centros no coincidian entre si. */
+  align-items: stretch;
   padding-block: var(--space-lg);
   border-top: 1px solid var(--color-border);
 }
@@ -982,6 +1041,11 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* Peticion cliente 2026-07-14 (2a): centra el bloque de items en la
+     altura completa de la columna (ahora stretch, ver .service-link-row)
+     para que su centro coincida con el de la imagen del carrusel
+     (.service-entry__media, centrada en col1 con el mismo alto). */
+  justify-content: center;
 }
 
 /* Figma: titulo de item Lora Regular 32px, color #989898 (--color-text-soft,
@@ -1007,6 +1071,100 @@
   line-height: normal;
   color: var(--color-text-soft);
   margin-top: 0;
+}
+
+/* Peticion cliente 2026-07-14: nuevo componente a la izquierda de cada
+   slide del carrusel de Servicios (solo escritorio/tablet), inspirado en
+   koto.com (div "bottom-0 left-0 w-full md:absolute md:max-w-sidebar-wide"
+   de su carrusel de estudios) - una imagen anclada a la esquina inferior
+   izquierda del slide. Se traslada el PATRON (imagen anclada abajo a la
+   izquierda, ancho acotado) sin copiar el aspecto de koto (esquinas
+   redondeadas): el resto del sitio no usa border-radius en ninguna
+   imagen, mantenerlo sin redondear es consistente con esa convencion ya
+   establecida.
+
+   Correccion 2026-07-14 sobre el primer intento: la imagen se habia
+   colocado compartiendo celda con el titulo via grid-column/grid-row en
+   .service-link-row (grid de 2 columnas, titulo/items) - eso descuadraba
+   el carrusel entero, porque .service-link-row usa align-items:start
+   (los hijos NO se estiran a la altura de la fila, solo se alinean
+   arriba): al compartir celda el titulo y la imagen quedaban los dos
+   pegados arriba (la imagen ENCIMA del titulo, no debajo) en vez de
+   quedar cada uno en su sitio, y el intento de forzar la imagen abajo
+   con align-self:end no tenia una celda con alto resuelto contra la que
+   anclarse de forma fiable.
+   Solucion: .service-link-row vuelve a tener exactamente 2 hijos directos
+   (como antes de este cambio) - .service-link-row__col1 (titulo + imagen)
+   y .service-link-row__items (sin tocar) - así las 2 columnas del grid
+   siguen siendo las mismas de siempre. Dentro de la primera columna,
+   .service-link-row__col1 es un flex column con height:100% (resuelve
+   bien: el grid contenedor SI tiene alto definido via su propio
+   height:100%, y con un unico row track sin dimensionar explicitamente
+   ese alto se reparte completo a la fila por defecto - align-items:start
+   solo afecta a cada ITEM dentro de su celda, no al alto de la celda en
+   si) - el titulo queda arriba (flujo normal) y la imagen se ancla abajo
+   con margin-top:auto, sin salir nunca de la propia columna 1. Imagenes
+   elegidas por afinidad tematica con cada pilar (mismos assets ya usados
+   en el teaser de Proyectos de Home, sin descargar nada nuevo): Estrategia
+   -> 108 Wanderlust (rebranding), Sistemas de Diseño -> Parque Warner
+   Madrid (sistema de identidad extenso), Experiencia y Ejecución -> DEVCON
+   VI (diseño de evento). */
+.service-link-row__col1 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Peticion cliente 2026-07-14: cada slide muestra varias imagenes (no 1
+   sola fija) que van cambiando mientras dura ese slide (ver main.js,
+   activeMediaImgs) - las imagenes se apilan con position:absolute+inset:0
+   y crossfade por opacidad (mismo patron que .service-entry para las
+   3 categorias), asi que el tamano/aspect-ratio se mueve al CONTENEDOR
+   (.service-entry__media, que ya no puede medir su alto a partir de una
+   imagen en flujo normal) en vez de a cada <img>.
+
+   Peticion cliente 2026-07-14 (2a): la imagen deja de anclarse abajo y
+   pasa a centrarse en altura con la columna de descripcion
+   (.service-link-row__items, que ahora hace lo mismo con su contenido -
+   ver justify-content:center mas abajo - dentro de una columna con
+   align-items:stretch en .service-link-row).
+
+   Primer intento (retirado): position:absolute + top:50% dentro de
+   col1, ignorando la altura real del titulo. Se rompio con el titulo de
+   2 lineas de "Experiencia y Ejecución" (mas largo que "Estrategia" o
+   "Sistemas de Diseño") - al salir del flujo, la imagen se centraba
+   respecto a la ALTURA TOTAL de col1 sin tener en cuenta cuanto espacio
+   ocupaba el titulo, y con 2 lineas invadia el hueco de la imagen
+   (solapamiento visible). Solucion actual: la imagen se queda EN EL
+   FLUJO normal de col1 (sin position:absolute), con margin-top:auto +
+   margin-bottom:auto - los margenes automaticos de flexbox reparten
+   TODO el espacio libre que deja el titulo por igual arriba y abajo de
+   la imagen, centrandola dentro del hueco restante bajo el titulo (nunca
+   pisa el titulo, cualquiera que sea su altura) - con el titulo ocupando
+   una fraccion pequeña de los 430px de alto de la columna, ese centro
+   practicamente coincide con el centro de .service-link-row__items. */
+.service-entry__media {
+  position: relative;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 4 / 3;
+}
+
+.service-entry__media img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.service-entry__media img.is-active {
+  opacity: 1;
 }
 
 /* Fallback documentado (solo prefers-reduced-motion, CUALQUIER ancho): se
@@ -1165,6 +1323,12 @@
     margin-top: var(--space-sm);
     height: 1px;
     background: var(--color-border);
+  }
+
+  /* Peticion cliente 2026-07-14: la imagen lateral de cada slide (ver
+     .service-entry__media mas arriba) es solo para escritorio/tablet. */
+  .service-entry__media {
+    display: none;
   }
 }
 

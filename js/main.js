@@ -241,12 +241,49 @@
       var rawProgress = scrollableDistance > 0 ? (-rect.top) / scrollableDistance : 0;
       rawProgress = Math.max(0, Math.min(1, rawProgress));
 
-      var activeIndex = Math.min(SERVICE_COUNT - 1, Math.round(rawProgress * (SERVICE_COUNT - 1)));
+      /* Peticion cliente 2026-07-14: cada slide debe consumir la MISMA
+         distancia de scroll ("dos movimientos de raton" para cualquier
+         transicion, no solo para las de los extremos). Con
+         round(rawProgress*(N-1)) (formula anterior) el slide del MEDIO
+         ocupa el doble de distancia que los de los extremos: al repartir
+         N puntos (0, 1/(N-1), 2/(N-1)...) sobre el rango 0-1 y redondear
+         al mas cercano, los slides interiores "heredan" medio segmento de
+         cada lado (segmento completo), mientras los de los extremos solo
+         heredan medio segmento (la otra mitad se sale del rango 0-1) - la
+         mitad de ancho, la mitad de scroll. floor(rawProgress*N) reparte
+         el rango 0-1 en N segmentos iguales (uno por slide) en vez de N-1
+         "huecos entre puntos", sin ese sesgo. */
+      var activeIndex = Math.min(SERVICE_COUNT - 1, Math.floor(rawProgress * SERVICE_COUNT));
 
       serviceEntries.forEach(function (entry, index) {
         entry.classList.toggle("is-active", index === activeIndex);
       });
       serviceShowcase.style.setProperty("--service-scroll-progress", rawProgress.toFixed(4));
+
+      /* Peticion cliente 2026-07-14: "por cada vez que hago scroll quiero
+         que la imagen cambie, para que se vean mas proyectos" - cada
+         .service-entry__media ya no es 1 sola imagen fija durante todo su
+         slide, sino varias (ver HTML, un <img data-media-index> por
+         proyecto) que van cambiando MIENTRAS dura ese slide. Se calcula
+         el progreso DENTRO del segmento del slide activo (0 a 1, mismo
+         truco floor() que activeIndex arriba pero aplicado al segmento
+         individual en vez de al carrusel entero) y se activa la imagen
+         correspondiente - asi cada scroll dentro de un mismo slide sigue
+         cambiando algo en pantalla, en vez de quedarse quieto hasta el
+         siguiente cambio de categoria. */
+      var segmentProgress = rawProgress * SERVICE_COUNT - activeIndex;
+      segmentProgress = Math.max(0, Math.min(1, segmentProgress));
+      var activeMediaImgs = serviceEntries[activeIndex]
+        ? Array.prototype.slice.call(serviceEntries[activeIndex].querySelectorAll(".service-entry__media img"))
+        : [];
+      if (activeMediaImgs.length) {
+        var mediaIndex = Math.min(activeMediaImgs.length - 1, Math.floor(segmentProgress * activeMediaImgs.length));
+        serviceEntries.forEach(function (entry) {
+          Array.prototype.slice.call(entry.querySelectorAll(".service-entry__media img")).forEach(function (img, i) {
+            img.classList.toggle("is-active", entry === serviceEntries[activeIndex] && i === mediaIndex);
+          });
+        });
+      }
 
       serviceTicking = false;
     };
