@@ -423,9 +423,16 @@
 
   /* .lang-toggle esta oculto sitewide en movil (regla generica de arriba);
      aqui se reactiva SOLO con el menu abierto, centrado igual que los
-     links (Figma: "EN ES" centrado bajo la lista, 14px). */
+     links.
+
+     Peticion cliente 2026-07-14: EN/ES al mismo tamaño que el resto de
+     opciones del menu movil (36px, ver body.nav-open .site-nav__links)
+     - antes heredaba var(--text-nav)=14px (pensado para el header de
+     escritorio/tablet, donde EN/ES SI comparte tamaño con los links via
+     ese mismo token), sin ningun override para el panel movil. */
   body.nav-open .lang-toggle {
     display: flex;
+    font-size: 36px;
   }
 
   /* Figma (Home Mobile, nodo 165:4 "Pie de Pagina"): Index e Info van

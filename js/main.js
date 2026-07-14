@@ -347,6 +347,89 @@
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(syncServiceRowTitleHeights);
     }
+
+    /* Peticion cliente 2026-07-14: en la pagina de Servicios (no la home),
+       una imagen de proyecto (una por servicio, ver .services-media en
+       components.css) vive bajo "Servicios" en la columna sticky de la
+       izquierda - no repetida en cada fila - y va cambiando "a medida
+       que hagas scroll down o up". Aqui no hay pin/scroll-jacking (CR-01
+       en Home): cada fila vive en flujo de pagina normal con SOLO su
+       titulo fijo por sticky (`.service-row > div:first-child`). Por eso
+       primero hay que decidir CUAL de las 3 filas esta "activa" en cada
+       momento del scroll (la que tiene su titulo actualmente fijo), y
+       solo despues calcular el progreso DENTRO de esa fila para elegir
+       la imagen - mismo patron de 2 niveles que activeIndex/
+       segmentProgress en el carrusel de Home, pero "cual fila" viene del
+       scroll normal en vez de un indice de slide con pin.
+
+       Progreso SIN acotar a 0-1 (a diferencia del resto del sitio): una
+       fila solo cuenta como "activa" mientras su titulo esta realmente
+       fijo (0 <= progreso <= 1); fuera de ese rango (la fila aun no ha
+       llegado o ya la paso el scroll) no debe poder "ganar" la imagen
+       compartida. En el hueco de margin-top entre filas (29-42px, ver
+       .service-row:nth-of-type) ninguna fila cae en rango - se deja tal
+       cual (no se actualiza name grupo activo) en vez de ocultar la
+       imagen, un parpadeo por un hueco de menos de 50px no aporta nada.
+
+       getComputedStyle(titleBlock).top da el valor de anclaje sticky
+       resuelto en px (calc(header+2xl+87px) en escritorio, header en
+       movil via media query) sin tener que duplicar ese calculo aqui -
+       es un valor estable, no la posicion visual actual del elemento. */
+    var serviceMediaGroups = Array.prototype.slice.call(document.querySelectorAll(".services-media__group"));
+
+    var updateServiceRowMedia = function () {
+      if (!serviceMediaGroups.length) return;
+
+      var activeRowIndex = -1;
+      var activeRawProgress = 0;
+
+      serviceRows.forEach(function (row, index) {
+        var titleBlock = row.querySelector(":scope > div:first-child");
+        if (!titleBlock) return;
+
+        var stickyTop = parseFloat(getComputedStyle(titleBlock).top) || 0;
+        var rowRect = row.getBoundingClientRect();
+        var scrollableDistance = row.offsetHeight - titleBlock.offsetHeight;
+        var rawProgress = scrollableDistance > 0 ? (stickyTop - rowRect.top) / scrollableDistance : 0;
+
+        if (rawProgress >= 0 && rawProgress <= 1) {
+          activeRowIndex = index;
+          activeRawProgress = rawProgress;
+        }
+      });
+
+      if (activeRowIndex === -1) return;
+
+      serviceMediaGroups.forEach(function (group, index) {
+        group.classList.toggle("is-active", index === activeRowIndex);
+      });
+
+      var activeGroup = serviceMediaGroups[activeRowIndex];
+      var activeImgs = Array.prototype.slice.call(activeGroup.querySelectorAll("img"));
+      if (!activeImgs.length) return;
+
+      var mediaIndex = Math.min(activeImgs.length - 1, Math.floor(activeRawProgress * activeImgs.length));
+      serviceMediaGroups.forEach(function (group) {
+        Array.prototype.slice.call(group.querySelectorAll("img")).forEach(function (img, i) {
+          img.classList.toggle("is-active", group === activeGroup && i === mediaIndex);
+        });
+      });
+    };
+
+    var serviceRowMediaTicking = false;
+    var onServiceRowMediaScroll = function () {
+      if (!serviceRowMediaTicking) {
+        serviceRowMediaTicking = true;
+        window.requestAnimationFrame(function () {
+          updateServiceRowMedia();
+          serviceRowMediaTicking = false;
+        });
+      }
+    };
+
+    updateServiceRowMedia();
+    window.addEventListener("scroll", onServiceRowMediaScroll, { passive: true });
+    window.addEventListener("resize", onServiceRowMediaScroll);
   }
 
 })();

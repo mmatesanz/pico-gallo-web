@@ -579,6 +579,57 @@
   background: var(--color-bg);
 }
 
+/* Peticion cliente 2026-07-14 (correccion sobre el primer intento): el
+   componente de imagen del carrusel de Servicios de Home (imagen de un
+   proyecto por servicio) NO va en la columna del medio (titulo de cada
+   fila, "Estrategia"/"Sistemas de Diseño"/"Experiencias y Ejecución"),
+   va debajo de "Servicios", en su misma columna sticky de la izquierda
+   - una sola imagen compartida para toda la pagina (no 3 independientes,
+   una por fila) que va cambiando segun el servicio y el proyecto que
+   esten activos en cada momento del scroll (ver JS en main.js,
+   updateServiceRowMedia). Estructura en 2 niveles, mismo patron que el
+   carrusel de Home pero aplicado aqui: .services-media (caja de tamano
+   fijo, position:relative) contiene un .services-media__group por
+   servicio (position:absolute+inset:0, crossfade por opacidad segun cual
+   de los 3 servicios este activo - equivalente a .service-entry en
+   Home), y cada grupo contiene sus 3 imagenes con el MISMO crossfade
+   interno que .service-entry__media/img de Home (name distinto,
+   .services-media__group img, para no interferir con esas reglas -
+   contextos distintos, aqui no hay flex-column que centrar). */
+.services-media {
+  position: relative;
+  margin-top: var(--space-lg);
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 4 / 3;
+}
+
+.services-media__group {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.services-media__group.is-active {
+  opacity: 1;
+}
+
+.services-media__group img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.services-media__group img.is-active {
+  opacity: 1;
+}
+
 /* Figma (frame Servicios 1:138): el diseñador piensa la pagina en 3
    columnas verticales reales -- col1 vacia/margen (alineada con "Servicios",
    x=98), col2 titulo+tagline de cada fila (x=351 en las 3 filas, sin
@@ -1326,8 +1377,11 @@
   }
 
   /* Peticion cliente 2026-07-14: la imagen lateral de cada slide (ver
-     .service-entry__media mas arriba) es solo para escritorio/tablet. */
-  .service-entry__media {
+     .service-entry__media mas arriba) es solo para escritorio/tablet.
+     .services-media (imagen compartida bajo "Servicios" en la pagina de
+     Servicios, ver mas arriba) sigue el mismo criterio. */
+  .service-entry__media,
+  .services-media {
     display: none;
   }
 }
