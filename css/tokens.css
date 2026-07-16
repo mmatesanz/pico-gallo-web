@@ -45,7 +45,7 @@
      16px - usado tambien por .project-entry__description de Home (la
      ficha de Wanderlust tambien pasa a 16px, ya sin excepcion). */
   --text-body: 1rem;                                        /* 16px */
-  --text-nav: 0.875rem;                                     /* 14px, solo header (footer ya no usa este token, ver layout.css) */
+  --text-nav: 1rem;                                         /* 16px (subido +2px, peticion cliente 2026-07-16), solo header (footer ya no usa este token, ver layout.css) */
 
   /* Espaciado */
   --space-xs: 0.5rem;

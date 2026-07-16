@@ -40,6 +40,19 @@
    derecho (x=1182-1216 = ancho total del Menu). El "gap" de aqui es la
    distancia logo->primer link; el resto de la distribucion (links cerca
    del logo, EN/ES al extremo derecho) se hace en .site-nav (mas abajo). */
+/* Peticion cliente 2026-07-16: el header debe ocupar todo el ancho de la
+   pagina (ya lo hace: el fondo vive en .site-header, position:fixed +
+   inset:0, sin max-width - ver arriba) Y sus margenes (logo/EN-ES respecto
+   al borde) deben quedar alineados con los margenes del resto de la web.
+   Primer intento (retirado el mismo dia): anular aqui max-width/margin-inline
+   de .container para que el CONTENIDO tambien llegara al borde - eso rompio
+   la alineacion pedida despues, porque el resto de secciones SI respeta
+   --content-max via .container (a partir de ~1380px de viewport su margen
+   real crece por encima de los 50px fijos de padding-inline, mientras el
+   header se quedaba fijo en 50px). Se revierte: .site-header__bar vuelve a
+   heredar max-width/margin-inline de .container sin overrides, asi su
+   margen coincide exactamente con el de cualquier otra seccion a cualquier
+   ancho de viewport. */
 .site-header__bar {
   width: 100%;
   display: flex;
@@ -81,19 +94,23 @@
   filter: invert(1);
 }
 
-/* Antes: justify-content por defecto (flex-start) + gap fijo, lo que
-   dejaba el bloque "nav" entero (links + EN/ES) pegado al borde derecho
-   del header (por el space-between de .site-header__bar de arriba), con
-   los links inmediatamente junto a EN/ES. En Figma los links estan cerca
-   del logo y EN/ES muy separados, a ras del borde derecho del Menu. Por
-   eso .site-nav crece para ocupar todo el espacio restante (flex:1) y
-   distribuye sus 2 hijos (ul de links / lang-toggle) con space-between:
-   los links quedan junto al logo, EN/ES quedan al extremo derecho. */
+/* Historial: con flex + justify-content:space-between (2 hijos: ul de
+   links / lang-toggle), los links quedaban pegados al logo (flex-start)
+   y EN/ES al extremo derecho - asi seguia el Figma original ("Menu": links
+   cerca del logo). Peticion cliente 2026-07-16: los 4 links deben quedar
+   CENTRADOS en el espacio asignado a las opciones del menu (ya no pegados
+   al logo). Grid de 3 columnas (1fr / auto / 1fr) en vez de flex: la
+   columna central (ancho = contenido de los links) queda geometricamente
+   centrada en TODO el ancho de .site-nav porque las 2 columnas 1fr
+   flanqueantes se reparten el espacio sobrante a partes iguales - la
+   primera queda vacia (ningun hijo asignado ahi) y solo actua de
+   contrapeso; EN/ES vive en la 3ª columna con justify-self:end para
+   seguir a ras del borde derecho, igual que antes. */
 .site-nav {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   flex: 1;
-  justify-content: space-between;
 }
 
 /* En Figma los 4 links (Proyectos/Nosotros/Servicios/Contacto) son cajas de
@@ -103,6 +120,7 @@
    anterior, que daba un ritmo de espaciado distinto al de Figma. */
 .site-nav__links {
   display: flex;
+  grid-column: 2;
   gap: 0;
   font-family: var(--font-display);
   font-size: var(--text-nav);
@@ -129,6 +147,8 @@
 
 .lang-toggle {
   display: flex;
+  grid-column: 3;
+  justify-self: end;
   gap: var(--space-xs);
   font-family: var(--font-display);
   font-size: var(--text-nav);

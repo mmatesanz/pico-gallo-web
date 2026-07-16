@@ -1045,11 +1045,9 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-xl);
   /* Peticion cliente 2026-07-14 (2a): stretch en vez de start - ambas
-     columnas (col1 con la imagen, .service-link-row__items con la
-     descripcion) pasan a ocupar la altura completa de la fila, requisito
-     para poder centrar su contenido en esa altura (ver
-     .service-link-row__items mas abajo) y que ese centro coincida con el
-     de la imagen (centrada en col1, ver .service-entry__media). Con
+     columnas (col1, .service-link-row__items con la descripcion) pasan a
+     ocupar la altura completa de la fila, requisito para poder centrar su
+     contenido en esa altura (ver .service-link-row__items mas abajo). Con
      align-items:start cada columna medía solo su propio contenido y sus
      centros no coincidian entre si. */
   align-items: stretch;
@@ -1093,9 +1091,7 @@
   flex-direction: column;
   gap: 20px;
   /* Peticion cliente 2026-07-14 (2a): centra el bloque de items en la
-     altura completa de la columna (ahora stretch, ver .service-link-row)
-     para que su centro coincida con el de la imagen del carrusel
-     (.service-entry__media, centrada en col1 con el mismo alto). */
+     altura completa de la columna (ahora stretch, ver .service-link-row). */
   justify-content: center;
 }
 
@@ -1164,58 +1160,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-}
-
-/* Peticion cliente 2026-07-14: cada slide muestra varias imagenes (no 1
-   sola fija) que van cambiando mientras dura ese slide (ver main.js,
-   activeMediaImgs) - las imagenes se apilan con position:absolute+inset:0
-   y crossfade por opacidad (mismo patron que .service-entry para las
-   3 categorias), asi que el tamano/aspect-ratio se mueve al CONTENEDOR
-   (.service-entry__media, que ya no puede medir su alto a partir de una
-   imagen en flujo normal) en vez de a cada <img>.
-
-   Peticion cliente 2026-07-14 (2a): la imagen deja de anclarse abajo y
-   pasa a centrarse en altura con la columna de descripcion
-   (.service-link-row__items, que ahora hace lo mismo con su contenido -
-   ver justify-content:center mas abajo - dentro de una columna con
-   align-items:stretch en .service-link-row).
-
-   Primer intento (retirado): position:absolute + top:50% dentro de
-   col1, ignorando la altura real del titulo. Se rompio con el titulo de
-   2 lineas de "Experiencia y Ejecución" (mas largo que "Estrategia" o
-   "Sistemas de Diseño") - al salir del flujo, la imagen se centraba
-   respecto a la ALTURA TOTAL de col1 sin tener en cuenta cuanto espacio
-   ocupaba el titulo, y con 2 lineas invadia el hueco de la imagen
-   (solapamiento visible). Solucion actual: la imagen se queda EN EL
-   FLUJO normal de col1 (sin position:absolute), con margin-top:auto +
-   margin-bottom:auto - los margenes automaticos de flexbox reparten
-   TODO el espacio libre que deja el titulo por igual arriba y abajo de
-   la imagen, centrandola dentro del hueco restante bajo el titulo (nunca
-   pisa el titulo, cualquiera que sea su altura) - con el titulo ocupando
-   una fraccion pequeña de los 430px de alto de la columna, ese centro
-   practicamente coincide con el centro de .service-link-row__items. */
-.service-entry__media {
-  position: relative;
-  margin-top: auto;
-  margin-bottom: auto;
-  width: 100%;
-  max-width: 320px;
-  aspect-ratio: 4 / 3;
-}
-
-.service-entry__media img {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.service-entry__media img.is-active {
-  opacity: 1;
 }
 
 /* Fallback documentado (solo prefers-reduced-motion, CUALQUIER ancho): se
@@ -1376,11 +1320,8 @@
     background: var(--color-border);
   }
 
-  /* Peticion cliente 2026-07-14: la imagen lateral de cada slide (ver
-     .service-entry__media mas arriba) es solo para escritorio/tablet.
-     .services-media (imagen compartida bajo "Servicios" en la pagina de
-     Servicios, ver mas arriba) sigue el mismo criterio. */
-  .service-entry__media,
+  /* .services-media (imagen compartida bajo "Servicios" en la pagina de
+     Servicios, ver mas arriba) es solo para escritorio/tablet. */
   .services-media {
     display: none;
   }

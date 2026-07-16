@@ -1338,13 +1338,21 @@
    ----------
    Validado primero solo en Home, extendido despues a el resto de paginas
    (misma estructura header/main/footer en todas: un unico `.container` por
-   pagina dentro de `main`, mas el de `.site-footer`). El header queda
-   fuera: sigue usando `.container` global (--content-max/--content-padding),
-   sin tocar el token compartido para no afectarlo (lo que si paso en el
-   cambio anterior a 50px, ver historial de tokens.css). max-width:none
-   quita el tope de 1280px para que el contenido ocupe pantalla completa en
-   viewports anchos, con un margen fijo de 100px a cada lado. */
+   pagina dentro de `main`, mas el de `.site-footer`). max-width:none quita
+   el tope de 1280px para que el contenido ocupe pantalla completa en
+   viewports anchos, con un margen fijo de 100px a cada lado.
+
+   Peticion cliente 2026-07-16: el header (.site-header__bar, que tambien
+   lleva la clase .container) se habia dejado fuera a proposito (ver
+   historial de esta regla) para no tocar el token --content-padding
+   compartido - eso hacia que el logo/EN-ES quedaran a 1280px+50px
+   (centrado) mientras "Proyectos" y el resto de titulos de seccion ya
+   usaban este mismo full-bleed de 100px, dejando el logo mas metido hacia
+   dentro que "Proyectos" en viewports anchos. Se anade `.site-header
+   .container` aqui para que el header comparta EXACTAMENTE el mismo
+   margen que el resto de la web, en vez de re-crear la regla aparte. */
 main .container,
+.site-header .container,
 .site-footer > .container {
   max-width: none;
   margin-inline: 0;
@@ -1360,6 +1368,7 @@ main .container,
    del sitio. */
 @media (max-width: 860px) {
   main .container,
+  .site-header .container,
   .site-footer > .container {
     padding-inline: var(--space-md);
   }
