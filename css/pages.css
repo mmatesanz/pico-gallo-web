@@ -960,15 +960,108 @@
   min-height: calc(100vh - var(--header-height) - var(--space-2xl) - var(--space-2xl));
 }
 
-/* Override sobre .btn-bar (mismo boton visual que en Home: contorno,
-   20px, fondo transparente) - ahi se alinea a la derecha (margin-left:
-   auto) para acompañar la columna de imagen; aqui se alinea a la
-   izquierda, con el mismo margen que el resto del texto de la columna
-   (0, ya que .project-detail__intro no tiene padding propio). */
-.project-detail__cta {
-  margin-left: 0;
-  margin-right: 0;
+/* Peticion cliente 2026-07-16: en todas las fichas de proyecto el boton de
+   texto "Ver todos los proyectos" se sustituye por flecha izquierda
+   (proyecto anterior) / icono de cuadricula (volver a todos los proyectos,
+   Figma node 346:597 "darhboard") / flecha derecha (proyecto siguiente) -
+   mismos 3 nodos que en Figma (346:599/346:597/346:598). Aplicado primero
+   solo en Parque Warner Madrid como prueba, extendido despues a las 18
+   fichas existentes (peticion cliente 2026-07-16, "recuerda que esta
+   navegacion la tenemos que incluir en todos los proyectos nuevos que se
+   incorporen" - CUALQUIER ficha de proyecto nueva debe llevar este mismo
+   .project-detail__nav, ya no el boton de texto). .btn-bar SIGUE en uso
+   (boton "Ver todos los proyectos" de Home, index.html) - solo se retira
+   .project-detail__cta, que ya no lo usa ninguna ficha.
+   .project-detail__nav reutiliza el mismo margin-top:auto dentro del
+   flex-column sticky de .project-detail__intro (ver arriba) para quedar
+   anclado abajo mientras se hace scroll por la galeria, igual que hacia
+   antes el boton de texto.
+   Flechas construidas con 2 bordes + rotate(45deg) (sin SVG ni asset
+   externo): mismo patron ya usado en .menu-toggle para el icono de
+   hamburguesa (CSS puro, sin depender de las URLs temporales de 7 dias
+   que expone el MCP de Figma). Icono "ver todos" con el mismo color
+   --color-text-soft (#989898) que usa el vector real en Figma. */
+.project-detail__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Mismo margen que .project-detail__body (ver arriba, 25px/1280*100 =
+     1.953vw) - sin esto, al no tener .project-detail__nav ese margen
+     derecho, quedaba mas ancho que el texto de encima en vez de compartir
+     el mismo limite derecho. width:auto (no 100%) para que ese margen
+     realmente reduzca el ancho ocupado, igual que en .project-detail__body
+     (un <div> en flujo normal se encoge solo con margin-right; con
+     width:100% explicito no lo haria, desbordaria el ancho del padre). */
+  margin-right: 1.953vw;
   margin-top: auto;
+}
+
+.project-detail__nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.project-detail__nav-arrow::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  border: 0 solid var(--color-text);
+  transform: rotate(45deg);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.project-detail__nav-arrow--prev::before {
+  border-left-width: 1.5px;
+  border-bottom-width: 1.5px;
+}
+
+.project-detail__nav-arrow--next::before {
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+.project-detail__nav-arrow:hover::before,
+.project-detail__nav-arrow:focus-visible::before {
+  border-color: var(--color-text-soft);
+}
+
+.project-detail__nav-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+}
+
+.project-detail__nav-all-icon {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  width: 20px;
+  height: 20px;
+}
+
+.project-detail__nav-all-icon span {
+  border: 1px solid var(--color-text-soft);
+  border-radius: 1px;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.project-detail__nav-all:hover .project-detail__nav-all-icon span,
+.project-detail__nav-all:focus-visible .project-detail__nav-all-icon span {
+  border-color: var(--color-text);
+}
+
+@media (max-width: 860px) {
+  .project-detail__nav {
+    margin-top: 20px;
+  }
 }
 
 /* Cambio de marca 2026-06-26: re-verificado en las 6 paginas de detalle

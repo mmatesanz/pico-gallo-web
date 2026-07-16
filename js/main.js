@@ -351,6 +351,7 @@
        movil via media query) sin tener que duplicar ese calculo aqui -
        es un valor estable, no la posicion visual actual del elemento. */
     var serviceMediaGroups = Array.prototype.slice.call(document.querySelectorAll(".services-media__group"));
+    var serviceRowTitleBlocks = Array.prototype.slice.call(document.querySelectorAll(".service-row__title-block"));
 
     var updateServiceRowMedia = function () {
       if (!serviceMediaGroups.length) return;
@@ -374,6 +375,16 @@
       });
 
       if (activeRowIndex === -1) return;
+
+      /* Peticion cliente 2026-07-16: el titulo de fila (Estrategia/Sistemas
+         de Diseño/Experiencia y Ejecución) aparece/desaparece directamente
+         segun este mismo activeRowIndex, en vez de deslizarse con el scroll
+         normal al soltar su sticky (ver .service-row__title-block en
+         components.css, solo escritorio/tablet) - reutiliza el indice ya
+         calculado arriba para la imagen compartida, sin logica nueva. */
+      serviceRowTitleBlocks.forEach(function (block, index) {
+        block.classList.toggle("is-active", index === activeRowIndex);
+      });
 
       serviceMediaGroups.forEach(function (group, index) {
         group.classList.toggle("is-active", index === activeRowIndex);

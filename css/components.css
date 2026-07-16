@@ -571,10 +571,25 @@
    sticky de la pagina (titulo de fila, titulo de bloque) asegura que,
    aunque algo llegara a coincidir en pantalla, "Servicios" se dibuje
    siempre por encima, nunca al reves. */
+/* Peticion cliente 2026-07-16: la imagen compartida (.services-media) debe
+   quedar anclada abajo a la izquierda del carrusel, no justo debajo de
+   "Servicios" como antes. Este contenedor sticky pasa a ocupar todo el
+   alto visible del viewport bajo el header (mismo alto que su `top`
+   necesita para llegar hasta el borde inferior real de la pantalla) y a
+   ser flex-column: "Servicios" se queda arriba (flujo normal) y
+   .services-media se ancla abajo con margin-top:auto (mismo truco que
+   .service-entry__media en el carrusel de Home). Solo escritorio/tablet:
+   en movil este contenedor vuelve a position:static + alto automatico (ver
+   @media max-width:860px mas abajo) porque .services-media esta oculta ahi
+   (regla ya existente) - sin ese reset, este alto de pantalla completa
+   dejaria un hueco vacio enorme debajo de "Servicios" en movil. */
 .services-layout__title {
   align-self: start;
   position: sticky;
   top: calc(var(--header-height) + var(--space-2xl));
+  height: calc(100vh - var(--header-height) - var(--space-2xl) * 2);
+  display: flex;
+  flex-direction: column;
   z-index: 4;
   background: var(--color-bg);
 }
@@ -598,7 +613,7 @@
    contextos distintos, aqui no hay flex-column que centrar). */
 .services-media {
   position: relative;
-  margin-top: var(--space-lg);
+  margin-top: auto;
   width: 100%;
   max-width: 320px;
   aspect-ratio: 4 / 3;
@@ -702,6 +717,34 @@
   top: calc(var(--header-height) + var(--space-2xl) + 87px);
   z-index: 2;
   background: var(--color-bg);
+}
+
+/* Peticion cliente 2026-07-16: al pasar de una categoria a otra
+   (Estrategia/Sistemas de Diseño/Experiencia y Ejecución), el titulo de
+   fila NO debe verse deslizarse hacia arriba al soltar su sticky - solo el
+   de la categoria activa debe estar visible, apareciendo directamente en
+   vez de a traves del scroll normal. Solo este titulo cambia asi: la
+   columna de cuerpo (.service-row > div:last-child, con sus
+   .service-group y el sticky anidado de cada uno) se queda exactamente
+   igual, sin tocar (peticion explicita del cliente). display:none/block
+   (sin transition) saca el bloque del todo mientras esta inactivo - por
+   eso no se ve "pasar" scrolleando, solo aparece cuando su clase is-active
+   se activa. El indice activo ya lo calculaba updateServiceRowMedia en
+   main.js para la imagen compartida (.services-media__group) - se
+   reutiliza el mismo calculo para alternar tambien esta clase, sin logica
+   nueva de deteccion de scroll.
+   Solo desktop/tablet (>860px): en movil este titulo sigue el patron
+   original de lista apilada con sticky por fila (ver @media
+   max-width:860px mas abajo), sin tocar - el cliente no ha pedido cambiar
+   el comportamiento movil, solo el "carrusel" de escritorio. */
+@media (min-width: 861px) {
+  .service-row__title-block {
+    display: none;
+  }
+
+  .service-row__title-block.is-active {
+    display: block;
+  }
 }
 /* Figma (1:198/1:197, 1:228/1:227, 1:225/1:224, las 3 filas con el mismo
    patron exacto): la columna de cuerpo NO empieza a la misma altura que la
@@ -1362,6 +1405,8 @@
      solo se les ajusta el `top` mas abajo, no se desactivan aqui. */
   .services-layout__title {
     position: static;
+    height: auto;
+    display: block;
   }
 
   .services-layout__title { margin-bottom: var(--space-lg); }
