@@ -83,13 +83,24 @@
    scroll) - asi que el header tapaba el trozo de arriba de la imagen
    minimizada. Se anade translateY(var(--header-height) * progreso) para
    que, en el estado final (progreso=1), la miniatura baje exactamente la
-   altura del header y quede completa, debajo de el, sin recortarse. */
+   altura del header y quede completa, debajo de el, sin recortarse.
+
+   Peticion cliente 2026-07-20 (cuarta vuelta, misma sesion): no basta con
+   que la miniatura quede pegada justo debajo del header (0px de hueco) -
+   tiene que haber espacio respecto al header. Se suma ese hueco fijo
+   (100px, bajado desde 150px en la quinta vuelta, mismo dia) al offset
+   vertical final (var(--header-height) + 100px), seguimos multiplicando
+   por --hero-progress para que la bajada siga siendo progresiva durante
+   el scroll, no un salto. Este mismo offset final (header-height + 100px)
+   es el que usa tambien .hero-scroll__content (mas abajo) como
+   padding-top fijo, para que imagen y texto queden exactamente a la
+   misma altura cuando la imagen esta pequena. */
 .hero-scroll__media {
   position: absolute;
   inset: 0;
   overflow: hidden;
   transform-origin: left top;
-  transform: translateY(calc(var(--header-height) * var(--hero-progress, 0))) scale(var(--hero-media-scale, 1));
+  transform: translateY(calc((var(--header-height) + 100px) * var(--hero-progress, 0))) scale(var(--hero-media-scale, 1));
   will-change: transform;
 }
 
@@ -99,11 +110,56 @@
   object-fit: cover;
 }
 
-.hero-scroll__content {
+/* Peticion cliente 2026-07-20 (dos vueltas, misma sesion): con la
+   miniatura de la imagen encogida en la esquina superior izquierda
+   (CR-02 mas arriba), el texto quedaba superpuesto encima de ella en vez
+   de al lado. Primer intento: padding-left dinamico atado a
+   --hero-media-scale (se movia en sincronia con el encogido de la
+   imagen). El cliente lo corrigio: el texto NUNCA se debe mover/adaptar
+   durante el scroll (complica la lectura) - tiene que quedar FIJO,
+   exactamente en la posicion que ya tenia cuando la imagen esta pequena.
+   Por eso ahora es un valor fijo, no un calc() con var(): 22% = el mismo
+   HERO_MIN_SCALE (0.22) que main.js usa como escala final de la imagen
+   (var HERO_MIN_SCALE en la funcion updateHeroProgress) - si ese valor
+   cambia alguna vez, este 22% tiene que actualizarse a mano en paralelo,
+   no hay una unica fuente compartida entre JS y CSS para esto.
+   box-sizing:border-box (regla global) asegura que el padding no ensancha
+   la caja (inset:0 sigue mandando en la posicion), solo desplaza el
+   contenido flex hacia dentro. Se resetea a 0 en movil (@media
+   max-width:860px, mas abajo) porque ahi la imagen no se encoge a una
+   esquina - hace crossfade a pantalla completa - y en el fallback de
+   prefers-reduced-motion (imagen y texto apilados en flujo normal, sin
+   solape posible).
+   Selector compuesto `.hero-scroll .hero-scroll__content` (no solo
+   `.hero-scroll__content`) a proposito: el elemento tambien lleva la
+   clase `.container`, y la regla sitewide `main .container` (mas abajo,
+   full-bleed 100px) tiene mas especificidad (0,1,1) que una sola clase
+   (0,1,0) y ganaba pese a estar declarada antes en el archivo, dejando
+   el padding-left fijo en 100px en vez del valor pretendido. Con el
+   selector compuesto (0,2,0) gana de forma normal, sin !important.
+
+   Peticion cliente 2026-07-20 (tercera vuelta, misma sesion): la imagen
+   encogida tiene que quedar a la misma altura que el texto, no mas
+   arriba. align-items pasa de center (centrado en los 100dvh completos
+   del pin, muy por debajo de donde acaba quedando la miniatura) a
+   flex-start + padding-top - exactamente el mismo offset vertical final
+   que usa .hero-scroll__media en su translateY (ver comentario ahi).
+   Con eso el texto arranca a la misma altura en la que empieza la
+   miniatura ya encogida, en vez de mas abajo.
+
+   Peticion cliente 2026-07-20 (cuarta vuelta, misma sesion; bajado de
+   150px a 100px en la quinta): el offset pasa de var(--header-height) a
+   var(--header-height) + 100px, en paralelo con el mismo cambio en
+   .hero-scroll__media - ver ese comentario para el porque. Los dos
+   valores tienen que moverse juntos: si alguno cambia sin el otro,
+   imagen y texto dejan de quedar a la misma altura. */
+.hero-scroll .hero-scroll__content {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: calc(var(--header-height) + 100px);
+  padding-left: 22%;
   opacity: var(--hero-content-opacity, 0);
   transform: translateY(calc(16px * (1 - var(--hero-content-opacity, 0))));
   pointer-events: none;
@@ -123,15 +179,27 @@
    overflow:hidden) - main.js ya no excluye movil de este calculo (ver
    nota en main.js). Solo cambia la INTERPRETACION visual del progreso
    para la imagen: opacity en vez de scale+translate. El texto
-   (.hero-scroll__content) no se toca aqui - ya hereda de la regla base de
+   (.hero-scroll__content) hereda opacity/transform de la regla base de
    escritorio mas arriba (opacity:var(--hero-content-opacity,0), 0 al
    cargar) que es exactamente "solo se ve la imagen al principio, el texto
    aparece con el scroll" - el mismo comportamiento que ya tenia
-   escritorio, ahora tambien en movil. */
+   escritorio, ahora tambien en movil. El padding-left:22% fijo y el
+   align-items:flex-start/padding-top:var(--header-height) anadidos el
+   2026-07-20 SI se resetean aqui (mas abajo): en movil la imagen no se
+   encoge a una esquina, hace crossfade a pantalla completa, asi que el
+   texto debe seguir ocupando todo el ancho y centrado verticalmente
+   como antes, no alineado a la posicion de una miniatura que aqui no
+   existe. */
 @media (max-width: 860px) {
   .hero-scroll__media {
     transform: none;
     opacity: calc(1 - var(--hero-progress, 0));
+  }
+
+  .hero-scroll .hero-scroll__content {
+    align-items: center;
+    padding-top: 0;
+    padding-left: 0;
   }
 
   /* 2026-06-29 (peticion del usuario: la imagen no se ve completa en los
@@ -173,12 +241,14 @@
     transform: none;
     opacity: 1;
   }
-  .hero-scroll__content {
+  .hero-scroll .hero-scroll__content {
     position: relative;
     inset: auto;
     height: auto;
     opacity: 1;
     transform: none;
+    padding-top: 0;
+    padding-left: 0;
     pointer-events: auto;
   }
 }
@@ -392,8 +462,15 @@
   line-height: normal;
 }
 
+/* Re-auditado 2026-07-20 (verificacion de pixel fidelity con Playwright):
+   el nodo 96:435 en Figma tiene las 2 frases como parrafos consecutivos
+   con mb-0 (sin margen) entre ellas - fluyen como un unico bloque de
+   texto, sin hueco de parrafo. margin-top:1em (sin justificar contra
+   Figma, valor por defecto asumido en la auditoria original) quedaba
+   claramente visible comparando la captura de Figma con el prototipo
+   renderizado: no debe haber hueco aqui. */
 .about-page__intro p { margin: 0; }
-.about-page__intro p + p { margin-top: 1em; }
+.about-page__intro p + p { margin-top: 0; }
 
 .manifesto {
   padding-block: var(--space-2xl);
@@ -461,23 +538,91 @@
   color: var(--color-text);
 }
 
-/* Figma (node 1:306): el cuerpo NO es texto corrido en 4 parrafos largos -
-   son 8 grupos de lineas cortas con saltos de linea manuales dentro de
-   cada grupo y una linea en blanco entre grupos (cadencia poetica
-   deliberada, confirmada linea por linea via get_design_context). 16px
-   exacto, Early Sans Variable, color #989898 (--color-text-soft),
-   line-height normal. Posicion actualizada 2026-06-26: en la revision
-   anterior de Figma este texto empezaba en x=629 de 1280 (~49%, mitad
-   derecha) - en la version actual del cliente empieza en x=290, la MISMA
-   columna que el resto del contenido (ya no hay desplazamiento a la
-   derecha) - se quita el margin-left:50% que tenia antes.
-   2026-07-13: la NOTA de 2026-06-28 (pendiente de revision visual real)
-   queda resuelta - medido en navegador (Playwright) comparando contra la
-   captura de Figma: el gap real texto-de-arriba->cuerpo es ~28px (no
-   75px, ese valor sobrestimaba bastante el alto real de una sola linea
-   de .manifesto__statement a 32px/line-height normal). */
+/* Peticion cliente 2026-07-20 (revision de Figma, nodo 1:230 re-auditado):
+   el cliente volvio a mover el cuerpo del manifiesto - x=290 (misma
+   columna que el resto del contenido, auditado 2026-06-26/2026-07-13) ->
+   x=616 (~48%, mitad derecha otra vez), y añadio dos elementos nuevos que
+   no existian en auditorias previas:
+   - Titulo "Manifiesto" (nodo 487:1051, Lora 32px blanco, mismo estilo
+     que .manifesto__statement) justo encima del cuerpo, con 0px de hueco
+     entre ambos (heading bottom y=1337 = texto top y=1337 exacto).
+   - Un icono de ojo decorativo (nodo 487:1045, "ojo"+"pupila", ver
+     .manifesto__eye mas abajo) a la izquierda del titulo/cuerpo, en el
+     hueco que el texto dejo libre al desplazarse a la derecha.
+   Se introduce el wrapper .manifesto__body (heading + ojo + texto) para
+   poder medir y posicionar los 3 juntos desde un unico origen: su propio
+   margin-left (283px) replica la distancia real Figma entre el borde de
+   la columna de contenido (x=332, ver .manifesto__media-wrap mas arriba)
+   y el nuevo inicio del titulo/texto (x=615, promedio de 614/616) ->
+   615-332=283. .manifesto__eye (mas abajo) se posiciona relativo a ESTE
+   wrapper, no a .manifesto, por eso su left es negativo (bleed hacia la
+   columna del titulo "Nosotros"). position:relative aqui es necesario
+   para que ese posicionamiento absoluto del ojo funcione. */
+.manifesto__body {
+  position: relative;
+  margin-top: 64px;
+  margin-left: 283px;
+}
+
+/* Icono decorativo (nodo 487:1045: "ojo" outline + "pupila" solida,
+   exportado como un unico SVG plano en
+   assets/icons/nosotros-ojo-manifiesto.svg - se quito del export un
+   rectangulo de fondo #1E1E1E y otro blanco que Figma incluyo por error
+   de contexto de pagina, dejando solo los 2 trazos reales). 256x100,
+   tamano literal de Figma (el resto de esta pagina tampoco usa unidades
+   fluidas). Posicion relativa a .manifesto__body (no a .manifesto):
+   left = 249(ojo) - 615(inicio real de .manifesto__body) = -366px (el
+   ojo queda a la izquierda del titulo/texto, invadiendo la columna del
+   titulo "Nosotros" - asi es tambien en Figma). top = 1378(ojo) -
+   1273(inicio real de .manifesto__body, que coincide con el titulo) =
+   105px. Decorativo puro (alt="", aria-hidden): no aporta informacion
+   que no este ya en el texto "Manifiesto" de al lado. */
+.manifesto__eye {
+  position: absolute;
+  top: 105px;
+  left: -366px;
+  width: 256px;
+  height: 100px;
+}
+
+/* Mismo estilo que .manifesto__statement (Lora 32px blanco, line-height
+   normal) - Figma usa el mismo estilo con nombre "Subtitulo Blanco" para
+   ambos textos. */
+.manifesto__heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 32px;
+  line-height: normal;
+  color: var(--color-text);
+}
+
+/* Figma (node 1:306): el cuerpo NO es texto corrido en parrafos largos -
+   son lineas cortas con saltos de linea manuales, agrupadas en 3
+   bloques reales separados por una linea en blanco (cadencia poetica
+   deliberada). 16px exacto, Early Sans Variable, color #989898
+   (--color-text-soft), line-height normal.
+   Re-auditado 2026-07-20 (verificacion de pixel fidelity con Playwright,
+   captura del prototipo vs captura de Figma lado a lado): la auditoria
+   anterior decia "8 grupos" y HTML tenia una etiqueta <p> por cada
+   sub-frase (con <br> solo dentro de algunas) - comparando contra el
+   nodo 1:306 real solo hay 2 saltos de linea en blanco (<br/><br/> en el
+   export), es decir 3 grupos, no 8. Las <p> de mas creaban huecos de
+   1.5em donde Figma no tiene ninguno, y a la vez faltaban <br> DENTRO de
+   los grupos (ej. "ya conoces," y "pero de pronto sabe distinto." iban
+   corridos en una sola frase en vez de en 2 lineas; el parrafo "En Pico
+   de Gallo creemos..." no tenia ningun <br>, corria como un parrafo
+   largo normal en vez de 6 lineas cortas). Corregido en nosotros.html:
+   ahora son exactamente 3 <p>, con <br> entre cada linea dentro de cada
+   uno, calcando el nodo 1:306 linea por linea.
+   margin-top pasa de 28px (medido desde .manifesto__statement, cuando el
+   texto no tenia titulo propio encima) a 0 (2026-07-20: ahora el hueco
+   real es entre .manifesto__statement y .manifesto__heading - ver
+   margin-top:64px en .manifesto__body - el titulo y el cuerpo ya no
+   tienen hueco propio entre ellos en Figma, bottom del titulo y top del
+   texto coinciden en y=1337). */
 .manifesto__text {
-  margin-top: 28px;
+  margin-top: 0;
   color: var(--color-text-soft);
   font-size: 16px;
   line-height: normal;
@@ -505,10 +650,31 @@
    no en el header. Por eso .contact-page envuelve TODO (statement +
    imagen + cuerpo), no solo el hero como antes (.contact-hero). */
 .contact-page {
+  position: relative;
   display: grid;
   grid-template-columns: 397px minmax(0, 1fr);
   padding-top: calc(var(--header-height) + var(--space-2xl));
   padding-bottom: var(--space-2xl);
+}
+
+/* Re-auditado 2026-07-20 (nodo 1:131, nuevo desde la ultima revision):
+   un email de utilidad aparece por encima del titulo "Contacto" - no
+   dentro del flujo normal de .contact-page__content (esta 27px MAS
+   ARRIBA que el titulo, y el titulo ya es el primer elemento del flujo).
+   position:absolute anclado a .contact-page (position:relative, arriba)
+   en vez de meterlo en el grid: top = mismo calc() que usa el titulo
+   para su propio reposo (header-height + space-2xl) menos esos 27px;
+   left = 397px, el mismo ancho de columna 1 que ya usa el grid, para que
+   arranque exactamente donde arranca la columna de contenido. Sin spec
+   movil en Figma (frame fijo de escritorio) - resuelto en el
+   @media(max-width:860px) de mas abajo con el mismo criterio de
+   accepted-deviation que el resto del sitio. */
+.contact-page__email {
+  position: absolute;
+  top: calc(var(--header-height) + var(--space-2xl) - 27px);
+  left: 397px;
+  color: var(--color-text-soft);
+  font-size: 16px;
 }
 
 /* Excepcion deliberada pedida por el cliente (2026-06-26): el titulo de
@@ -570,9 +736,19 @@
    Nosotros cambio de 48px/92.055% a 32px/normal despues del 2026-06-26).
    Esta regla de Contacto NO se ha re-auditado de forma independiente
    contra su propio nodo Figma (1:132) - solo se mantiene igualada a
-   Nosotros porque asi lo pidio el usuario explicitamente. Pendiente:
-   confirmar que el nodo 1:132 de Contacto tambien sigue en 32px si se
-   audita Contacto por separado. */
+   Nosotros porque asi lo pidio el usuario explicitamente.
+
+   Re-auditado 2026-07-20 (peticion "analiza los cambios de Figma"): el
+   texto Lorem ipsum se sustituyo por el copy real ("Conversemos sobre
+   nuevas ideas..."). El nodo 1:132 en Figma ahora mide 48px (ni los 64px
+   de la auditoria original ni los 32px actuales) y el hueco titulo-
+   >statement tambien cambio (y=310 vs y=229 del titulo = 81px, no ya los
+   187px originales). NO se tocan font-size/margin-top aqui: la decision
+   del usuario de igualar Contacto a Nosotros fue explicita y no
+   referenciaba un valor de Figma concreto que debiera seguir
+   actualizandose con cada revision - se preserva 32px/99px hasta que el
+   usuario diga lo contrario. Señalar esta discrepancia (48px/81px reales
+   en Figma vs 32px/99px aplicados) si se revisa esta pagina de nuevo. */
 .contact-page__content .page-hero__statement {
   margin-top: 99px;
   font-size: 32px;
@@ -621,25 +797,152 @@
   object-fit: cover;
 }
 
-/* Figma (node 1:131): el cuerpo no ocupaba el ancho completo - empieza en
-   x=531 de 1280 (~41.5%) y termina en x=1199 (~93.7%), una columna a la
-   derecha, no a lo ancho de toda la imagen. 16px exacto, Early Sans
-   Variable, color #5e5e5e (--color-text-muted, NO --color-text-soft -
-   distinto del resto de cuerpos de texto de este sitio, que usan
-   #989898). Gap real imagen→texto: 112px. 2 parrafos identicos
-   (Lorem ipsum repetido tal cual en Figma) separados por una linea en
-   blanco. */
-.contact-visual__body {
-  margin-top: 112px;
-  margin-left: 41.5%;
-  max-width: 668px;
-  color: var(--color-text-muted);
-  font-size: 16px;
-  line-height: normal;
+/* Re-auditado 2026-07-20: el cuerpo secundario Lorem ipsum (node 1:131,
+   antigua .contact-visual__body) ya no existe en Figma - la revision
+   actual lo sustituye por un formulario de contacto real (nodos
+   487:1052-487:1061) y un bloque de datos de contacto (node 424:572,
+   email/telefono/ciudad), uno junto al otro, debajo de la imagen.
+   .contact-form-section usa la MISMA tecnica de bleed que .contact-visual
+   (width:100%+397px / margin-left:-397px) porque tambien vive dentro de
+   .contact-page__content (columna 2) y tiene que ocupar el ancho
+   completo del frame igual que la imagen - no se restructura el HTML
+   para usar grid-column:1/-1 en su lugar por consistencia con el patron
+   ya establecido en este archivo (mismo criterio que
+   .manifesto__media-wrap en Nosotros).
+   padding-left:96px = posicion real medida del formulario (node
+   487:1052, x=96) dentro de ese ancho bled (que replica el frame
+   Figma completo, no la columna de contenido). margin-top:105px = hueco
+   real imagen->formulario (form top y=1197 - imagen bottom
+   581+511=1092). gap:64px entre formulario e info = hueco real medido
+   entre el borde derecho del formulario (96+496=592) y el inicio del
+   bloque de datos (656). */
+.contact-form-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 64px;
+  width: calc(100% + 397px);
+  margin-left: -397px;
+  margin-top: 105px;
+  padding-left: 96px;
 }
 
-.contact-visual__body p { margin: 0; }
-.contact-visual__body p + p { margin-top: 1.5em; }
+/* 496px = ancho real del formulario en Figma (los 5 campos comparten
+   ese mismo ancho). 15px de gap entre campos = hueco real constante
+   medido entre los 5 elementos (48px de alto cada campo, salvo el
+   mensaje que mide 324px) - los 5 huecos reales medidos (63, 63, 63, 63px
+   de diferencia entre tops menos 48px de alto) dieron el mismo valor,
+   15px, en los 4 casos. */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 496px;
+  max-width: 100%;
+}
+
+.contact-form__field { display: block; }
+
+/* Campos sin borde visible en Figma (fondo solido #d9d9d9, sin trazo) y
+   sin esquinas redondeadas (el export de Figma no incluye ninguna clase
+   "rounded-*" pese a que get_metadata los llama "rounded-rectangle" -
+   nombre generico del TIPO de nodo en Figma, no indica un radio > 0
+   real). padding-inline:19px = x real del texto (115) menos x real de
+   la caja (96). El campo de texto (input) usa altura fija (48px, la
+   misma que la caja) y centra el texto verticalmente por defecto del
+   navegador; el textarea, al no centrar verticalmente su placeholder,
+   usa padding-top:14px, la distancia real medida entre el top de su caja
+   y el top de su texto en Figma. */
+.contact-form input,
+.contact-form textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: #d9d9d9;
+  padding-inline: 19px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-soft);
+}
+
+.contact-form input {
+  height: 48px;
+}
+
+.contact-form textarea {
+  height: 324px;
+  padding-top: 14px;
+  resize: vertical;
+  font-family: var(--font-body);
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: var(--color-text-soft);
+  opacity: 1;
+}
+
+/* No hay CTA de envio en el frame de Figma auditado (ni boton ni texto
+   entre el textarea y el pie de pagina) - probable hueco del diseño, no
+   una decision deliberada de omitirlo. Se añade un boton minimo y una
+   nota de "demo, sin backend" porque un formulario sin forma de enviarlo
+   no es utilizable ni evaluable como prototipo - decision del asistente,
+   NO viene de Figma, señalar al usuario para confirmar o sustituir por
+   el CTA real cuando el cliente lo defina. data-form-state="static" en
+   el <form> (contacto.html) documenta que no esta conectado a backend,
+   siguiendo el mismo criterio que el resto del prototipo para
+   formularios placeholder (ver tambien el preventDefault en main.js). */
+.contact-form__note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.contact-form__submit {
+  align-self: flex-start;
+  border: 1px solid var(--color-text);
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+}
+
+.contact-form__submit:hover,
+.contact-form__submit:focus-visible {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+/* Bloque de datos de contacto (node 424:572): email/telefono/ciudad,
+   16px, Early Sans Variable, color #989898 (--color-text-soft, el mismo
+   tono que el resto del sitio - a diferencia del antiguo cuerpo Lorem
+   ipsum que usaba --color-text-muted). max-width = ancho real medido en
+   Figma (557px) para que no se estire de mas en pantallas anchas dentro
+   del flex de .contact-form-section (que no fija un ancho de columna
+   propio para este bloque, solo lo posiciona con gap tras el
+   formulario). */
+.contact-form__info {
+  max-width: 557px;
+  color: var(--color-text-soft);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.contact-form__info p { margin: 0; }
+
+.contact-form__info a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.contact-form__info a:hover,
+.contact-form__info a:focus-visible {
+  text-decoration: underline;
+}
 
 /* ---------- Proyectos (index) — mosaico real (2026-06-26) ----------
    Figma (frame Proyectos 1:582, "Group 1" 1:609): la pagina de Proyectos
@@ -1266,6 +1569,48 @@
   .contact-visual {
     width: auto;
     margin-left: 0;
+  }
+
+  /* Sin spec movil en Figma (frame fijo de escritorio) - accepted-deviation,
+     mismo criterio que el resto del sitio: el bleed de 283px de
+     .manifesto__body y el -366px de .manifesto__eye (pensados para un
+     viewport ancho) no caben en movil - se resetea a flujo normal
+     apilado (ojo primero, tamano reducido, despues titulo y texto a
+     ancho completo). */
+  .manifesto__body {
+    margin-left: 0;
+  }
+
+  .manifesto__eye {
+    position: static;
+    width: 128px;
+    height: 50px;
+    margin-bottom: var(--space-md);
+  }
+
+  /* Mismo criterio: el bleed de .contact-form-section (96px de
+     padding-left dentro de un ancho 100%+397px) y el anclaje absoluto de
+     .contact-page__email (left:397px, pensado para la columna de
+     contenido de escritorio) no tienen sentido con .contact-page ya
+     apilado en 1 columna (ver .about-page/.contact-page mas arriba en
+     este mismo bloque) - se resetean a flujo normal, ancho completo. */
+  .contact-page__email {
+    position: static;
+    display: block;
+    margin-bottom: var(--space-md);
+  }
+
+  .contact-form-section {
+    flex-direction: column;
+    width: auto;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .contact-form,
+  .contact-form__info {
+    width: 100%;
+    max-width: none;
   }
 
   /* Columna de texto apilada arriba, galeria en cuadricula de 2 columnas

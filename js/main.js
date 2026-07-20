@@ -460,4 +460,29 @@
     }
   }
 
+  /* Formulario de Contacto (contacto.html, nodo Figma 487:1052-487:1061,
+     re-auditado 2026-07-20): prototipo estatico sin backend - marcado
+     con data-form-state="static" en el <form> (ver PROTOTYPE_AGENT.md,
+     "formularios sin backend deben marcarse como placeholder/static").
+     preventDefault evita la navegacion real del navegador al enviar
+     (que intentaria un GET a la propia URL, perdiendo los datos escritos
+     sin avisar); en su lugar se muestra un mensaje de confirmacion
+     minimo y se resetea el formulario. No hay llamada a ningun endpoint
+     ni almacenamiento de los datos - nada se envia a ningun sitio. */
+  var contactForm = document.querySelector('.contact-form[data-form-state="static"]');
+  if (contactForm) {
+    var isEnglishPage = document.documentElement.lang === "en";
+    var contactFormSubmittedNote = isEnglishPage
+      ? "Thanks - this prototype doesn't submit the form anywhere yet."
+      : "Gracias - este prototipo aun no envia el formulario a ningun sitio.";
+    contactForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var note = contactForm.querySelector(".contact-form__note");
+      if (note) {
+        note.textContent = contactFormSubmittedNote;
+      }
+      contactForm.reset();
+    });
+  }
+
 })();
