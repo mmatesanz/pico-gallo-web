@@ -196,10 +196,24 @@
     opacity: calc(1 - var(--hero-progress, 0));
   }
 
+  /* Bug encontrado 2026-07-21 (peticion cliente: el statement queda sin
+     margen izquierdo en movil, desalineado del titulo "Proyectos" de
+     debajo): esta regla reseteaba padding-left a 0, pisando (mayor
+     especificidad, .hero-scroll .hero-scroll__content vs .container) el
+     padding-inline:50px que .container ya aporta - el mismo padding que
+     usa "Proyectos" (tambien .container, sin override) para su margen.
+     El fix de 2026-07-13 de mas abajo en este archivo (que resetea los
+     margenes PROPIOS de .intro-statement/.intro-statement h1 a 0)
+     asumia que ese padding de .container seguiria vivo para dar el
+     margen en movil - esta regla, mas antigua, se lo comia primero. Se
+     iguala explicitamente a --content-padding (el mismo valor y la
+     misma variable que usa .container) en vez de 0, para que ambos
+     titulos queden alineados sin depender de cual de las dos reglas
+     "gana" la cascada. */
   .hero-scroll .hero-scroll__content {
     align-items: center;
     padding-top: 0;
-    padding-left: 0;
+    padding-left: var(--content-padding);
   }
 
   /* 2026-06-29 (peticion del usuario: la imagen no se ve completa en los
