@@ -232,16 +232,96 @@
   grid-template-rows: 100%;
 }
 
+/* margin-top:115px vivia antes aqui (empuja el titulo desde el borde
+   superior del panel) - re-auditado 2026-07-20 al montar la persiana de
+   titulo+categoria: con el titulo ahora DENTRO de la ventana recortada
+   (.project-entry__heading-window, mas abajo), ese margin-top empujaba
+   el texto fuera de la ventana (ventana con alto fijo desde arriba,
+   texto desplazado 115px hacia abajo dentro de ella = recortado por
+   completo, invisible - verificado con Playwright). Se traslada el
+   margin-top a la propia ventana (afecta a la posicion de la ventana
+   dentro del panel, no al contenido que se desliza dentro de ella);
+   border-top/padding-top se quedan aqui, son parte del contenido que
+   SI se desliza (la linea va pegada al titulo, no al borde del panel). */
 #home-proyectos .project-showcase__list .project-entry__title {
   border-top: 1px solid var(--color-text-muted);
-  margin-top: 115px;
+  /* 0, no omitido: la regla base #home-proyectos .project-entry__title
+     (mas arriba, especificidad menor pero declara margin-top:115px) NO
+     se cancela por si sola con solo quitar la propiedad aqui - hay que
+     pisarla explicitamente o el titulo vuelve a heredar el margin-top
+     que ya causo el bug de invisibilidad (ver nota en
+     .project-entry__heading-window). */
+  margin-top: 0;
   padding-top: 11px;
 }
 
-/* Columna de texto: no se desplaza (sin transform), solo crossfade.
-   JS anade/quita .is-active en el .project-entry segun cual sea el
-   proyecto activo (ver main.js, CR-03). */
-.project-showcase__list .project-entry > div:first-child {
+#home-proyectos .project-showcase__list .project-entry__heading-window {
+  margin-top: 115px;
+}
+
+/* Peticion cliente 2026-07-20: titulo+categoria dejan de hacer crossfade
+   (opacidad) y pasan a "persiana" - se desliza hacia arriba al entrar/
+   salir haciendo scroll hacia abajo, y hacia abajo al hacer scroll hacia
+   arriba. Envueltos en 2 niveles (nuevo HTML en index.html/en/index.html):
+   - .project-entry__heading-window: la "ventana" fija (overflow:hidden,
+     alto fijo medido por JS en --project-heading-h, mismo patron que
+     --row-title-h en Servicios) - lo unico que no se mueve.
+   - .project-entry__heading: el contenido que SI se desplaza dentro de
+     esa ventana.
+
+   Primer intento (2026-07-20): transform continuo atado a
+   --project-track-progress/--item-index, igual mecanismo que
+   .project-entry__media. Descartado 2026-07-21 (peticion explicita del
+   cliente tras verlo: "no quiero que se vea el texto de dos proyectos a
+   la vez") - con un transform continuo ligado al scroll, CUALQUIER
+   punto intermedio del scroll (el usuario puede parar de hacer scroll
+   en cualquier momento, no solo cuando un proyecto esta 100% activo)
+   deja los 2 titulos parcialmente visibles y legibles a la vez dentro
+   de la misma ventana - verificado con Playwright, se veian claramente
+   2 titulos simultaneos al parar el scroll a medio camino. Ademas tenia
+   un bug propio (translateY con % es relativo al alto del PROPIO
+   elemento, no al de la ventana - un titulo de 1 sola linea no se
+   desplazaba lo suficiente para salir del todo de la ventana cuando
+   Abu Dhabi, de 2 lineas, era el activo).
+
+   Solucion actual: en vez de un transform continuo, cada titulo solo
+   tiene 3 posiciones discretas segun su relacion con el proyecto activo
+   (is-active/is-past, ver main.js) - SIEMPRE fuera de la ventana salvo
+   el activo, nunca "a medias". El cambio entre posiciones anima con
+   transition (0.4s, mismo tiempo que el crossfade de
+   .project-entry__description), asi que sigue viendose como una
+   persiana deslizante al cambiar de proyecto, pero sin quedar nunca
+   parada a medio camino con 2 titulos visibles: parado en cualquier
+   punto del scroll, o esta el titulo activo centrado en la ventana, o
+   no se ve ninguno todavia/ya paso (segun se este a medio camino entre
+   2 proyectos o no). */
+.project-showcase__list .project-entry__heading-window {
+  overflow: hidden;
+  height: var(--project-heading-h, auto);
+}
+
+.project-showcase__list .project-entry__heading {
+  /* Por defecto (ni activo ni ya pasado): debajo de la ventana, aun no
+     le toca aparecer - scroll hacia abajo lo hace subir hasta 0. */
+  transform: translateY(var(--project-heading-h, 0px));
+  transition: transform 0.4s ease;
+  will-change: transform;
+}
+
+.project-showcase__list .project-entry.is-active .project-entry__heading {
+  transform: translateY(0);
+}
+
+.project-showcase__list .project-entry.is-past .project-entry__heading {
+  /* Ya se paso este proyecto (scroll hacia abajo lo dejo atras, encima
+     de la ventana) - scroll hacia arriba lo hace bajar de vuelta a 0. */
+  transform: translateY(calc(-1 * var(--project-heading-h, 0px)));
+}
+
+/* La descripcion (fuera de la ventana/persiana) sigue con el mismo
+   crossfade de opacidad de siempre - JS anade/quita .is-active en el
+   .project-entry segun cual sea el proyecto activo (ver main.js, CR-03). */
+.project-showcase__list .project-entry__description {
   opacity: 0;
   transition: opacity 0.4s ease;
 }
@@ -250,7 +330,7 @@
   pointer-events: auto;
 }
 
-.project-showcase__list .project-entry.is-active > div:first-child {
+.project-showcase__list .project-entry.is-active .project-entry__description {
   opacity: 1;
 }
 
@@ -380,7 +460,17 @@
     margin-top: 40px;
     padding-top: 11px;
   }
-  .project-showcase__list .project-entry > div:first-child { opacity: 1; }
+  .project-showcase__list .project-entry__description { opacity: 1; }
+  /* Persiana de titulo+categoria (regla base de escritorio, mas arriba):
+     sin pin ni progreso continuo en movil/reduced-motion, se vuelve a
+     flujo normal - ventana sin recortar y sin desplazamiento. */
+  .project-showcase__list .project-entry__heading-window {
+    overflow: visible;
+    height: auto;
+  }
+  .project-showcase__list .project-entry__heading {
+    transform: none;
+  }
   /* Aqui .project-entry vuelve a flujo normal (position:relative, alto
      automatico segun contenido) - la fila YA NO tiene una altura externa
      fija que darle a la imagen (a diferencia del modo panel/showcase de

@@ -621,8 +621,14 @@
    margin-top:64px en .manifesto__body - el titulo y el cuerpo ya no
    tienen hueco propio entre ellos en Figma, bottom del titulo y top del
    texto coinciden en y=1337). */
+/* Peticion cliente 2026-07-21: aunque en Figma el bottom del titulo
+   "Manifiesto" coincide exactamente con el top del cuerpo (0px, ver nota
+   de mas arriba en .manifesto__body), el cliente pidio ~10px de aire
+   igualmente - queda demasiado justo en la practica. Excepcion deliberada
+   sobre el nodo 1:306, igual que otras ya documentadas en este archivo
+   (no es un error de fidelidad, es una peticion explicita posterior). */
 .manifesto__text {
-  margin-top: 0;
+  margin-top: 10px;
   color: var(--color-text-soft);
   font-size: 16px;
   line-height: normal;

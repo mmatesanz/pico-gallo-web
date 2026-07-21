@@ -171,6 +171,24 @@
       document.documentElement.style.setProperty("--project-media-right-gap", gap.toFixed(2) + "px");
     };
 
+    /* Peticion cliente 2026-07-20: ventana fija para la persiana de
+       titulo+categoria (ver .project-entry__heading-window en
+       components.css) - necesita un alto en px que quepa el titulo MAS
+       ALTO de los 4 (Abu Dhabi ocupa 2 lineas por su <br> fijo, el resto
+       1), o esos proyectos se recortarian. Mismo patron que
+       --row-title-h en Servicios: se mide el offsetHeight real de cada
+       .project-entry__heading (no le afecta su propio transform ni el
+       overflow:hidden del padre, que solo recorta lo que se PINTA, no lo
+       que se MIDE) y se usa el mayor de los 4. */
+    var projectHeadings = Array.prototype.slice.call(projectShowcase.querySelectorAll(".project-entry__heading"));
+    var updateProjectHeadingHeight = function () {
+      if (!projectHeadings.length) return;
+      var tallest = projectHeadings.reduce(function (max, heading) {
+        return Math.max(max, heading.offsetHeight);
+      }, 0);
+      document.documentElement.style.setProperty("--project-heading-h", tallest + "px");
+    };
+
     var updateProjectProgress = function () {
       var rect = projectShowcase.getBoundingClientRect();
       var scrollableDistance = projectShowcase.offsetHeight - projectPin.offsetHeight;
@@ -183,6 +201,12 @@
       projectShowcase.style.setProperty("--project-track-progress", trackProgress.toFixed(4));
       projectEntries.forEach(function (entry, index) {
         entry.classList.toggle("is-active", index === activeIndex);
+        // Persiana de titulo+categoria (ver components.css, 2026-07-21):
+        // is-past marca los proyectos ya dejados atras (encima de la
+        // ventana) para distinguirlos de los que aun no llegan (debajo,
+        // el estado por defecto sin clase) - necesario para que la
+        // persiana entre/salga por el lado correcto segun la direccion.
+        entry.classList.toggle("is-past", index < activeIndex);
       });
       updateProjectMediaGap();
 
@@ -196,9 +220,16 @@
       }
     };
 
+    updateProjectHeadingHeight();
     updateProjectProgress();
     window.addEventListener("scroll", onProjectScroll, { passive: true });
-    window.addEventListener("resize", onProjectScroll);
+    window.addEventListener("resize", function () {
+      updateProjectHeadingHeight();
+      onProjectScroll();
+    });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(updateProjectHeadingHeight);
+    }
   }
 
   /* Peticion cliente 2026-07-10: mismo mecanismo de carrusel que
