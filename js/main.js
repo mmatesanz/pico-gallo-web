@@ -46,7 +46,7 @@
     window.addEventListener("resize", setHeaderState);
   }
 
-  /* CR-02 (peticion de cliente, ver client-feedback/header-scroll-behavior-spec.md):
+  /* CR-02 (peticion de cliente):
      el hero de Home reduce su tamano y se reposiciona hacia la esquina
      superior izquierda a medida que se hace scroll (corregido 2026-06-25,
      dos veces: primero la esquina, luego el desplazamiento extra para que
@@ -110,7 +110,7 @@
     window.addEventListener("resize", onHeroScroll);
   }
 
-  /* CR-03 (peticion de cliente, ver client-feedback/projects-scroll-showcase-spec.md):
+  /* CR-03 (peticion de cliente):
      en la seccion Proyectos de Home, "Proyectos" queda fijo mientras se
      hace scroll; la columna de imagenes (.project-entry__media) se
      desplaza de forma continua; la columna de texto (primer <div> de cada
@@ -491,10 +491,50 @@
     }
   }
 
-  /* Formulario de Contacto (contacto.html, nodo Figma 487:1052-487:1061,
+  /* Peticion cliente 2026-07-22: el margen que .project-mosaic__item gana
+     en hover (pages.css, ".project-mosaic__item:has(...)") para dejar
+     hueco al caption de abajo era un valor fijo (28px), ajustado solo
+     para un titulo de una linea. Con titulos largos (p.ej. "Executive
+     Office of the Ministry of Defence", "Expo 2025 Osaka Panamá") el
+     texto envuelve a 2 lineas y el caption crece mas de lo que ese hueco
+     fijo reservaba, pisando la imagen de la pieza siguiente. Se mide la
+     altura real del caption de cada pieza (siempre presente en el DOM,
+     con opacity:0 en reposo pero con layout real - measurable) y se
+     guarda como variable CSS por pieza; la regla de hover en pages.css
+     usa esa variable, con el 28px original como fallback si por lo que
+     sea no llega a ejecutarse este script. Se recalcula en resize
+     (el ancho de columna cambia el punto donde el titulo envuelve) y
+     tras cargar las fuentes (su metrica tambien afecta el envuelto). */
+  var projectMosaicItems = document.querySelectorAll(".project-mosaic__item");
+  if (projectMosaicItems.length) {
+    var updateProjectMosaicCaptionSpacing = function () {
+      projectMosaicItems.forEach(function (item) {
+        var caption = item.querySelector(".project-mosaic__caption");
+        if (!caption) return;
+        item.style.setProperty("--mosaic-hover-margin", (caption.offsetHeight + 4) + "px");
+      });
+    };
+
+    updateProjectMosaicCaptionSpacing();
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(updateProjectMosaicCaptionSpacing);
+    }
+
+    var mosaicCaptionResizeTicking = false;
+    window.addEventListener("resize", function () {
+      if (mosaicCaptionResizeTicking) return;
+      mosaicCaptionResizeTicking = true;
+      window.requestAnimationFrame(function () {
+        updateProjectMosaicCaptionSpacing();
+        mosaicCaptionResizeTicking = false;
+      });
+    });
+  }
+
+  /* Formulario de Contacto (contacto.html):
      re-auditado 2026-07-20): prototipo estatico sin backend - marcado
-     con data-form-state="static" en el <form> (ver PROTOTYPE_AGENT.md,
-     "formularios sin backend deben marcarse como placeholder/static").
+     con data-form-state="static" en el <form>.
      preventDefault evita la navegacion real del navegador al enviar
      (que intentaria un GET a la propia URL, perdiendo los datos escritos
      sin avisar); en su lugar se muestra un mensaje de confirmacion

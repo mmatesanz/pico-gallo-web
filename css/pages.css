@@ -1,6 +1,6 @@
 /* ---------- Home: hero scroll (CR-02, peticion de cliente 2026-06-25) ----------
    Antes: imagen estatica de altura fija (950px, ver historico debajo).
-   Peticion del cliente (ver client-feedback/header-scroll-behavior-spec.md):
+   Peticion del cliente:
    la imagen del hero reduce su tamano progresivamente con el scroll y se
    reposiciona hacia la esquina superior izquierda (corregido 2026-06-25,
    instruccion Z: el cliente pidio originalmente "inferior izquierda" pero
@@ -294,7 +294,7 @@
    alineada a la derecha (735px, 57.6% del frame) de la revision anterior:
    el cliente pide que el texto ocupe todo el ancho disponible del
    contenedor, igual que el resto de paginas tras ampliar los margenes a
-   100px (ver client-feedback/home-full-bleed-spec.md). Solo se usa en
+   100px. Solo se usa en
    index.html, seguro hardcodear sin tocar el token --text-display-md
    compartido con otras paginas. */
 .intro-statement h1 {
@@ -970,7 +970,7 @@
    asimetrico de 11 piezas en 2 columnas (5 a la izquierda, 6 a la
    derecha), cada una con su propio alto real (sin aspect-ratio comun).
    Reemplaza la version anterior, que reutilizaba por error el layout de
-   4 fichas de Home (ver client-feedback/projects-page-rebuild-spec.md).
+   4 fichas de Home.
 
    El titulo "Proyectos" y el mosaico empiezan a la MISMA altura (no el
    titulo arriba y el mosaico despues, como en el resto de paginas) -
@@ -1056,10 +1056,15 @@
   transition: margin-bottom 0.4s ease;
 }
 
+/* Peticion cliente 2026-07-22: 28px (ver --mosaic-hover-margin mas abajo)
+   solo alcanzaba para un titulo de una linea. main.js mide la altura real
+   del caption de cada pieza (que varia segun cuantas lineas ocupe su
+   titulo) y la guarda en --mosaic-hover-margin por pieza; 28px queda solo
+   como fallback si el script no llega a ejecutarse. */
 .project-mosaic__item:has(.project-mosaic__frame:hover),
 .project-mosaic__item:has(.project-mosaic__frame:focus-visible),
 .project-mosaic__item:has(.project-mosaic__frame.is-active) {
-  margin-bottom: 28px;
+  margin-bottom: var(--mosaic-hover-margin, 28px);
 }
 
 .project-mosaic__item img {
@@ -1564,8 +1569,8 @@
      que cualquier viewport movil.
      Las de Contacto (339px), Servicios (.page-hero__title--md, 339px) y
      Proyectos (230px) cabian en moviles >=360-375px mientras el margen
-     lateral fue 20-50px, pero con el margen ampliado a 100px (2026-07-10,
-     ver client-feedback/home-full-bleed-spec.md) la columna de contenido
+     lateral fue 20-50px, pero con el margen ampliado a 100px (2026-07-10)
+     la columna de contenido
      baja de esos anchos en viewports pequenos y las lineas empezaban a
      provocar scroll horizontal de pagina - mismo tope aplicado a las 3
      por consistencia. */
@@ -1713,8 +1718,8 @@
      el resto del sitio para este tipo de fallback.
      minmax(0, 1fr), no "1fr" a secas: la linea decorativa de "Proyectos"
      (.page-hero__title--proyectos::after, 230px) empujaba la pista a
-     230px+padding tras ampliar el margen lateral a 100px (2026-07-10,
-     ver client-feedback/home-full-bleed-spec.md), provocando scroll
+     230px+padding tras ampliar el margen lateral a 100px (2026-07-10),
+     provocando scroll
      horizontal en viewports estrechos. */
   .projects-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -1792,7 +1797,7 @@
 }
 
 /* ---------- Margenes horizontales ampliados a 100px, todas las paginas
-   (peticion cliente 2026-07-10, ver client-feedback/home-full-bleed-spec.md)
+   (peticion cliente 2026-07-10)
    ----------
    Validado primero solo en Home, extendido despues a el resto de paginas
    (misma estructura header/main/footer en todas: un unico `.container` por
