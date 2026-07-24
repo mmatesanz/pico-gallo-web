@@ -46,7 +46,7 @@
     window.addEventListener("resize", setHeaderState);
   }
 
-  /* CR-02 (peticion de cliente):
+  /* CR-02 (peticion de cliente, ver client-feedback/header-scroll-behavior-spec.md):
      el hero de Home reduce su tamano y se reposiciona hacia la esquina
      superior izquierda a medida que se hace scroll (corregido 2026-06-25,
      dos veces: primero la esquina, luego el desplazamiento extra para que
@@ -110,7 +110,7 @@
     window.addEventListener("resize", onHeroScroll);
   }
 
-  /* CR-03 (peticion de cliente):
+  /* CR-03 (peticion de cliente, ver client-feedback/projects-scroll-showcase-spec.md):
      en la seccion Proyectos de Home, "Proyectos" queda fijo mientras se
      hace scroll; la columna de imagenes (.project-entry__media) se
      desplaza de forma continua; la columna de texto (primer <div> de cada
@@ -532,9 +532,10 @@
     });
   }
 
-  /* Formulario de Contacto (contacto.html):
+  /* Formulario de Contacto (contacto.html, nodo Figma 487:1052-487:1061,
      re-auditado 2026-07-20): prototipo estatico sin backend - marcado
-     con data-form-state="static" en el <form>.
+     con data-form-state="static" en el <form> (ver PROTOTYPE_AGENT.md,
+     "formularios sin backend deben marcarse como placeholder/static").
      preventDefault evita la navegacion real del navegador al enviar
      (que intentaria un GET a la propia URL, perdiendo los datos escritos
      sin avisar); en su lugar se muestra un mensaje de confirmacion

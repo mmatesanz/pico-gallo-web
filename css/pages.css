@@ -1,6 +1,6 @@
 /* ---------- Home: hero scroll (CR-02, peticion de cliente 2026-06-25) ----------
    Antes: imagen estatica de altura fija (950px, ver historico debajo).
-   Peticion del cliente:
+   Peticion del cliente (ver client-feedback/header-scroll-behavior-spec.md):
    la imagen del hero reduce su tamano progresivamente con el scroll y se
    reposiciona hacia la esquina superior izquierda (corregido 2026-06-25,
    instruccion Z: el cliente pidio originalmente "inferior izquierda" pero
@@ -289,18 +289,35 @@
   margin-right: 50px;
 }
 
-/* font-size literal (no clamp): 98px a peticion explicita del cliente
-   (2026-07-10, bajado desde 111px). Se abandona la caja estrecha
-   alineada a la derecha (735px, 57.6% del frame) de la revision anterior:
-   el cliente pide que el texto ocupe todo el ancho disponible del
-   contenedor, igual que el resto de paginas tras ampliar los margenes a
-   100px. Solo se usa en
-   index.html, seguro hardcodear sin tocar el token --text-display-md
-   compartido con otras paginas. */
+/* Arreglo minimo 2026-07-24 (bug reportado por el cliente: al reducir la
+   ventana en escritorio y en iPad se recortan las palabras del titular) -
+   causa raiz: 98px era un valor literal fijo (peticion cliente 2026-07-10,
+   ver historial debajo) sin ningun breakpoint intermedio entre este y el
+   fallback movil de mas abajo (<=860px, 40px) - entre 861px y ~1280px el
+   texto envuelve a muchas mas lineas de las que caben en el alto del pin
+   (overflow:hidden, ver .hero-scroll__pin), cortando el final del titular.
+   Verificado con Playwright a 1024px: el bloque de texto necesitaba
+   1281px de alto dentro de un pin de 900px, 381px cortados. Se sustituye
+   el valor fijo por clamp(), con techo en 98px (no se toca el tamano de
+   escritorio ya aprobado por el cliente). Primero se probo una version
+   solo-vw (misma pendiente que --text-display-xl) - insuficiente: a
+   1366x768 y 1280x720 (resoluciones de portatil muy comunes, no solo
+   iPad) seguia recortando 268px/188px porque el alto disponible (vh) no
+   entraba en la cuenta, solo el ancho. Se anade min(vw,vh) para que el
+   texto tambien encoja en viewports anchos pero bajos - eso sí exige
+   ceder algo en el otro extremo: a 1920x1080 (monitor comun, sin
+   problema de recorte) el titular pasa de 98px a 88.8px. Se acepta el
+   cambio (~9%, sigue siendo un titular enorme) porque el requisito duro
+   es que no se corte texto, no mantener 98px exactos en todas partes.
+   Verificado sin recorte con Playwright (contentScrollHeight <= alto del
+   pin) en 861x900, 900x900, 1024x900, 1180x820, 1280x720, 1366x768,
+   1440x900, 1920x1080. Arreglo deliberadamente minimo (evita el recorte,
+   no rediseña el layout) - ver tema pendiente "layout de tablet" en
+   client-feedback/implementation-tracker.md. */
 .intro-statement h1 {
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: 98px;
+  font-size: clamp(2.5rem, min(5.625vw, 6vh) + 1.5rem, 98px);
   line-height: 1.25;
   /* Peticion cliente 2026-07-10: margen izquierdo/derecho de "unos 30px"
      calculado de forma dinamica (no un valor fijo, escala con el ancho
@@ -970,7 +987,7 @@
    asimetrico de 11 piezas en 2 columnas (5 a la izquierda, 6 a la
    derecha), cada una con su propio alto real (sin aspect-ratio comun).
    Reemplaza la version anterior, que reutilizaba por error el layout de
-   4 fichas de Home.
+   4 fichas de Home (ver client-feedback/projects-page-rebuild-spec.md).
 
    El titulo "Proyectos" y el mosaico empiezan a la MISMA altura (no el
    titulo arriba y el mosaico despues, como en el resto de paginas) -
@@ -1569,8 +1586,8 @@
      que cualquier viewport movil.
      Las de Contacto (339px), Servicios (.page-hero__title--md, 339px) y
      Proyectos (230px) cabian en moviles >=360-375px mientras el margen
-     lateral fue 20-50px, pero con el margen ampliado a 100px (2026-07-10)
-     la columna de contenido
+     lateral fue 20-50px, pero con el margen ampliado a 100px (2026-07-10,
+     ver client-feedback/home-full-bleed-spec.md) la columna de contenido
      baja de esos anchos en viewports pequenos y las lineas empezaban a
      provocar scroll horizontal de pagina - mismo tope aplicado a las 3
      por consistencia. */
@@ -1718,8 +1735,8 @@
      el resto del sitio para este tipo de fallback.
      minmax(0, 1fr), no "1fr" a secas: la linea decorativa de "Proyectos"
      (.page-hero__title--proyectos::after, 230px) empujaba la pista a
-     230px+padding tras ampliar el margen lateral a 100px (2026-07-10),
-     provocando scroll
+     230px+padding tras ampliar el margen lateral a 100px (2026-07-10,
+     ver client-feedback/home-full-bleed-spec.md), provocando scroll
      horizontal en viewports estrechos. */
   .projects-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -1797,7 +1814,7 @@
 }
 
 /* ---------- Margenes horizontales ampliados a 100px, todas las paginas
-   (peticion cliente 2026-07-10)
+   (peticion cliente 2026-07-10, ver client-feedback/home-full-bleed-spec.md)
    ----------
    Validado primero solo en Home, extendido despues a el resto de paginas
    (misma estructura header/main/footer en todas: un unico `.container` por

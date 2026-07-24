@@ -431,11 +431,22 @@
      fuera de la unica pista explicita) colapsaba a 0, y con ella la
      imagen entera. grid-template-rows:none restaura el dimensionado
      automatico normal (cada fila mide su propio contenido). */
+  /* Bug encontrado 2026-07-24 (reportado por el cliente: "no funcionan los
+     hipervinculos de los proyectos que estan en el home, son 4"): la regla
+     base de escritorio (mas arriba, #home-proyectos .project-showcase__list
+     .project-entry) pone pointer-events:none y solo lo libera vía
+     .is-active (clase que pone el JS del pin/scroll-progress). Ese JS no se
+     ejecuta en movil/reduced-motion (ver nota de mas arriba), asi que
+     ningun .project-entry llega a tener .is-active nunca - los 4 enlaces
+     (titulo e imagen de cada proyecto) quedaban permanentemente
+     inaccesibles al toque. Se restaura aqui junto con el resto de
+     propiedades que ya reseteaba este mismo bloque. */
   #home-proyectos .project-showcase__list .project-entry {
     position: relative;
     inset: auto;
     padding-block: 24px;
     grid-template-rows: none;
+    pointer-events: auto;
   }
   /* Bug encontrado 2026-07-13 (auditoria de version movil): en el HTML el
      bloque de texto (titulo/categoria/descripcion) va ANTES que
@@ -598,6 +609,28 @@
    .service-row - se traslada aqui para que "Estrategia" etc. sigan
    empezando exactamente en la misma posicion x que antes (ver nota de
    alineacion mas abajo, en .service-row). */
+/* Investigado 2026-07-24 (bug reportado por el cliente: en tablet/ventana
+   reducida "recorta las palabras" - en Servicios concretamente provoca
+   scroll horizontal y los titulos de cada bloque partidos en una columna
+   de ~80px, "Estr/de/Mar..."). Causa: 279px (esta columna) + 420px
+   (.service-row, mas abajo) + 200px de padding del .container suman
+   899px fijos que ya no caben en un viewport de 1024px, sin ningun
+   breakpoint intermedio entre esto y el fallback movil (<=860px).
+   Se probo estrechar ambas columnas con clamp() (igual que el arreglo
+   aplicado al hero de Home) - descartado tras probarlo con Playwright:
+   en cuanto un .service-group__title deja de caber en 1 sola linea (p.ej.
+   "Estrategia de Marca" a columnas mas estrechas), su sticky (top fijo,
+   calc(header+space-2xl+87px), pensado para un titulo de 1 linea) se
+   queda pegado a esa altura fija y el titulo de 2 lineas invade
+   visualmente el primer renglon de .service-group__desc, que si respeta
+   el alto real del titulo en flujo normal (verificado con offsetTop/
+   offsetHeight: sin sticky no hay solape, con sticky si). Arreglarlo bien
+   exige recalcular ese offset de forma dinamica (como ya hace el
+   fallback movil con --row-title-h medido por JS, ver main.js) para
+   todas las combinaciones de titulo/fila - eso ya no es un ajuste minimo,
+   es la reconstruccion de tablet pendiente (ver
+   client-feedback/implementation-tracker.md, tema "layout de tablet").
+   Se revierte esta columna a su ancho original sin tocar. */
 .services-layout {
   display: grid;
   grid-template-columns: 279px minmax(0, 1fr);
@@ -752,6 +785,9 @@
    mas espacio horizontal (289px -> 420px) - la lista de items sigue
    mostrandose exactamente igual (una sola columna apilada, sin
    reagrupar), solo cambia el ancho reservado para esta columna. */
+/* Investigado 2026-07-24: mismo bug/diagnostico que .services-layout de
+   mas arriba (ver ese comentario) - revertido a su ancho original, no es
+   un ajuste seguro sin tocar tambien el sticky de .service-group__title. */
 .service-row {
   display: grid;
   grid-template-columns: 420px minmax(0, 1fr);
