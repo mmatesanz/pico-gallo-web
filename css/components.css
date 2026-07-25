@@ -1523,48 +1523,16 @@
     display: block;
   }
 
-  /* Peticion usuario 2026-07-25 (prototipo unicamente): "en movil, las
-     categorias de servicios en Home no se entienden bien" - verificado
-     con captura: el titulo de categoria ("Estrategia") y el titulo de
-     cada item dentro ("Estrategia de Marca") usaban la misma tipografia
-     display (Lora) practicamente al mismo tamano/color, sin jerarquia
-     visual que distinga "categoria" de "contenido dentro de ella". Se
-     resuelve sin tocar el mecanismo de scroll/pin existente (seguiria
-     siendo un cambio mayor, no pedido) con 2 ajustes puramente
-     tipograficos, solo en este breakpoint:
-
-     1) Contador "01 — 03"/"02 — 03"/"03 — 03" encima de cada categoria
-        (positional, ::before de nth-child ya que hay exactamente 3
-        entries fijas en el HTML - mismo supuesto "3 categorias" que ya
-        asume el resto del sitio, ver comentarios de servicios.html) -
-        dice inmediatamente "estas viendo 1 de 3", nueva informacion que
-        antes no existia en absoluto en movil. */
-  #home-servicios .service-showcase__list .service-entry:nth-child(1) .service-link-row__title::before,
-  #home-servicios .service-showcase__list .service-entry:nth-child(2) .service-link-row__title::before,
-  #home-servicios .service-showcase__list .service-entry:nth-child(3) .service-link-row__title::before {
-    display: block;
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--color-text-soft);
-    margin-bottom: var(--space-xs);
-  }
-  #home-servicios .service-showcase__list .service-entry:nth-child(1) .service-link-row__title::before { content: "01 — 03"; }
-  #home-servicios .service-showcase__list .service-entry:nth-child(2) .service-link-row__title::before { content: "02 — 03"; }
-  #home-servicios .service-showcase__list .service-entry:nth-child(3) .service-link-row__title::before { content: "03 — 03"; }
-
-  /* 2) Titulo de cada item dentro de la categoria: de Lora 32px (misma
-     familia/escala que el titulo de categoria, la fuente del problema)
-     a Libre Franklin - la misma tipografia sans-serif que ya usa
-     .service-link-row__item-desc justo debajo. Un item con titulo+
-     descripcion en la MISMA familia tipografica lee como un bloque de
-     contenido; el titulo de categoria, unico en Lora en todo el carrusel,
-     queda inequivocamente como el unico encabezado real. */
+  /* Peticion usuario 2026-07-25 (prototipo unicamente, solo movil):
+     primer intento de esta mejora (ver historial) probaba un contador
+     "01 — 03" sobre cada categoria y pasaba el titulo de cada item
+     ("Estrategia de Marca") a la tipografia de cuerpo (Libre Franklin) -
+     el cliente pidio revertir ambas cosas tras verlo: sin contador, y
+     el titulo de item vuelve a la MISMA tipografia display (Lora) que
+     el titulo de categoria ("Estrategia"), solo que un punto mas grande
+     que el tamano base compartido con escritorio/tablet (32px -> 34px). */
   #home-servicios .service-showcase__list .service-link-row__item-title {
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 18px;
+    font-size: 34px;
   }
 
   /* Peticion cliente 2026-07-13: incluir el vector (misma linea fina que
