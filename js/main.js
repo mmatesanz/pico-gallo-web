@@ -385,8 +385,6 @@
     var serviceRowTitleBlocks = Array.prototype.slice.call(document.querySelectorAll(".service-row__title-block"));
 
     var updateServiceRowMedia = function () {
-      if (!serviceMediaGroups.length) return;
-
       var activeRowIndex = -1;
       var activeRawProgress = 0;
 
@@ -412,10 +410,18 @@
          segun este mismo activeRowIndex, en vez de deslizarse con el scroll
          normal al soltar su sticky (ver .service-row__title-block en
          components.css, solo escritorio/tablet) - reutiliza el indice ya
-         calculado arriba para la imagen compartida, sin logica nueva. */
+         calculado arriba para la imagen compartida, sin logica nueva.
+         Este toggle NO depende de .services-media__group (a diferencia del
+         resto de la funcion, ver early-return de abajo): en el tema de
+         WordPress la imagen compartida todavia no esta migrada (ver
+         page-servicios.php) y si el early-return original se dejaba al
+         principio de la funcion, ninguna fila salvo la primera (activa por
+         defecto desde PHP) llegaba a mostrar su titulo/tagline. */
       serviceRowTitleBlocks.forEach(function (block, index) {
         block.classList.toggle("is-active", index === activeRowIndex);
       });
+
+      if (!serviceMediaGroups.length) return;
 
       serviceMediaGroups.forEach(function (group, index) {
         group.classList.toggle("is-active", index === activeRowIndex);
@@ -489,6 +495,31 @@
         lastProjectLink.scrollIntoView({ block: "center" });
       }
     }
+  }
+
+  /* Bug encontrado 2026-07-25 (reportado por el usuario, version tablet
+     desplegada: el boton "Ver todos los proyectos" del Home no llevaba al
+     inicio de Proyectos). Causa: el mecanismo de arriba (2026-07-14)
+     recuerda EN QUE PROYECTO se hizo clic desde el propio mosaico de
+     Proyectos, para restaurar esa posicion de scroll al volver - pero
+     sessionStorage sigue vivo mientras dure la pestaña, no solo durante
+     esa "vuelta" inmediata. Si el usuario ya habia visitado un proyecto
+     desde el mosaico en algun momento anterior de la sesion, y LUEGO
+     (sin haber vuelto a Proyectos todavia, asi que el valor seguia sin
+     consumir) navega Home -> "Ver todos los proyectos", proyectos.html
+     encontraba ese valor antiguo y saltaba a el en vez de quedarse
+     arriba - el mecanismo no distingue "vengo de ver un proyecto" de
+     "vengo de cualquier otro sitio". El boton de Home (.btn-bar) es
+     siempre una entrada "fresca" a Proyectos (nunca un "volver de la
+     ficha de un proyecto" - eso ya lo cubre .project-detail__nav-all,
+     sin tocar), asi que aqui se limpia el valor guardado ANTES de
+     navegar, para que proyectos.html cargue siempre desde arriba
+     cuando se llega por este boton en concreto. */
+  var homeProjectsBtnBar = document.querySelector(".btn-bar");
+  if (homeProjectsBtnBar) {
+    homeProjectsBtnBar.addEventListener("click", function () {
+      sessionStorage.removeItem(PROJECT_LAST_VIEWED_KEY);
+    });
   }
 
   /* Peticion cliente 2026-07-22: el margen que .project-mosaic__item gana

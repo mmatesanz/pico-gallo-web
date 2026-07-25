@@ -295,9 +295,27 @@
    punto del scroll, o esta el titulo activo centrado en la ventana, o
    no se ve ninguno todavia/ya paso (segun se este a medio camino entre
    2 proyectos o no). */
+/* Bug encontrado 2026-07-25 (al investigar por que el titulo de algunos
+   proyectos se recortaba - reportado primero como "108 Wanderlust" en
+   tablet): esta ventana es hija de un flex-column (div:first-child de
+   .project-entry, alto:100% estirado a la fila completa) sin
+   flex-shrink:0 - por defecto flex-shrink:1, asi que si el contenido
+   total del flex-column (esta ventana + .project-entry__description) no
+   cabe en el alto fijo de la fila, flexbox la ENCOGE en vez de respetar
+   el alto exacto medido por JS (--project-heading-h, pensado para
+   contener el titulo/categoria completos para el efecto "persiana" de
+   mas arriba). El grado de encogido variaba por proyecto segun cuanto
+   ocupara su propia descripcion (verificado con Playwright: 51px/148px/
+   0px/51px de alto real en los 4 proyectos de Home, en vez de 148px en
+   los 4). Con flex-shrink:0 la ventana nunca se encoge; si el contenido
+   total sigue sin caber, es .project-entry__description quien se sale
+   del alto de la fila (el propio panel raiz ya recorta ese sobrante con
+   overflow:hidden - mucho menos visible/grave que recortar titulo o
+   categoria). */
 .project-showcase__list .project-entry__heading-window {
   overflow: hidden;
   height: var(--project-heading-h, auto);
+  flex-shrink: 0;
 }
 
 .project-showcase__list .project-entry__heading {
@@ -366,9 +384,29 @@
      actua si al menos una de las dos dimensiones es auto), y el ancho se
      quedaba en 767px aunque el alto se hubiera encogido, deformando la
      proporcion. */
+  /* Arreglo 2026-07-25 (reportado por el usuario: en tablet "los textos de
+     los proyectos de la Home no se adaptan al ancho" - confirmado con
+     Playwright a 1024px: la imagen invadia la columna de texto). Causa:
+     height:868px fijo (el alto exacto de Figma) + max-height:100% SOLO
+     limitaba el alto por si la fila quedaba mas baja que 868px (caso ya
+     corregido 2026-07-10 para portatiles bajos) - pero nunca limitaba el
+     ANCHO derivado via aspect-ratio, que en un viewport estrecho pero
+     ALTO (tablet en vertical, ~1024x900) sigue siendo enorme (~620-700px)
+     aunque la columna de texto solo tenga sitio para ~260px. width/height
+     "auto" + max-width/max-height (cada uno con su propio techo de Figma
+     via min(), ademas del limite real de la fila/columna en 100%) es el
+     patron CSS estandar para que el navegador elija el mas restrictivo de
+     los 2 ejes manteniendo el aspect-ratio - en escritorio ancho y alto
+     (sitio de sobra en ambos ejes) el resultado es identico a antes
+     (767x868, el techo de Figma); en tablet, el ancho pasa a ser el eje
+     limitante y el alto se deriva proporcionalmente, sin invadir la
+     columna de texto. Verificado con Playwright que no cambia el tamano
+     en escritorio ancho (1920px) ni en el caso ya corregido de portatil
+     bajo (2026-07-10). */
   width: auto;
-  height: 868px;
-  max-height: 100%;
+  height: auto;
+  max-width: min(767px, 100%);
+  max-height: min(868px, 100%);
   aspect-ratio: 767 / 868;
   /* Historial 2026-07-10: sin justify-self, un ancho definido (via
      aspect-ratio) menor que el de la columna de grid se alinea por
@@ -472,6 +510,15 @@
     padding-top: 11px;
   }
   .project-showcase__list .project-entry__description { opacity: 1; }
+  /* Peticion del usuario 2026-07-25: mismo espaciado que en el rango
+     861-1279px de mas abajo, extendido aqui porque tablets reales en
+     vertical (iPad Mini/Air/Pro 11, Galaxy Tab S7: ~744-834px de ancho)
+     caen en este breakpoint (<=860px), no en el de 861px+ - se habian
+     calibrado los arreglos de tablet anteriores asumiendo ~1024px como
+     ancho tipico, sin contrastar con anchos reales de dispositivo. */
+  #home-proyectos .project-entry__description {
+    margin-top: 20px;
+  }
   /* Persiana de titulo+categoria (regla base de escritorio, mas arriba):
      sin pin ni progreso continuo en movil/reduced-motion, se vuelve a
      flujo normal - ventana sin recortar y sin desplazamiento. */
@@ -1476,6 +1523,50 @@
     display: block;
   }
 
+  /* Peticion usuario 2026-07-25 (prototipo unicamente): "en movil, las
+     categorias de servicios en Home no se entienden bien" - verificado
+     con captura: el titulo de categoria ("Estrategia") y el titulo de
+     cada item dentro ("Estrategia de Marca") usaban la misma tipografia
+     display (Lora) practicamente al mismo tamano/color, sin jerarquia
+     visual que distinga "categoria" de "contenido dentro de ella". Se
+     resuelve sin tocar el mecanismo de scroll/pin existente (seguiria
+     siendo un cambio mayor, no pedido) con 2 ajustes puramente
+     tipograficos, solo en este breakpoint:
+
+     1) Contador "01 — 03"/"02 — 03"/"03 — 03" encima de cada categoria
+        (positional, ::before de nth-child ya que hay exactamente 3
+        entries fijas en el HTML - mismo supuesto "3 categorias" que ya
+        asume el resto del sitio, ver comentarios de servicios.html) -
+        dice inmediatamente "estas viendo 1 de 3", nueva informacion que
+        antes no existia en absoluto en movil. */
+  #home-servicios .service-showcase__list .service-entry:nth-child(1) .service-link-row__title::before,
+  #home-servicios .service-showcase__list .service-entry:nth-child(2) .service-link-row__title::before,
+  #home-servicios .service-showcase__list .service-entry:nth-child(3) .service-link-row__title::before {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-text-soft);
+    margin-bottom: var(--space-xs);
+  }
+  #home-servicios .service-showcase__list .service-entry:nth-child(1) .service-link-row__title::before { content: "01 — 03"; }
+  #home-servicios .service-showcase__list .service-entry:nth-child(2) .service-link-row__title::before { content: "02 — 03"; }
+  #home-servicios .service-showcase__list .service-entry:nth-child(3) .service-link-row__title::before { content: "03 — 03"; }
+
+  /* 2) Titulo de cada item dentro de la categoria: de Lora 32px (misma
+     familia/escala que el titulo de categoria, la fuente del problema)
+     a Libre Franklin - la misma tipografia sans-serif que ya usa
+     .service-link-row__item-desc justo debajo. Un item con titulo+
+     descripcion en la MISMA familia tipografica lee como un bloque de
+     contenido; el titulo de categoria, unico en Lora en todo el carrusel,
+     queda inequivocamente como el unico encabezado real. */
+  #home-servicios .service-showcase__list .service-link-row__item-title {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 18px;
+  }
+
   /* Peticion cliente 2026-07-13: incluir el vector (misma linea fina que
      ya separa "Servicios" del carrusel, ver .divider) debajo de CADA
      servicio del carrusel - entre el nombre de la categoria y su lista
@@ -1584,5 +1675,80 @@
   /* La linea de 495px fijos (SRV-018) desbordaria en viewports estrechos. */
   .service-row > div:last-child .service-group:first-child::before {
     width: 100%;
+  }
+}
+
+/* Arreglo 2026-07-25 (reportado por el usuario: "los textos de la version
+   tablet no se ajustan al ancho de la tablet" - confirmado con Playwright:
+   scroll horizontal en Servicios a 1024px, las columnas fijas 279px+420px
+   de mas arriba no caben). Se probo antes estrechar esas 2 columnas con
+   clamp() (mismo patron que el hero de Home) - descartado: en cuanto un
+   .service-group__title deja de caber en 1 linea a columnas mas
+   estrechas, su sticky (top fijo, calibrado para 1 linea) invade
+   visualmente el primer renglon de la descripcion de abajo (confirmado
+   con Playwright, offsetTop/offsetHeight: sin sticky no hay solape, con
+   sticky si). Arreglarlo bien ahi exigiria un offset dinamico nuevo para
+   el rango de tablet - en vez de reinventarlo, se reutiliza el fallback
+   movil de arriba (ya probado: layout apilado de 1 columna, sticky con
+   --row-title-h dinamico, sin franja opaca) extendiendo su rango SOLO
+   para las reglas propias de la pagina Servicios
+   (.service-row/.services-layout/.service-group__title). No se toca
+   .project-entry ni .service-link-row (carrusel de Servicios/Proyectos
+   de Home) - esos mantienen deliberadamente el efecto de escritorio en
+   tablet por peticion explicita del cliente (ver "Historial 2026-06-29"
+   en el bloque de arriba). .services-media (imagen compartida) se deja
+   visible (a diferencia de movil, donde se oculta) pero ya no queda
+   anclada al fondo del viewport - el truco de altura 100vh de
+   .services-layout__title solo tiene sentido con sticky; aqui pasa a
+   flujo normal, justo debajo del texto "Servicios". Techo en 1279px:
+   1280px es el ancho de referencia (--content-max) donde 279+420+200px
+   de padding ya caben con margen. */
+@media (min-width: 861px) and (max-width: 1279px) {
+  .service-row,
+  .services-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-md);
+  }
+
+  .service-row > div:first-child,
+  .service-row > div:last-child {
+    grid-column: 1;
+  }
+
+  .services-layout__title {
+    position: static;
+    height: auto;
+    display: block;
+    margin-bottom: var(--space-lg);
+  }
+
+  .service-row > div:first-child {
+    top: var(--header-height);
+  }
+
+  .service-group__title {
+    top: calc(var(--header-height) + var(--row-title-h, 0px));
+  }
+
+  .service-row > div:last-child > .service-group:last-child .service-group__title {
+    position: static;
+  }
+
+  .services-layout::before { display: none; }
+
+  .service-row > div:last-child .service-group:first-child::before {
+    width: 100%;
+  }
+
+  /* Peticion del usuario 2026-07-25: en tablet, la descripcion de cada
+     proyecto (carrusel de Proyectos, Home) debe llevar interlineado
+     respecto a project-entry__category, no seguir anclada al fondo de
+     la columna (margin-top:auto, regla de escritorio mas arriba) - con
+     la columna de texto estrecha en tablet, ese anclaje al fondo dejaba
+     muy poco aire entre categoria y descripcion cuando el texto envuelve
+     en muchas lineas. Ajustado de 10px a 20px (peticion del usuario,
+     mismo dia, tras ver el resultado de 10px). */
+  #home-proyectos .project-entry__description {
+    margin-top: 20px;
   }
 }

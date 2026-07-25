@@ -1579,6 +1579,17 @@
   .about-page::before,
   .contact-page::before { display: none; }
 
+  /* Bug encontrado 2026-07-25 (al mejorar la composicion del manifiesto en
+     tablet): a diferencia del titulo "Nosotros" (linea de arriba,
+     position:static en movil), esta linea decorativa vive en un <div>
+     propio, hermano del titulo, no en su ::before - se quedaba sin
+     resetear, asi que seguia con el position:sticky de escritorio (queda
+     "flotando" segun se hace scroll y se monta encima del manifiesto,
+     mucho mas abajo en la pagina). */
+  .about-page__divider {
+    position: static;
+  }
+
   /* Sin spec movil en Figma (accepted-deviation, igual criterio que el
      resto del sitio): la linea de Nosotros mide 884px en Figma (frame
      fijo de escritorio, ver nota en .about-page__divider - ya tiene su
@@ -1628,6 +1639,21 @@
     width: 128px;
     height: 50px;
     margin-bottom: var(--space-md);
+  }
+
+  /* Peticion del usuario 2026-07-25: mejorar la composicion del texto
+     poetico del manifiesto en tablet - sin este limite, las lineas
+     cortas (cada una con su propio <br> manual, ver nosotros.html)
+     quedan sueltas dentro de una columna de ancho completo (~786px
+     util en un iPad de 834px), sin la sensacion de bloque compacto e
+     intencional que tienen en escritorio (donde la columna de texto
+     mide de forma organica ~610px, acotada por su propio contenido
+     dentro del layout de 2 columnas). Se fija un ancho similar aqui
+     para que el efecto se sienta igual de compuesto en tablet. min()
+     evita que estorbe en telefonos reales (390px), donde el contenedor
+     ya es mas estrecho que este limite. */
+  .manifesto__text {
+    max-width: min(480px, 100%);
   }
 
   /* Mismo criterio: el bleed de .contact-form-section (96px de
