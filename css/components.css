@@ -1538,6 +1538,13 @@
     font-size: 24px;
   }
 
+  /* Peticion cliente 2026-07-25: font-size explicito de 14px para la
+     descripcion de cada item (base 16px, compartido con escritorio/
+     tablet) en este mismo breakpoint. */
+  #home-servicios .service-showcase__list .service-link-row__item-desc {
+    font-size: 14px;
+  }
+
   /* Peticion cliente 2026-07-13: incluir el vector (misma linea fina que
      ya separa "Servicios" del carrusel, ver .divider) debajo de CADA
      servicio del carrusel - entre el nombre de la categoria y su lista
