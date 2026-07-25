@@ -1452,7 +1452,21 @@
    aceptado: el cliente prioriza ver el texto completo sobre conservar esa
    transicion. */
 @media (max-width: 860px) {
-  .service-showcase__pin { height: auto; }
+  /* Bug encontrado 2026-07-26 (ver main.js, syncServicePinMobileHeight):
+     height:auto a secas hacia que el pin (sticky) cambiara de alto en el
+     mismo frame en que cambia el slide activo, empujando de golpe el
+     resto de la pagina - mas notorio en la transicion 2->3 (mayor
+     diferencia de alto entre slides consecutivos). var() con "auto" como
+     fallback: antes de que el JS calcule la altura real (o si esta
+     desactivado), se comporta exactamente igual que antes. overflow
+     visible explicito (la regla base pensada para escritorio pone
+     hidden): con el pin ya fijado al mas alto de los 3 slides no debería
+     hacer falta, pero es la misma red de seguridad que ya se aplica en
+     servicios.html para garantizar que ningun texto se recorta. */
+  .service-showcase__pin {
+    height: var(--service-pin-mobile-h, auto);
+    overflow: visible;
+  }
 
   /* Peticion cliente 2026-07-13: reducir el espacio entre "Servicios" y
      el primer servicio del carrusel - en movil, con la pantalla mas baja,

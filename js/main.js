@@ -266,6 +266,56 @@
     var SERVICE_COUNT = serviceEntries.length;
     var serviceTicking = false;
 
+    /* Bug encontrado 2026-07-26 (reportado por el usuario: en movil, al
+       pasar del slide 2 al 3 del carrusel de Servicios de Home "pasa algo
+       raro" que no pasa del 1 al 2). Causa: .service-showcase__pin en
+       movil usa height:auto (components.css) - cada slide mide lo que
+       necesita su propio contenido, mismo criterio que en servicios.html
+       (el cliente no permite cortar texto). El pin sigue siendo
+       position:sticky en movil (mismo comportamiento que escritorio/
+       tablet, peticion expresa del cliente) - un elemento sticky que
+       cambia de alto en el mismo frame en que cambia el slide activo
+       (mas abajo, display:none/block) empuja de golpe el resto de la
+       pagina, y el salto es mas notorio cuanto mayor es la diferencia de
+       alto entre el slide saliente y el entrante. De los 3 slides,
+       "Sistemas de Diseño" (4 items) es el mas alto y "Experiencia y
+       Ejecución" (3 items) el mas bajo - la mayor diferencia entre
+       cualquier par consecutivo cae justo en la transicion 2->3, por eso
+       se nota ahi y no en la 1->2.
+       Solucion: se mide con JS la altura natural de los 3 slides (mismo
+       patron que --row-title-h en servicios.html - visibility:hidden en
+       vez de display:none, para medir sin pintarse ni afectar el layout
+       real gracias a position:absolute) y se fija el pin movil a la
+       altura del mas alto de los 3 via variable CSS. El pin ya no cambia
+       de alto al cambiar de slide activo (elimina el salto); los slides
+       mas bajos simplemente dejan aire debajo, dentro de la misma caja -
+       ningun texto se recorta (overflow:visible en el pin movil, ver
+       components.css). */
+    var syncServicePinMobileHeight = function () {
+      if (window.innerWidth > 860) {
+        servicePin.style.removeProperty("--service-pin-mobile-h");
+        return;
+      }
+      var listEl = serviceShowcase.querySelector(".service-showcase__list");
+      if (!listEl) return;
+      var width = listEl.clientWidth;
+      var maxHeight = 0;
+      serviceEntries.forEach(function (entry) {
+        var original = entry.style.cssText;
+        entry.style.cssText = "display:block;position:absolute;visibility:hidden;top:0;left:0;width:" + width + "px;";
+        maxHeight = Math.max(maxHeight, entry.offsetHeight);
+        entry.style.cssText = original;
+      });
+      if (maxHeight > 0) {
+        servicePin.style.setProperty("--service-pin-mobile-h", maxHeight + "px");
+      }
+    };
+    syncServicePinMobileHeight();
+    window.addEventListener("resize", syncServicePinMobileHeight);
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(syncServicePinMobileHeight);
+    }
+
     var updateServiceProgress = function () {
       var rect = serviceShowcase.getBoundingClientRect();
       var scrollableDistance = serviceShowcase.offsetHeight - servicePin.offsetHeight;
