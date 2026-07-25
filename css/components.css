@@ -1527,13 +1527,12 @@
      primer intento de esta mejora (ver historial) probaba un contador
      "01 — 03" sobre cada categoria y pasaba el titulo de cada item
      ("Estrategia de Marca") a la tipografia de cuerpo (Libre Franklin) -
-     el cliente pidio revertir ambas cosas tras verlo: sin contador, y
-     el titulo de item vuelve a la MISMA tipografia display (Lora) que
-     el titulo de categoria ("Estrategia"), solo que un punto mas grande
-     que el tamano base compartido con escritorio/tablet (32px -> 34px). */
-  #home-servicios .service-showcase__list .service-link-row__item-title {
-    font-size: 34px;
-  }
+     el cliente pidio revertir ambas cosas: sin contador, y el titulo de
+     item vuelve a la MISMA tipografia display (Lora) que el titulo de
+     categoria ("Estrategia"). Un segundo ajuste subio el tamano un punto
+     por encima del base (32px -> 34px); un tercer ajuste pide "un punto
+     menos, como en la version anterior" - vuelve a 32px, sin override de
+     tamano propio (hereda el mismo valor que escritorio/tablet). */
 
   /* Peticion cliente 2026-07-13: incluir el vector (misma linea fina que
      ya separa "Servicios" del carrusel, ver .divider) debajo de CADA
