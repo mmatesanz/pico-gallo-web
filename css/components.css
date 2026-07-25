@@ -1514,9 +1514,11 @@
   }
 
   /* Peticion cliente 2026-07-13: en movil, .service-link-row__title baja
-     de 48px (tamano compartido con escritorio/tablet) a 42px. */
+     de 48px (tamano compartido con escritorio/tablet) a 42px. Reducido de
+     nuevo 2026-07-25 (peticion cliente) a 30px, en linea con los ajustes
+     de tamano del titulo de item justo debajo (ver comentario siguiente). */
   #home-servicios .service-showcase__list .service-link-row__title {
-    font-size: 42px;
+    font-size: 30px;
     /* De inline (span) a block: necesario para que el vector de abajo
        (::after) se dibuje como una linea de ancho completo bajo el
        titulo, no pegado al final del texto. */
