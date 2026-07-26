@@ -89,10 +89,20 @@
    16px de --text-body (ver tokens.css) cubre las 4. La posicion vertical
    se corrige mas abajo (anclada al fondo de la fila, no con margin-top
    fijo). */
+/* Peticion cliente 2026-07-26 (1a): subir el texto 2px - con
+   margin-top:auto empujando el bloque al fondo de la fila, aumentar el
+   padding-bottom (que reserva el hueco entre el texto y el borde
+   inferior real) sube el texto sin mover el borde inferior de la fila
+   ni el resto del layout.
+   Peticion cliente 2026-07-26 (2a, mismo dia): ademas, subir 2px el
+   font-size - de 16px (--text-body, token compartido con el resto del
+   sitio) a 18px, explicito y escopado solo a esta ficha de Home para no
+   afectar el resto de usos de --text-body. */
 #home-proyectos .project-entry__description {
   max-width: 410px;
   margin-top: auto;
-  padding-bottom: 100px;
+  padding-bottom: 102px;
+  font-size: 18px;
 }
 
 /* En Figma la descripcion queda anclada al borde inferior de cada fila

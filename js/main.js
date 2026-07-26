@@ -356,6 +356,234 @@
     window.addEventListener("resize", onServiceScroll);
   }
 
+  /* Peticion cliente 2026-07-26 (Nosotros, solo escritorio/tablet, >860px
+     - ver el @media (min-width:861px) de .manifesto__text en pages.css):
+     el titulo "Manifiesto" se queda fijo mientras el texto (3 parrafos)
+     entra y sale como una persiana segun el scroll. Combina 2 patrones ya
+     existentes en este archivo en vez de inventar uno nuevo: el pin+
+     scroll de arriba (updateServiceProgress) para decidir que parrafo
+     esta activo, y el efecto de persiana is-active/is-past (translateY
+     discreto, ver updateProjectProgress mas abajo) para la transicion
+     visual. Bloque independiente (variables/selectores propios), mismo
+     criterio que el resto de carruseles de este archivo.
+     La altura de cada parrafo (para saber cuanto debe desplazarse al
+     entrar/salir) no es la misma para los 3 - se mide con JS la altura
+     natural del mas alto (mismo patron que --mosaic-hover-margin unas
+     lineas mas abajo: position:absolute + visibility:hidden, para medir
+     sin pintarse ni afectar el layout real) y se expone como
+     --manifesto-text-h en .manifesto__text. */
+  var manifestoRoot = document.querySelector(".manifesto");
+  var manifestoShowcase = document.querySelector(".manifesto__showcase");
+  var manifestoPin = manifestoShowcase ? manifestoShowcase.querySelector(".manifesto__pin") : null;
+  var manifestoTextEl = manifestoShowcase ? manifestoShowcase.querySelector(".manifesto__text") : null;
+  var manifestoStatement = document.querySelector(".manifesto__statement");
+  var manifestoProgressBar = document.querySelector(".manifesto__progress-bar");
+  var manifestoReleaseSpacer = document.querySelector(".manifesto__release-spacer");
+  var manifestoCurtain = document.querySelector(".manifesto__curtain");
+  var manifestoParagraphs = manifestoTextEl
+    ? Array.prototype.slice.call(manifestoTextEl.querySelectorAll("p"))
+    : [];
+
+  if (manifestoShowcase && manifestoPin && manifestoTextEl && manifestoParagraphs.length && !prefersReducedMotion) {
+    var MANIFESTO_COUNT = manifestoParagraphs.length;
+    var manifestoTicking = false;
+    var manifestoPinTopValue = 0;
+
+    var syncManifestoTextHeight = function () {
+      if (window.innerWidth <= 860) {
+        manifestoTextEl.style.removeProperty("--manifesto-text-h");
+        if (manifestoRoot) {
+          manifestoRoot.style.removeProperty("--manifesto-statement-top");
+          manifestoRoot.style.removeProperty("--manifesto-pin-top");
+        }
+        if (manifestoReleaseSpacer) {
+          manifestoReleaseSpacer.style.removeProperty("--manifesto-release-h");
+        }
+        if (manifestoCurtain) {
+          manifestoCurtain.classList.remove("is-visible");
+        }
+        return;
+      }
+      var width = manifestoTextEl.clientWidth;
+      var maxHeight = 0;
+      manifestoParagraphs.forEach(function (p) {
+        var original = p.style.cssText;
+        p.style.cssText = "position:absolute;visibility:hidden;top:0;left:0;width:" + width + "px;margin:0;";
+        maxHeight = Math.max(maxHeight, p.offsetHeight);
+        p.style.cssText = original;
+      });
+      /* Peticion cliente 2026-07-26 (7a, escritorio/tablet): ampliar 50px
+         la altura que ocupa el carrusel del manifiesto. --manifesto-text-h
+         (el alto del parrafo mas largo de los 3, ver mas arriba) es lo
+         que fija la altura real de .manifesto__text y, con ella, la de
+         todo .manifesto__pin (heading+texto+progreso) - sumar 50px aqui
+         en vez de en la propia .manifesto__text en CSS mantiene el mismo
+         valor propagado automaticamente a todo lo que ya depende de el
+         (manifestoPin.offsetHeight: el spacer de despegue, el calculo de
+         scrollableDistance y el punto de despegue nativo del sticky, ver
+         mas abajo) sin desincronizar nada. */
+      if (maxHeight > 0) {
+        manifestoTextEl.style.setProperty("--manifesto-text-h", (maxHeight + 50) + "px");
+      }
+      /* Peticion cliente 2026-07-26 (ajuste sobre el intento anterior, que
+         anclaba el statement justo debajo del header): "Somos el
+         ingrediente..." debe quedar fijo ~50px ANTES de llegar al div
+         .about-page__divider (la linea bajo "Nosotros", sticky durante
+         toda la pagina - ver .about-page__divider en este mismo archivo).
+         "Nosotros"+divider quedan fijos desde el principio del scroll de
+         la pagina (mas arriba en el documento); el statement, mucho mas
+         abajo, sube por scroll normal HACIA esa linea ya fija - "antes de
+         llegar" = se detiene (se vuelve sticky) mientras todavia esta
+         POR DEBAJO del divider, dejando 50px de hueco entre el borde
+         inferior del divider y el borde superior del statement, no al
+         reves. Se lee el "top"+alto reales YA RESUELTOS del divider (en
+         vez de reconstruir su formula calc aqui, con riesgo de
+         desincronizarse si esa formula cambia). El pin de "Manifiesto" se
+         ancla justo debajo del statement (mismo criterio que antes, ahora
+         con el nuevo punto de referencia). Todo en un UNICO valor en px
+         por variable (no un calc() con varias variables distintas en el
+         "top" de cada elemento) - mas facil de depurar.
+         Se expone en .manifesto (el ancestro comun de .manifesto__statement
+         y .manifesto__pin, ver pages.css), no en el propio statement: una
+         variable CSS solo hereda hacia sus DESCENDIENTES, y .manifesto__pin
+         no es descendiente de .manifesto__statement (son hermanos). */
+      if (manifestoStatement && manifestoRoot) {
+        var dividerEl = document.querySelector(".about-page__divider");
+        var dividerBottom = 0;
+        if (dividerEl) {
+          dividerBottom = (parseFloat(getComputedStyle(dividerEl).top) || 0) + dividerEl.offsetHeight;
+        }
+        var statementTop = dividerBottom + 50;
+        /* Peticion cliente 2026-07-26 (6a): 100px de interlineado entre
+           el statement y lo que viene despues (el pin de "Manifiesto")
+           en escritorio/tablet tambien - antes quedaban pegados sin
+           hueco (pinTop = statementTop + altura del statement, 0px de
+           separacion). Mismo valor que el margin-top de .manifesto__body
+           en movil (ver pages.css), por coherencia. */
+        manifestoPinTopValue = statementTop + manifestoStatement.offsetHeight + 100;
+        manifestoRoot.style.setProperty("--manifesto-statement-top", statementTop + "px");
+        manifestoRoot.style.setProperty("--manifesto-pin-top", manifestoPinTopValue + "px");
+      }
+
+      /* Peticion cliente 2026-07-26 (5a, origen de .manifesto__release-
+         spacer): al terminar la 3a diapositiva el pin se despega de su
+         sticky de forma nativa y en ese momento (9c, peticion cliente
+         "cuando pase la ultima slide quiero que se empiece a ver el
+         footer") ya NO necesita ningun hueco extra reservado despues de
+         .manifesto__showcase - el propio pin se desvanece por completo
+         (opacity 0, clase is-releasing, ver pages.css) exactamente en el
+         mismo instante en que empieza a despegarse (rawProgressUnclamped
+         cruza 1 en la misma formula que ya sincroniza ambos eventos, ver
+         mas arriba), asi que no queda nada visible que "termine de
+         recorrer" ese hueco - reservarlo solo alejaba el footer sin
+         ningun beneficio visual. De los intentos anteriores (9a: -50px,
+         9b: -100px adicionales) a esto solo queda el propio elemento
+         spacer (por si hiciera falta reintroducir hueco en el futuro),
+         con su altura siempre en 0. */
+      if (manifestoReleaseSpacer) {
+        manifestoReleaseSpacer.style.setProperty("--manifesto-release-h", "0px");
+      }
+
+      /* Peticion cliente 2026-07-26 (5a): .manifesto__curtain (ver
+         pages.css) es position:fixed (para no aportar altura al
+         documento), asi que no puede heredar el left/width del carrusel
+         via margin-left como hace .manifesto__pin - se mide su rect real
+         (fijo mientras no cambie el ancho de viewport/columna, por eso
+         se recalcula aqui, en sync, no en cada scroll). */
+      if (manifestoCurtain) {
+        var pinRect = manifestoPin.getBoundingClientRect();
+        manifestoCurtain.style.setProperty("--manifesto-curtain-left", pinRect.left + "px");
+        manifestoCurtain.style.setProperty("--manifesto-curtain-width", pinRect.width + "px");
+      }
+    };
+
+    var updateManifestoProgress = function () {
+      if (window.innerWidth <= 860) {
+        manifestoTicking = false;
+        return;
+      }
+      /* Bug encontrado 2026-07-26 (5a, peticion cliente "el carrusel se
+         esconda por debajo del texto... y no se vea nada"): esta formula
+         (heredada del carrusel de Servicios, updateServiceProgress mas
+         arriba) asume que el pin se pega justo en top:0 del viewport. Aqui
+         el pin se pega mas abajo (--manifesto-pin-top, 304px en
+         escritorio tipico - debajo del statement) y sin sumar ese offset
+         el progreso llegaba a 1 (fin de la 3a diapositiva) ANTES de que
+         el pin realmente se despegue de forma nativa por CSS (sticky dejaba
+         de estar pegado al ~87% del scroll, no al 100%) - se veia el
+         carrusel "escaparse" hacia arriba, por encima del statement,
+         mientras is-active todavia marcaba el 3er parrafo como visible.
+         Sumar manifestoPinTopValue (el mismo offset que ya usa el CSS,
+         --manifesto-pin-top) alinea este calculo con el punto real en el
+         que el sticky nativo se despega, para que ambos coincidan. */
+      var rect = manifestoShowcase.getBoundingClientRect();
+      var scrollableDistance = manifestoShowcase.offsetHeight - manifestoPin.offsetHeight;
+      var rawProgressUnclamped = scrollableDistance > 0 ? (-rect.top + manifestoPinTopValue) / scrollableDistance : 0;
+      var rawProgress = Math.max(0, Math.min(1, rawProgressUnclamped));
+      var activeIndex = Math.min(MANIFESTO_COUNT - 1, Math.floor(rawProgress * MANIFESTO_COUNT));
+
+      manifestoParagraphs.forEach(function (p, index) {
+        p.classList.toggle("is-active", index === activeIndex);
+        p.classList.toggle("is-past", index < activeIndex);
+      });
+
+      /* Peticion cliente 2026-07-26 (5a): la cortina (.manifesto__curtain,
+         ver pages.css) solo debe pintarse mientras el pin esta a punto de
+         despegarse o ya despegado (rawProgressUnclamped por encima de 1
+         real, no el valor recortado a [0,1] de arriba) - el resto del
+         tiempo (todavia scrolleando hacia el manifiesto, o ya durante el
+         propio carrusel con el pin bien pegado) no hay nada que tape, y
+         al ser position:fixed no debe quedar encendida permanentemente
+         fuera de este rango o taparia otro contenido de la pagina que
+         pase por esa misma columna en otro momento del scroll. 0.85 dejar
+         un pequeno margen ANTES del punto real de despegue (~0.87-1,
+         segun el resto de la formula) para que la cortina ya este lista
+         cuando el despegue empieza. */
+      if (manifestoCurtain) {
+        manifestoCurtain.classList.toggle("is-visible", rawProgressUnclamped > 0.85);
+      }
+
+      /* Peticion cliente 2026-07-26 (5a): en cuanto termina de mostrarse
+         la 3a diapositiva (rawProgressUnclamped >= 1, el mismo punto en
+         el que el sticky nativo empieza a despegarse - ver la nota de
+         mas arriba sobre por que se sumo manifestoPinTopValue a la
+         formula), el pin entero se desvanece (.is-releasing, ver
+         pages.css) en vez de deslizarse visiblemente fuera de vista. */
+      manifestoPin.classList.toggle("is-releasing", rawProgressUnclamped >= 1);
+
+      /* Peticion cliente 2026-07-26: mismo indicador visual de avance que
+         --service-scroll-progress en el carrusel de Servicios de Home -
+         reutiliza el mismo rawProgress ya calculado arriba, sin logica
+         nueva. */
+      if (manifestoProgressBar) {
+        manifestoShowcase.style.setProperty("--manifesto-scroll-progress", rawProgress.toFixed(4));
+      }
+
+      manifestoTicking = false;
+    };
+
+    var onManifestoScroll = function () {
+      if (!manifestoTicking) {
+        manifestoTicking = true;
+        window.requestAnimationFrame(updateManifestoProgress);
+      }
+    };
+
+    syncManifestoTextHeight();
+    updateManifestoProgress();
+    window.addEventListener("scroll", onManifestoScroll, { passive: true });
+    window.addEventListener("resize", function () {
+      syncManifestoTextHeight();
+      onManifestoScroll();
+    });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        syncManifestoTextHeight();
+        updateManifestoProgress();
+      });
+    }
+  }
+
   /* Peticion del cliente (2026-06-29, ampliacion de CR-07): en movil, el
      titulo de fila de Servicios ("Estrategia"/"Sistemas de Diseño"/
      "Experiencias y Ejecucion") tambien queda fijo bajo el header (antes
