@@ -515,8 +515,10 @@
        y equivalentes) entre el borde inferior de la imagen y esta linea
        divisoria, ~40-49px segun el proyecto - nunca antes visible en
        movil real porque .project-entry__media medía 0 de alto (ver bug
-       de mas arriba, ya corregido). */
-    margin-top: 40px;
+       de mas arriba, ya corregido).
+       Peticion cliente 2026-07-27: reducir a la mitad (40px -> 20px) el
+       hueco entre la imagen y el texto de cada proyecto, solo en movil. */
+    margin-top: 20px;
     padding-top: 11px;
   }
   .project-showcase__list .project-entry__description { opacity: 1; }
@@ -531,10 +533,27 @@
   }
   /* Persiana de titulo+categoria (regla base de escritorio, mas arriba):
      sin pin ni progreso continuo en movil/reduced-motion, se vuelve a
-     flujo normal - ventana sin recortar y sin desplazamiento. */
-  .project-showcase__list .project-entry__heading-window {
+     flujo normal - ventana sin recortar y sin desplazamiento.
+     Bug encontrado 2026-07-27 (al revisar la peticion de reducir a la
+     mitad el hueco entre imagen y texto): el margin-top:115px de la
+     regla base de escritorio (mas arriba, pensado unicamente para
+     separar la "ventana" fija de persiana del borde superior del panel
+     absoluto de escritorio - ver su propio comentario extenso) no se
+     reseteaba aqui igual que overflow/height. En movil el panel ya no
+     es absoluto y la ventana ya no desliza nada (sin sentido mantenerlo
+     "separado" del resto) - ese margin se sumaba sin motivo al hueco
+     real entre imagen y texto (medido con Playwright: 159px en vez de
+     los ~44px que corresponden). Se resetea aqui a 0 igual que el resto
+     de propiedades de este bloque.
+     La regla de escritorio que se resetea lleva el prefijo
+     #home-proyectos (mayor especificidad, ID + 2 clases) - hay que
+     igualarlo aqui o esta regla pierde el empate de especificidad pese
+     a venir despues en el archivo (verificado con Playwright: sin el
+     prefijo, margin-top seguia calculando 115px pese a este reset). */
+  #home-proyectos .project-showcase__list .project-entry__heading-window {
     overflow: visible;
     height: auto;
+    margin-top: 0;
   }
   .project-showcase__list .project-entry__heading {
     transform: none;
