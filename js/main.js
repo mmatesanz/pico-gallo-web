@@ -158,11 +158,21 @@
        --project-media-right-gap en :root, tanto .btn-bar como
        .project-entry__media lo usan como margin-right. Las 4 fichas
        miden lo mismo, basta medir la primera. */
+    /* 2026-07-28 (auditoria responsive): antes hardcodeaba la proporcion
+       1:1.9 de .project-entry (grid-template-columns) para derivar el
+       ancho de la columna de imagen. Desde que existe un breakpoint de
+       tablet (861-1279px) con una proporcion distinta (ver components.css,
+       bug de descripcion cortada), ese hardcode daba un ancho de columna
+       incorrecto ahi. getComputedStyle().gridTemplateColumns devuelve los
+       valores YA resueltos a px por el navegador (fr converitod a px real),
+       asi que leerlo en vivo funciona con cualquier proporcion presente o
+       futura, sin depender de que este calculo se actualice cada vez que
+       cambie un breakpoint en CSS. */
     var updateProjectMediaGap = function () {
       if (!firstProjectMedia) return;
-      var entryRect = projectEntries[0].getBoundingClientRect();
       var mediaRect = firstProjectMedia.getBoundingClientRect();
-      var mediaColumnWidth = (entryRect.width - 64) * 1.9 / 2.9;
+      var columns = getComputedStyle(projectEntries[0]).gridTemplateColumns.split(" ").map(parseFloat);
+      var mediaColumnWidth = columns.length ? columns[columns.length - 1] : 0;
       var rawGap = Math.max(0, mediaColumnWidth - mediaRect.width);
       // Peticion cliente 2026-07-10: el margen resultante quedaba
       // demasiado grande - se reduce un 20% (se usa el 80% del hueco

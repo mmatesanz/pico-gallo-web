@@ -446,6 +446,54 @@
 .project-showcase__list .project-entry[data-project-index="2"] .project-entry__media { --item-index: 2; }
 .project-showcase__list .project-entry[data-project-index="3"] .project-entry__media { --item-index: 3; }
 
+/* Bug reportado por el cliente 2026-07-28 (auditoria responsive): en
+   resoluciones de portatil (pantalla mas baja que un monitor de
+   escritorio externo, tipicamente 768-900px de alto) la descripcion de
+   cada proyecto se cortaba a mitad de frase. El panel es de alto fijo
+   (100vh menos el header, overflow:hidden - efecto pedido explicitamente
+   por el cliente tambien en tablet, ver "Historial 2026-06-29" mas
+   arriba), y titulo+categoria+descripcion no siempre caben en esa altura
+   cuando el viewport es mas bajo que un monitor de escritorio tipico.
+   Confirmado con Playwright a 1366x768 (portatil comun): la descripcion
+   de "Parque Warner Madrid" se cortaba 245px por debajo del borde del
+   panel, a mitad de la palabra "Nuestra". Se reduce el espacio decorativo
+   fijo (separacion entre el borde superior del panel y el titulo, hueco
+   reservado bajo la descripcion) y el interlineado para recuperar altura,
+   SIN tocar el tamano de fuente de 18px (pedido explicito del cliente el
+   2026-07-26). Verificado que soluciona el corte en los 4 proyectos a
+   1280x800/1366x768/1440x900 (overflow 0 en los 4). */
+@media (max-height: 900px) {
+  #home-proyectos .project-showcase__list .project-entry__heading-window {
+    margin-top: 24px;
+  }
+
+  #home-proyectos .project-entry__description {
+    padding-bottom: 16px;
+    line-height: 1.4;
+  }
+}
+
+/* Mismo bug, causa adicional en este rango de ancho: la columna de texto
+   (proporcion 1:1.9 con la imagen, pensada para escritorio ancho) se
+   estrecha por debajo de lo que Figma asume (410px), asi que el mismo
+   parrafo envuelve en muchas mas lineas y necesita mas altura de la que
+   el ajuste de arriba por si solo puede recuperar - confirmado con
+   Playwright a 1024x768: incluso con el espaciado ya reducido, "Parque
+   Warner Madrid" seguia cortandose ~245px (columna de texto medida en
+   ~222px reales). Se le da mas proporcion al texto (imagen mas pequeña)
+   solo en este rango de ancho - decision confirmada con el usuario
+   2026-07-28 (prioriza que el texto nunca se corte sobre mantener el
+   tamano de imagen de escritorio en tablet). Escritorio (>=1280px)
+   mantiene la proporcion e imagen exactas de Figma, sin cambios.
+   updateProjectMediaGap en main.js ya no asume esta proporcion (lee
+   getComputedStyle().gridTemplateColumns en tiempo real) - no hace falta
+   tocar el JS al cambiar este ratio. */
+@media (min-width: 861px) and (max-width: 1279px) {
+  #home-proyectos .project-entry {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+}
+
 /* Fallback documentado (mobile real <=860px y prefers-reduced-motion): se
    desactiva el pin/scrub por completo y se vuelve al layout en flujo
    normal - mismas reglas de #home-proyectos de mas arriba, sin pin, sin
@@ -1017,12 +1065,20 @@
   padding-top: 33px;
 }
 
+/* Bug encontrado 2026-07-28 (auditoria responsive): 495px es fijo
+   independientemente del ancho real de la columna de cuerpo, que se
+   estrecha por debajo de 495px en portatiles (~1366px de viewport, columna
+   ~288px) - la linea se salia de su contenedor y provocaba scroll
+   horizontal en toda la pagina (confirmado con Playwright: scrollWidth
+   979px vs 772px de .service-row a 1366x768). min() mantiene los 495px
+   exactos de Figma en pantallas anchas (columna >=495px) y la limita al
+   100% de la columna cuando esta es mas estrecha, sin overflow. */
 .service-row > div:last-child .service-group:first-child::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
-  width: 495px;
+  width: min(495px, 100%);
   height: 1px;
   background: var(--color-text-muted);
 }
