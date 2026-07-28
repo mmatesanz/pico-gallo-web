@@ -866,6 +866,42 @@
   aspect-ratio: 4 / 3;
 }
 
+/* Auditoria responsive 2026-07-28: 2 problemas reales de adaptacion
+   encontrados en esta imagen (ver hallazgos en la conversacion con el
+   cliente).
+
+   1) Se ocultaba (display:none) para cualquier ancho <=860px, el mismo
+      umbral que "es un movil". Pero un iPad vertical mide 768px de ancho
+      y caia en esa regla igual que un telefono - el mismo dispositivo
+      mostraba la imagen en horizontal (1024px, bloque de tablet) y la
+      ocultaba por completo en vertical. Bajado a <=600px (por encima del
+      ancho de cualquier telefono real en horizontal o vertical, por
+      debajo de cualquier tablet real) para que tablet vertical y
+      horizontal se comporten igual - deja de ocultarse solo por rotar el
+      dispositivo. El layout que la envuelve (.services-layout__title en
+      flujo normal, no sticky) ya es identico en todo el rango 601-1279px,
+      asi que no hace falta ningun ajuste adicional de posicion.
+
+   2) A la inversa, un telefono grande en horizontal (ej. 932x430, ancho
+      por encima de 860px) heredaba el tamano de escritorio/tablet
+      (320x240 fijo) en una pantalla de apenas 430px de alto - la imagen
+      por si sola ocupaba mas de la mitad del viewport antes de llegar a
+      ningun contenido. Se limita por ALTO de viewport (no de ancho, que
+      ya es grande en ese caso) para que telefonos en horizontal reciban
+      una imagen proporcional a su pantalla, no la misma que un monitor de
+      escritorio. */
+@media (max-width: 600px) {
+  .services-media {
+    display: none;
+  }
+}
+
+@media (max-height: 500px) {
+  .services-media {
+    max-width: 180px;
+  }
+}
+
 .services-media__group {
   position: absolute;
   inset: 0;
@@ -1274,34 +1310,37 @@
    habla de "el avance que hacemos con el scroll", no de "en que slide
    estamos" - una barra que se llena de 0 a 100% representa mejor un
    avance continuo que 3 puntos que solo tienen 3 estados posibles.
-   Colocada en el HTML DESPUES de .service-showcase__list (no justo
-   despues del .divider, donde se puso primero) - peticion del cliente:
-   asi no quedan las 2 lineas finas (divider + barra) seguidas, una
-   pegada a la otra, con el mismo aspecto y sin nada en medio.
    Aislado del resto del sitio: clases y variable CSS exclusivas de este
    carrusel (--service-scroll-progress, ver main.js), no relacionadas con
    --project-track-progress de Proyectos (esa es para animar la imagen,
-   esta es solo para el indicador visual). overflow:hidden en el
-   contenedor + width en la barra interior, mismo patron ya usado en
-   .divider/.service-link-row para lineas finas (1px, --color-border).
-   margin-top: 30px (peticion cliente 2026-07-11, antes var(--space-sm)
-   =16px) - mismo espacio de 30px que ya separa el divider del contenido
-   mas arriba, esta vez entre el final del texto del slide y la barra.
-   Reducido a 18px/24px el 2026-07-14 (ver nota extensa en
-   .service-showcase__pin) para recuperar altura del pin sin recortar
-   contenido. */
+   esta es solo para el indicador visual).
+
+   Rediseñada 2026-07-28 (peticion cliente): la version horizontal (linea
+   fina bajo el contenido, se llenaba de izquierda a derecha) "no termina
+   de funcionar" segun el cliente - sustituida por una barra VERTICAL en
+   el lado izquierdo del carrusel. Movida en el HTML de hermana de
+   .service-showcase__list a hija suya (primer elemento, antes de los 3
+   .service-entry) para poder anclarla con position:absolute al lado
+   izquierdo de esa lista (ya es position:relative) sin depender de un
+   alto medido por JS - simplemente estira top:0/bottom:0 al alto real de
+   la lista, sea cual sea. Colocada dentro del hueco de margin-left:100px
+   de .service-showcase__list (mismo margen que usa el carrusel de
+   Proyectos), no debajo del texto. aria-hidden en el HTML (ya existente):
+   es un indicador puramente visual, redundante con el propio scroll para
+   un lector de pantalla. */
 .service-showcase__progress {
-  height: 2px;
-  flex-shrink: 0;
-  margin-top: 18px;
-  margin-bottom: 24px;
+  position: absolute;
+  left: -52px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
   background: var(--color-border);
   overflow: hidden;
 }
 
 .service-showcase__progress-bar {
-  height: 100%;
-  width: calc(var(--service-scroll-progress, 0) * 100%);
+  width: 100%;
+  height: calc(var(--service-scroll-progress, 0) * 100%);
   background: var(--color-text);
 }
 
@@ -1309,16 +1348,39 @@
    pantalla completa dentro del pin", igual que .project-entry en
    Proyectos - por eso se anula el border-top/padding-block de
    .service-link-row (pensados para la lista apilada, ver mas abajo), y
-   se cruza por opacidad segun la clase .is-active que pone main.js. */
+   se cruza por opacidad segun la clase .is-active que pone main.js.
+
+   Bug encontrado 2026-07-28 (a raiz del reporte de cliente sobre el hover
+   en "Experiencia y Ejecucion"): a diferencia de .project-entry en
+   Proyectos, aqui faltaba aislar los 3 paneles con pointer-events - los 3
+   .service-entry ocupan el mismo inset:0 simultaneamente y, sin
+   pointer-events:none en los inactivos, el ultimo del DOM
+   (data-service-index="2", "Experiencia y Ejecucion") quedaba SIEMPRE
+   encima en el orden de pintado y se comia el hover/clic de los otros 2,
+   aunque no fueran el panel visible en ese momento. Esto explicaba 2
+   sintomas: (a) el titulo de "Experiencia y Ejecucion" era el UNICO de
+   los 3 donde el hover podia verse (los otros 2 tenian su hover
+   silenciosamente interceptado por el panel invisible encima, sin efecto
+   visible - por eso el cliente solo reporto ese bloque); (b) mas grave,
+   cada .service-link-row es un <a href> a una seccion distinta de
+   servicios.html - sin este aislamiento, hacer clic en "Estrategia" o
+   "Sistemas de Diseño" mientras se mostraban en pantalla en realidad
+   activaba el enlace de "Experiencia y Ejecucion" (el que estaba encima),
+   llevando siempre a la misma seccion sin importar cual se hubiera
+   clicado. Mismo patron ya usado en Proyectos (ver nota identica en
+   components.css sobre #home-proyectos .project-showcase__list
+   .project-entry). */
 #home-servicios .service-showcase__list .service-entry {
   position: absolute;
   inset: 0;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.4s ease;
 }
 
 #home-servicios .service-showcase__list .service-entry.is-active {
   opacity: 1;
+  pointer-events: auto;
 }
 
 #home-servicios .service-showcase__list .service-link-row {
@@ -1380,7 +1442,16 @@
   transition: color var(--duration-fast) var(--ease-standard);
 }
 
-.service-link-row:hover .service-link-row__title,
+/* Peticion cliente 2026-07-28: el titulo cambiaba a blanco con el hover -
+   "ese comportamiento no es el esperado". Se quita el :hover (el efecto
+   solo se veia de forma consistente en "Experiencia y Ejecucion" por un
+   bug de capas ya corregido arriba - #home-servicios .service-showcase__list
+   .service-entry - que hacia que ese panel, ultimo del DOM, se comiera el
+   hover/clic de los otros 2 sin importar cual estuviera activo; con las
+   capas ya aisladas el efecto se hubiera visto igual en los 3, pero el
+   cliente no lo quiere en ninguno). Se conserva :focus-visible (no
+   reportado, accesibilidad de teclado: quien navega con Tab necesita ver
+   donde esta el foco). */
 .service-link-row:focus-visible .service-link-row__title { color: var(--color-text); }
 
 /* Peticion usuario 2026-07-13: 20px de interlineado entre cada item
@@ -1495,10 +1566,18 @@
     overflow: visible;
   }
   .service-showcase__list { flex: none; min-height: 0; margin-left: 0; }
+  /* pointer-events:auto restaurado 2026-07-28: mismo bug ya conocido y
+     corregido en Proyectos (ver #home-proyectos .project-showcase__list
+     .project-entry mas arriba, "no funcionan los hipervinculos") - la
+     regla base pone pointer-events:none y solo lo libera via .is-active,
+     pero ese JS no corre con reduced-motion, asi que sin este reset los 3
+     enlaces de Servicios quedarian permanentemente inaccesibles al tacto/
+     clic para quien tenga esta preferencia activada. */
   #home-servicios .service-showcase__list .service-entry {
     position: relative;
     inset: auto;
     opacity: 1;
+    pointer-events: auto;
   }
   #home-servicios .service-showcase__list .service-link-row {
     border-top: 1px solid var(--color-border);
@@ -1657,11 +1736,14 @@
     background: var(--color-border);
   }
 
-  /* .services-media (imagen compartida bajo "Servicios" en la pagina de
-     Servicios, ver mas arriba) es solo para escritorio/tablet. */
-  .services-media {
-    display: none;
-  }
+  /* .services-media: regla de ocultacion trasladada 2026-07-28 a su propio
+     @media (max-width:600px), ver justo debajo de la regla base de
+     .services-media mas arriba - antes se ocultaba en todo este bloque
+     (<=860px), lo que apagaba la imagen tambien en tablet vertical real
+     (768px de ancho, ej. iPad) mientras se veia con normalidad en el
+     mismo dispositivo en horizontal (1024px) - un mismo aparato daba 2
+     experiencias distintas solo por rotarlo. Ver auditoria responsive de
+     esa fecha. */
 }
 
 
