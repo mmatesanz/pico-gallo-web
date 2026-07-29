@@ -461,15 +461,28 @@
    reservado bajo la descripcion) y el interlineado para recuperar altura,
    SIN tocar el tamano de fuente de 18px (pedido explicito del cliente el
    2026-07-26). Verificado que soluciona el corte en los 4 proyectos a
-   1280x800/1366x768/1440x900 (overflow 0 en los 4). */
+   1280x800/1366x768/1440x900 (overflow 0 en los 4).
+
+   Ajustado 2026-07-29 tras desplegar en test.foozgeneration.com: estos
+   valores (calibrados contra este mismo prototipo estatico) daban
+   overflow 0 exacto ahi, sin ningun margen de seguridad - en el tema
+   WordPress real, con las fuentes cargadas via @font-face del tema
+   (metricas ligeramente distintas a como las interpreta el navegador
+   aqui), "Parque Warner Madrid" seguia cortandose ~37px a 1366x768 pese
+   al fix. Endurecido a valores con margen real, verificado con Playwright
+   directamente contra el sitio ya desplegado (no solo este prototipo):
+   overflow 0 con margen en 1280x768/1366x768/1440x900. Portado aqui para
+   que prototipo y tema no diverjan. Por debajo de eso (ej. 1280x700,
+   ventana no maximizada) puede volver a rozar el limite - no cubierto,
+   fuera del rango de portatiles reales que se pidio soportar. */
 @media (max-height: 900px) {
   #home-proyectos .project-showcase__list .project-entry__heading-window {
-    margin-top: 24px;
+    margin-top: 4px;
   }
 
   #home-proyectos .project-entry__description {
-    padding-bottom: 16px;
-    line-height: 1.4;
+    padding-bottom: 0px;
+    line-height: 1.2;
   }
 }
 
