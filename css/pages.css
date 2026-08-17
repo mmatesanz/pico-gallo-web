@@ -620,14 +620,68 @@
    left:-366px por grid-column + margin-top - sin position propia aqui,
    la hereda del flujo normal (bloque apilado en movil, grid en
    escritorio/tablet). */
-.manifesto__eye {
+/* Peticion cliente 2026-07-30: se sustituyo el SVG (nueva ilustracion,
+   Figma nodo 601:114) - el anterior era un icono ancho y bajo (256x100,
+   ratio 2.56:1); el nuevo es casi cuadrado (251.13x270.61 en Figma, ratio
+   ~0.93:1, mas alto que ancho). El propio SVG lleva
+   preserveAspectRatio="none" (para poder estirarlo a cualquier caja sin
+   que el navegador le imponga su propio letterboxing) - eso significa que
+   SI no se actualiza esta caja para que respete el ratio real del nuevo
+   archivo, el navegador lo deforma (aplasta) para llenar los viejos
+   256x100. Ancho sin cambios (256px, sigue cabiendo de sobra en la
+   columna de 366px reservada para el ojo, ver mas abajo) - alto
+   recalculado a partir del ratio real del SVG (256 * 270.61/251.13 =
+   275.86, redondeado). */
+/* Peticion cliente 2026-07-30 (tarea 7): el fundido continuo (opacity,
+   ver historial arriba) se sentia como una imagen que simplemente se
+   desvanece en el sitio - el cliente pidio que en vez de eso la imagen
+   "desaparezca hacia arriba por debajo de 'Manifiesto'", es decir, el
+   mismo lenguaje visual que ya usa .manifesto__text al pasar por detras
+   del pin (contenido real que se desplaza y queda tapado), pero sin
+   mover el ojo de sitio (sigue viviendo DENTRO de .manifesto__pin,
+   peticion cliente previa "todo dentro del carrusel" - ver mas arriba).
+   Se logra con un wrapper opaco al overflow (.manifesto__eye-frame, el
+   marco/mascara) mas un translateY continuo sobre la propia imagen -
+   el marco (overflow:hidden) recorta lo que ya "salio" en vez de
+   dejarlo escapar por encima del resto del diseño.
+   Tarea 8 (mismo dia, aclaracion sobre esta misma tarea): --manifesto-
+   eye-progress (0-1, normalizado sobre una ventana de scroll fija) se
+   sustituye por --manifesto-eye-offset (main.js), un desplazamiento en
+   PX ya calculado 1:1 con el recorrido real de la ultima linea de
+   .manifesto__text - "alineada con la ultima frase" (peticion cliente).
+   translateY consume ese valor directamente (sin invertir/interpolar
+   aqui, main.js ya entrega el valor final en px) - 0px = imagen quieta
+   en su sitio, manifestoEyeTravelPx (alto del marco) = imagen entera
+   fuera de el. La ultima porcion visible antes de desaparecer del todo
+   sigue siendo el borde INFERIOR de la imagen (la "ultima parte", ver
+   peticion cliente). */
+.manifesto__eye-frame {
   width: 256px;
-  height: 100px;
+  height: 276px;
+  overflow: hidden;
+}
+
+.manifesto__eye {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: translateY(calc(-1 * var(--manifesto-eye-offset, 0px)));
 }
 
 /* Mismo estilo que .manifesto__statement (Lora 32px blanco, line-height
    normal) - Figma usa el mismo estilo con nombre "Subtitulo Blanco" para
-   ambos textos. */
+   ambos textos.
+   Peticion cliente 2026-07-30: se quita la palabra "Manifiesto" de la
+   pagina - el <h2> se deja vacio en vez de eliminarse (ver nosotros.html/
+   en/nosotros.html, aria-hidden="true" añadido ahi al perder su nombre
+   accesible) para que el comportamiento de todo lo demas no cambie: su
+   propio alto de linea (font-size/line-height, sin cambios aqui) sigue
+   determinando el alto de .manifesto__pin exactamente igual que antes
+   (un elemento de bloque vacio genera su caja de linea igual que con
+   texto dentro), y de el dependen manifestoPin.offsetHeight (altura de
+   la cortina, formula de .manifesto__release-spacer) y el punto de
+   despegue nativo del sticky - todo eso sigue calculandose en main.js
+   sin ningun cambio. */
 .manifesto__heading {
   margin: 0;
   font-family: var(--font-display);
@@ -677,258 +731,333 @@
 .manifesto__text p { margin: 0; }
 .manifesto__text p + p { margin-top: 1.5em; }
 
-/* Peticion cliente 2026-07-26 (solo escritorio/tablet, >860px - en movil
-   se deja el flujo apilado de siempre, sin pedirse cambiar): el titulo
-   "Manifiesto" se queda fijo mientras el texto (3 parrafos) entra y sale
-   como una persiana segun el scroll. Combina 2 patrones ya existentes en
-   el sitio en vez de inventar uno nuevo:
-   - El pin+scroll del carrusel de Servicios de Home (.service-showcase/
-     .service-showcase__pin): wrapper alto (calc(3*100vh), uno por
-     parrafo) + pin sticky que se queda fijo mientras se scrollea a
-     traves de ese alto.
-   - El efecto de persiana (translateY discreto via is-active/is-past,
-     nunca un transform continuo - ver la nota extensa en
-     .project-showcase__list .project-entry__heading de components.css
-     sobre por que se descarto un transform continuo: "no quiero que se
-     vea el texto de dos proyectos a la vez") ya usado en el titulo+
-     categoria de cada ficha del carrusel de Proyectos de Home, aplicado
-     aqui a cada parrafo del manifiesto en vez de al titulo+categoria de
-     un proyecto.
-   Los 3 parrafos se posicionan absolute (top:0, apilados exactamente en
-   el mismo sitio) dentro de .manifesto__text - overflow:hidden ahi actua
-   de "ventana": solo el parrafo con translateY(0) (is-active) se ve.
-   --manifesto-text-h (alto del parrafo mas largo de los 3, medido con JS
-   igual que --mosaic-hover-margin/--row-title-h en otras paginas) le da
-   a .manifesto__text una altura real (los hijos absolute no aportan
-   ninguna por si solos) y es la distancia que cada parrafo recorre al
-   entrar/salir. */
-@media (min-width: 861px) {
-  .manifesto__showcase {
-    height: calc(3 * 100vh);
-  }
+/* Peticion cliente 2026-07-30: sustituye el carrusel de scroll-jacking de
+   arriba (pin+persiana+barra de progreso+cortina+spacer de despegue) por
+   un efecto de parallax vertical, mismo patron ya aplicado el mismo dia
+   al carrusel de Servicios de Home (ver "Reveal-on-scroll de Servicios
+   en Home" en components.css/main.js). Los 3 parrafos pasan a flujo
+   normal (apilados uno debajo de otro, respetando el orden ya existente
+   en el HTML - .manifesto__text ya no vive dentro de .manifesto__pin,
+   ahora es su hermano) y se revelan con un fade+deslizamiento vertical
+   segun entran en el viewport (clase .is-revealed que anade main.js via
+   IntersectionObserver), en vez de superponerse en el mismo hueco con un
+   efecto de persiana (translateY discreto is-active/is-past sobre
+   parrafos position:absolute). Sin la barra de progreso vertical
+   (.manifesto__progress/-bar, eliminada del HTML) - mismo motivo que en
+   Servicios, el cliente no la queria.
+   "Manifiesto" (titulo+ojo, .manifesto__pin) SIGUE fijo (sticky) mientras
+   los parrafos pasan por detras y se ocultan - eso ya pasaba antes, pero
+   como un crossfade contenido DENTRO de la misma caja fija; ahora es un
+   scroll-past real (el texto, hermano del pin, se desplaza por detras
+   suyo) que necesita algo opaco detras del pin para taparlo - ver
+   .manifesto__curtain mas abajo (bug del rectangulo negro corregido el
+   mismo dia: NO es background en el propio pin, mismo error que se probo
+   primero en #home-servicios .service-showcase__title de components.css
+   pero que ahi si funciona, porque ese titulo es tan ancho como el texto
+   que tapa - aqui "Manifiesto" es mucho mas corto que .manifesto__text).
+   "Somos el ingrediente..." (.manifesto__statement) no cambia, sigue fijo
+   igual que antes.
+   Al ya no necesitar una altura artificial (antes calc(3*100vh), un
+   viewport completo por parrafo, para darle "pista" de scroll al pin) ni
+   forzar su despegue con JS (antes manifestoPinTopValue+is-releasing),
+   .manifesto__release-spacer (hueco extra para que el despegue nativo del
+   sticky terminara antes del footer) ya no hace falta y se quita del HTML
+   (nosotros.html/en/nosotros.html) y de main.js - el alto real de
+   .manifesto__showcase lo dan ahora sus propios hijos en flujo normal
+   (pin + texto), mismo patron ya usado sin spacer en Servicios/Proyectos.
 
-  /* Peticion cliente 2026-07-26 (4a): "cada diapositiva tenga dos
-     columnas, en la de la izquierda la imagen del ojo y en la de la
-     derecha el texto, todo dentro del carrusel". Se descarta el intento
-     anterior (ojo position:sticky, hermano de .manifesto__showcase,
-     alineado "a mano" con --manifesto-pin-top + margin-left:-366px) y se
-     sustituye por un grid de 2 columnas en .manifesto__pin (ver mas
-     abajo): el ojo pasa a ser el primer hijo de .manifesto__pin (HTML),
-     con .manifesto__pin-content (titulo+texto+progreso) como segunda
-     columna. Al vivir DENTRO de .manifesto__pin, que ya es sticky, el
-     ojo hereda gratis el mismo "fijado" durante el scroll sin necesitar
-     su propio position - de ahi que ya no lleve position/top aqui.
-     margin-top:105px reproduce el offset vertical original (top:105px
-     del intento con position:absolute, medido desde el top del titulo/
-     .manifesto__pin). La columna 1 del grid mide 366px (ver
-     .manifesto__pin) y el ojo se alinea por defecto al inicio (justify-
-     self:stretch se comporta como start al tener el ojo un ancho fijo,
-     256px) - reproduce el mismo left:-366px/width:256px de antes: el
-     ojo ocupa los primeros 256px de esa columna de 366px, dejando 110px
-     de hueco antes de que empiece el texto (identico al calculo previo,
-     ver commit anterior). */
-  .manifesto__eye {
-    margin-top: 105px;
-  }
+   .manifesto__curtain SI se mantiene (bug reportado por el cliente
+   2026-07-30, "el texto ya no se debe ver cuando se oculta detras de
+   Manifiesto" - ver la regla mas abajo): a diferencia de Servicios/
+   Proyectos (donde el titulo sticky se pega justo en top:var(--header-
+   height), sin hueco por encima), "Manifiesto" se pega mas abajo
+   (--manifesto-pin-top, deliberadamente por debajo de "Somos el
+   ingrediente..." y de un hueco visual de 100px) - todo el texto que
+   sigue subiendo DESPUES de ocultarse detras del pin pasa fisicamente por
+   esa franja superior (header/franja opaca de "Nosotros"/statement/hueco
+   de 100px) antes de desaparecer del todo por arriba del viewport, y ahi
+   no habia ningun fondo opaco continuo que lo tapase (a diferencia del
+   viejo diseño, donde el texto nunca salia de la ventana interna del
+   propio pin). La cortina (fixed, opaca, cubre 0 a donde termina el pin)
+   soluciona exactamente eso. Unica diferencia con el viejo curtain: antes
+   solo se hacia visible un instante (cerca del despegue del pin, con
+   is-releasing); ahora se hace visible durante TODO el tiempo que
+   .manifesto__showcase esta en pantalla (IntersectionObserver sobre el
+   propio showcase, ver main.js) - el texto puede estar pasando por detras
+   del pin en cualquier punto de ese rango, no solo al final.
 
-  /* Peticion cliente 2026-07-26 (2a): "Somos el ingrediente..." tambien se
-     queda fijo junto con "Manifiesto" mientras avanzan los parrafos. En
-     vez de mover el HTML del statement dentro de .manifesto__pin (le
-     haria heredar el ancho/indentado de esa columna, mas estrecha - un
-     cambio visual no pedido), se le da su propio position:sticky. Su
-     contenedor (.manifesto, padre directo) es lo bastante alto (incluye
-     el showcase de 2700px) para que se mantenga fijo durante todo ese
-     rango. background solido: sin esto, el texto del carrusel se veria
-     pasar por debajo al hacer scroll (mismo motivo que --color-bg en
-     .service-row > div:first-child, servicios.html).
-     Peticion cliente 2026-07-26 (ajuste, mismo dia): el punto donde se
-     fija no es header-height a secas - debe quedar ~50px ANTES de
-     alcanzar el div .about-page__divider (la linea bajo "Nosotros",
-     tambien sticky durante toda la pagina), no pegado al header. Valor
-     resuelto por JS a un unico numero en px (--manifesto-statement-top,
-     ver main.js) - depende del "top" real del divider y de la altura del
-     propio statement, ninguno de los 2 fijo de antemano. */
-  .manifesto__statement {
-    position: sticky;
-    top: var(--manifesto-statement-top, var(--header-height));
-    z-index: 2;
-    background: var(--color-bg);
-  }
+   Bug encontrado 2026-07-30 (reportado por el cliente: "aparece un
+   rectangulo negro arriba a la derecha" justo al empezar a verse
+   "Manifiesto") sobre el primer intento de esta misma tarea: ese primer
+   intento le daba background:var(--color-bg) al propio .manifesto__pin
+   en vez de a la cortina, para tapar el texto que pasa exactamente por SU
+   franja (pinTop a pinTop+altoPin). Pero .manifesto__pin no tiene ancho
+   propio (ocupa toda la columna de contenido, ~600-900px) mientras que
+   "Manifiesto" solo ocupa sus primeros ~200px - ese fondo se veia como un
+   rectangulo negro solido a la derecha del titulo, tapando lo que hubiera
+   detras (la foto del estudio) incluso sin texto que ocultar todavia.
+   Corregido: el pin ya no lleva background propio (ver esa regla mas
+   abajo); la cortina crece para cubrir tambien esa franja (0 a
+   pinTop+altoPin, no solo 0 a pinTop) con el ancho correcto (el de
+   .manifesto__text, no el del pin, ver .manifesto__curtain mas abajo).
 
-  /* El pin se ancla justo debajo del statement (medido con JS,
-     --manifesto-pin-top ya resuelto a un unico valor en px, sin calc()
-     anidado con otra variable - ver main.js) en vez de debajo del header
-     directamente - asi quedan apilados sin hueco ni solape, statement
-     siempre encima.
-     2026-07-26 (4a): grid de 2 columnas para que el ojo (primer hijo,
-     ver HTML) y .manifesto__pin-content (segundo hijo: titulo+texto+
-     progreso) queden lado a lado dentro del propio carrusel. margin-
-     left:-366px desplaza TODO el pin 366px a la izquierda (el mismo
-     bleed que antes tenia solo el ojo via left:-366px) y, al ser
-     width:auto un elemento en flujo normal, el navegador compensa
-     ampliando el ancho del pin esos mismos 366px en vez de encogerlo -
-     el resultado es que la columna 2 (texto) recupera exactamente el
-     mismo ancho y posicion horizontal que tenia antes, mientras que la
-     columna 1 (366px) le da sitio al ojo (256px) + 110px de hueco antes
-     del texto, igual que el calculo original. */
-  .manifesto__pin {
-    position: sticky;
-    top: var(--manifesto-pin-top, var(--header-height));
-    display: grid;
-    grid-template-columns: 366px minmax(0, 1fr);
-    margin-left: -366px;
-    transition: opacity 0.25s ease;
-  }
+   Peticion cliente 2026-07-30 (tarea 4, mismo dia): el titulo de
+   Manifiesto y la imagen tienen que desaparecer A LA VEZ que desaparece
+   el texto del manifiesto (los 3 parrafos), sin quedar nunca por encima
+   del footer. Dos intentos previos de este mismo dia (ver git history si
+   hace falta el detalle): 1) esconder el pin al alcanzar el borde de
+   .manifesto__statement (reservaba hueco con .manifesto__eye-spacer); 2)
+   esconderlo en cuanto el sticky nativo se despega (reservaba hueco con
+   .manifesto__release-spacer, formula basada en la posicion del PIN). El
+   2º fallaba en viewports altos (~980px+ con las medidas actuales, un
+   monitor externo o ventana maximizada normal): con esa altura de
+   ventana, .manifesto__showcase (alto fijo, en flujo normal) ya no tiene
+   suficiente scroll total para que el sticky nativo del pin llegue a
+   despegarse NUNCA antes del final real de la pagina - el pin se queda
+   pegado (visible) indefinidamente y el ojo, mucho mas alto que el pin,
+   queda montado sobre el footer sin remedio.
+   Version actual: el disparador de .is-releasing (ver mas abajo) ya no
+   depende de si el pin se ha despegado (una condicion que puede no
+   llegar a cumplirse) sino de si .manifesto__text ha terminado de pasar
+   por detras del pin (compara la posicion real de ambos en cada scroll,
+   ver updateManifestoCurtain en main.js) - cierto tanto si el pin sigue
+   tecnicamente pegado como si no. .manifesto__release-spacer sigue
+   haciendo falta (formula recalculada, ya no basada en el pin sino en
+   garantizar que ese cruce de posiciones LLEGUE a ocurrir antes del final
+   de la pagina, ver main.js) - sin el, en viewports altos el ultimo
+   parrafo ni siquiera llega a completar su propio recorrido de scroll
+   antes de que la pagina se quede sin mas alto. */
 
-  /* Peticion cliente 2026-07-26 (5a): incluso con la cortina opaca (ver
-     .manifesto__curtain) hay un instante, mientras el pin recorre el
-     hueco entre su altura y el borde del statement, en el que una parte
-     de el (la mas cercana al statement, la ultima en cruzar y=304) sigue
-     tecnicamente por DEBAJO de esa linea - zona que la cortina, fija en
-     0-304px, no cubre a proposito (ahi es donde vive el contenido normal
-     del carrusel durante el resto del scroll). Se ve un fragmento suelto
-     cruzando durante esa fraccion de segundo. En vez de perseguir la
-     geometria exacta, se desvanece el pin entero (clase is-releasing,
-     ver updateManifestoProgress en main.js) justo cuando termina de
-     mostrarse la 3a diapositiva - "se esconde" de verdad en vez de
-     limitarse a deslizarse fuera de vista. */
-  .manifesto__pin.is-releasing {
-    opacity: 0;
-  }
-
-  /* Peticion cliente 2026-07-26 (8a, solo escritorio/tablet - en movil se
-     deja el 16px base de siempre): sube 3px el texto de las diapositivas
-     del carrusel, 16px -> 19px. */
-  .manifesto__text {
-    position: relative;
-    height: var(--manifesto-text-h, auto);
-    overflow: hidden;
-    font-size: 19px;
-  }
-
-  .manifesto__text p,
-  .manifesto__text p + p {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    margin: 0;
-    transform: translateY(var(--manifesto-text-h, 0px));
-    transition: transform 0.4s ease;
-    will-change: transform;
-  }
-
-  .manifesto__text p.is-active {
-    transform: translateY(0);
-  }
-
-  .manifesto__text p.is-past {
-    /* Ya se paso este parrafo (scroll hacia abajo lo dejo atras, encima
-       de la ventana) - scroll hacia arriba lo hace bajar de vuelta a 0,
-       mismo criterio que .project-entry.is-past en components.css. */
-    transform: translateY(calc(-1 * var(--manifesto-text-h, 0px)));
-  }
-
-  /* Peticion cliente 2026-07-26 (3a): mismo indicador de avance que ya
-     usa el carrusel de Servicios de Home (.service-showcase__progress) -
-     clases y variable CSS propias (--manifesto-scroll-progress, ver
-     main.js), mismo patron visual (barra fina, overflow:hidden + width
-     de la barra interior). */
-  .manifesto__progress {
-    height: 2px;
-    margin-top: 18px;
-    background: var(--color-border);
-    overflow: hidden;
-  }
-
-  .manifesto__progress-bar {
-    height: 100%;
-    width: calc(var(--manifesto-scroll-progress, 0) * 100%);
-    background: var(--color-text);
-  }
-
-}
-
-/* Sin scroll-jacking en movil (<=860px, regla base de este archivo) ni
-   con prefers-reduced-motion: la barra de progreso no tiene ningun
-   avance que representar en esos casos (mismo criterio que
-   .service-showcase__progress). */
-.manifesto__progress {
-  display: none;
-}
-
-/* Sin altura en movil ni con reduced-motion (regla base, cualquier
-   ancho) - solo existe para dar hueco de scroll extra al despegue
-   nativo del pin sticky en escritorio/tablet (ver mas arriba). En
-   movil no hay sticky/scroll-jacking que despegar. */
+/* .manifesto__release-spacer: display:none base - DEBE ir antes del
+   @media (min-width:861px) que le pone display:block mas abajo (mismo
+   error de orden ya corregido antes para .manifesto__eye-spacer/este
+   mismo elemento, ver git history - misma especificidad, un display:none
+   posterior en el archivo le ganaria siempre al display:block del media
+   query). Solo hace falta en escritorio/tablet, donde el pin es sticky
+   (ver mas abajo) - en movil no hay nada que despegar/ocultar. */
 .manifesto__release-spacer {
   display: none;
 }
 
-/* Peticion cliente 2026-07-26 (5a, complemento del spacer de arriba):
-   el hueco extra de scroll evita que el pin quede "a medias" al final,
-   pero MIENTRAS se despega (recorre ese hueco) sigue pasando fisicamente
-   por delante de la franja entre el header y el statement - ahi no hay
-   ningun fondo opaco propio (.about-page__divider/.page-hero__title--
-   nosotros son solo su propia caja de texto/linea, no cubren toda la
-   franja) y el ojo/titulo/texto del carrusel se veian de forma
-   fantasma cruzando por encima del statement y de la linea divisoria
-   mientras dura la transicion - exactamente el "hueco" que describe el
-   cliente. Soluccion: una cortina opaca fixed (no aporta altura al
-   documento, a diferencia de sticky) del mismo ancho/x que
-   .manifesto__pin (JS mide su rect real, ver main.js), con
-   z-index:1 - por debajo de .about-page__divider y .page-hero__title--
-   nosotros (ambos z-index:2 ya existente, sin tocar) para que sigan
-   viendose POR ENCIMA de la cortina, pero por encima de cualquier
-   contenido del carrusel (z-index:auto por defecto). Solo visible
-   (clase is-visible, ver updateManifestoProgress en main.js) mientras
-   el carrusel esta cerca del viewport - el resto de la pagina (antes/
-   despues del manifiesto) no debe verse afectado por una cortina fixed
-   permanente. */
+@media (min-width: 861px) {
+  /* Bug reportado por el cliente 2026-07-30 ("mucho hueco entre
+     'Manifiesto' y donde empieza el texto"): hasta ahora el ojo era la
+     columna 1 de un grid en .manifesto__pin (ver git history) - esa
+     columna (105px de margen + 100px de alto = 205px) era mas alta que
+     la columna del titulo (~38px, una sola linea), y el alto de fila de
+     un grid SIEMPRE lo marca la columna mas alta, sin importar
+     align-items - asi que .manifesto__pin media esos ~205px aunque el
+     titulo solo ocupara los primeros ~38px, y .manifesto__text (su
+     hermano en el HTML) empezaba justo despues de esa caja entera,
+     dejando ~165px de hueco de mas antes de su propio margin-top:10px
+     (regla base, sin cambios). Solucion: el ojo pasa a position:absolute
+     (ya no es un item de grid, no aporta altura a .manifesto__pin) -
+     left:-366px reproduce el mismo offset horizontal que antes daba el
+     grid (columna de 366px + margin-left:-366px en el pin), calculado
+     ahora desde el propio .manifesto__pin (position:sticky, que ya sirve
+     de containing block para descendientes absolute sin necesitar
+     position:relative aparte). Sin el grid, el pin ya no necesita
+     margin-left:-366px (ver mas abajo) - vuelve a su posicion natural,
+     la misma que .manifesto__text y .manifesto__statement.
+     opacity (2026-07-30, tarea 6): antes este fundido continuo vivia en
+     .manifesto__pin entero (titulo+ojo se desvanecian juntos) - el
+     cliente aclaro que solo la imagen tiene que desaparecer "por debajo
+     de 'Manifiesto'", que se queda fijo y visible (igual que "Servicios"/
+     "Proyectos", sin fundido propio). --manifesto-eye-offset (main.js,
+     updateManifestoCurtain, renombrada en tarea 8 - ver historial en
+     main.js) es un desplazamiento en px atado 1:1 al recorrido real de
+     la ultima linea de .manifesto__text contra el borde inferior del
+     pin, consumido como translateY en .manifesto__eye (regla base, ver
+     mas arriba). Sin transition: un valor que ya se recalcula en cada
+     frame de scroll no la necesita (añadiria retraso, alejando el
+     efecto del progreso real). Fallback 1 (visible, translateY(0)):
+     mientras main.js no haya corrido todavia (primer pintado).
+     left/top se mueven aqui a .manifesto__eye-frame (el marco que
+     recorta la imagen al "desaparecer hacia arriba", ver regla base) -
+     la imagen en si ya no lleva su propia posicion, solo rellena el
+     marco (width/height:100%) y se desplaza dentro de el. */
+  /* Peticion cliente 2026-07-30 (siguiente turno, tarea 13): medido en
+     vivo (Playwright) que aunque el ritmo ya era 1:1 (ver main.js), el
+     punto de pantalla en el que cada uno desaparece NO coincidia - el
+     texto se tapa detras de la cortina a la altura del borde inferior del
+     pin (pinBottom), pero este marco (top:105px, heredado de un ajuste
+     anterior para dejar hueco bajo el antiguo texto "Manifiesto") empezaba
+     105px mas abajo en pantalla, asi que aunque avanzaran a la vez, sus
+     bordes de desaparicion quedaban desalineados 105px en vertical.
+     "Manifiesto" ya esta vacio (h2 sin texto, ver mas abajo) - ese hueco ya
+     no tiene texto del que separarse, asi que top:0 no colisiona con nada.
+     Con top:0 el marco pasa a ocupar pinBottom a pinBottom+276 (antes
+     pinBottom+105 a pinBottom+381) - su borde inferior en reposo coincide
+     ahora con pinBottom, el mismo borde que usa la cortina para tapar el
+     texto, asi que el punto exacto de desaparicion (no solo el ritmo) es
+     el mismo para ambos. */
+  .manifesto__eye-frame {
+    position: absolute;
+    left: -366px;
+    top: 0;
+  }
+
+  /* Peticion cliente 2026-07-26 (2a, sin cambios sobre este punto):
+     "Somos el ingrediente..." se queda fijo junto con "Manifiesto"
+     mientras avanzan los parrafos - su propio position:sticky, anclado
+     ~50px antes de .about-page__divider (valor resuelto por JS, ver
+     --manifesto-statement-top en main.js). background solido: sin esto
+     el texto se veria pasar por debajo al hacer scroll.
+     z-index:3 (tarea 9, subido desde 2 - antes empataba con
+     .manifesto__pin, ver mas abajo): peticion cliente "cuando se oculta
+     'Manifiesto', el titulo y la imagen se tienen que ocultar por debajo
+     de 'Somos el ingrediente...'" - .manifesto__pin es sticky con su
+     PROPIO rango de scroll (mas corto que el de .manifesto__showcase
+     completo), asi que en algun momento se despega de su enganche nativo
+     y sigue subiendo con el scroll normal, pasando fisicamente por la
+     misma franja de pantalla donde este statement esta clavado. Con
+     ambos al mismo z-index (2), el orden de pintado ganaba el ultimo en
+     el DOM (.manifesto__pin, dentro de .manifesto__body, que va DESPUES
+     de este statement como hermano en .manifesto) - el titulo/ojo se
+     pintaban POR ENCIMA del statement en vez de tapados por su fondo
+     solido. Subiendo el z-index de este statement por encima del pin
+     (pero dejando intacta la relacion pin(2) > cortina(1), ver mas
+     abajo) el statement, con su propio background opaco, vuelve a tapar
+     correctamente lo que pase por detras - mismo mecanismo que ya usa
+     para el resto de .manifesto__text, aplicado ahora tambien al pin. */
+  .manifesto__statement {
+    position: sticky;
+    top: var(--manifesto-statement-top, var(--header-height));
+    z-index: 3;
+    background: var(--color-bg);
+  }
+
+  /* El pin se ancla justo debajo del statement (--manifesto-pin-top,
+     resuelto por JS - ver main.js). Ya no es un grid (ver .manifesto__eye
+     de arriba, 2026-07-30) - bloque simple, mismo ancho/posicion que
+     .manifesto__statement/.manifesto__text.
+     Bug reportado por el cliente 2026-07-30 ("aparece un rectangulo negro
+     arriba a la derecha" al empezar a verse "Manifiesto"): esta regla
+     tenia su propio background:var(--color-bg) para tapar el texto que
+     pasa detras (intento anterior, mismo dia) - pero .manifesto__pin, sin
+     ancho propio, ocupa TODO el ancho de la columna de contenido (~600-
+     900px) aunque "Manifiesto" solo ocupe los primeros ~200px, asi que
+     ese fondo opaco se veia como un rectangulo negro a la derecha del
+     titulo, tapando lo que hubiera detras (la foto del estudio) incluso
+     cuando no habia texto que ocultar todavia. Se quita el background de
+     aqui (el pin vuelve a ser una caja invisible, solo se ve el propio
+     texto "Manifiesto") - la funcion de tapar el texto que pasa detras
+     pasa a .manifesto__curtain (ver mas abajo), que ya usaba un ancho
+     correcto (el de .manifesto__text, no el del pin) y ahora ademas
+     cubre hasta el borde inferior del pin, no solo hasta su borde
+     superior. z-index:2 se mantiene: sigue haciendo falta para que el
+     titulo se pinte por ENCIMA de la cortina (ambas piezas del mismo
+     mecanismo, ver .manifesto__curtain). */
+  /* Peticion cliente 2026-07-30 (tarea 6): "Manifiesto" ya NO lleva
+     fundido propio - antes (tarea 5) heredaba un --manifesto-pin-fade
+     continuo que tambien arrastraba al ojo (descendiente suyo), pero el
+     cliente aclaro que la imagen tiene que desaparecer "por debajo de
+     'Manifiesto'": el titulo se queda fijo y visible, solo el ojo se
+     oculta (ver --manifesto-eye-fade en .manifesto__eye, mas arriba) - el
+     titulo pasa a comportarse exactamente igual que "Servicios"/
+     "Proyectos" (sticky normal, sin logica de ocultamiento propia,
+     simplemente se desplaza fuera de vista de forma nativa al terminar su
+     rango de scroll - nunca fue la causa del bug de footer tapado, eso lo
+     causaba solo el ojo, mucho mas alto que el). */
+  .manifesto__pin {
+    position: sticky;
+    top: var(--manifesto-pin-top, var(--header-height));
+    z-index: 2;
+  }
+
+  /* Peticion cliente 2026-07-30 (tarea 10): en cuanto el pin (titulo+ojo)
+     ha desaparecido detras de .manifesto__statement (z-index:3, ver mas
+     arriba - tarea 9) se oculta del todo (visibility:hidden, no solo el
+     z-index) - evita que el ojo (fuera de la columna del statement, ver
+     left:-366px mas arriba, por lo que el fondo opaco del statement no lo
+     tapa a el directamente) se quede asomando cuando el titulo ya deberia
+     estar tapado. visibility (no display:none): el pin sigue sticky/
+     ocupando su sitio en el flujo - solo deja de pintarse - evita
+     cualquier salto de layout en el instante en que se oculta.
+     .is-hidden-behind-statement (main.js, updateManifestoCurtain) se
+     recalcula en cada frame de scroll a partir de la posicion real actual
+     - NO es un estado permanente (ver tarea 11 en main.js: un primer
+     intento con un "trinquete" de una sola direccion rompia el
+     comportamiento reversible normal de position:sticky - al scrollear
+     hacia atras y hacia adelante otra vez, "Manifiesto" ya no volvia a
+     aparecer nunca, ni en la zona donde debia verse). Con la condicion
+     recalculada en vivo, esta clase se quita y pone sola segun haga falta
+     en cualquier direccion de scroll, igual que .manifesto__curtain
+     .is-visible un poco mas abajo. */
+  .manifesto__pin.is-hidden-behind-statement {
+    visibility: hidden;
+  }
+
+  /* .manifesto__release-spacer: garantiza que, para CUALQUIER alto de
+     viewport, haya suficiente scroll despues de .manifesto__showcase para
+     que .manifesto__text llegue a terminar de pasar por detras del pin,
+     CON margen de sobra para que el fundido continuo del ojo
+     (--manifesto-eye-fade) tenga tambien esos px de recorrido para
+     completarse - sin esto, en viewports altos (ver comentario grande de
+     mas arriba) el ultimo parrafo se queda a medio camino indefinidamente
+     y el fundido nunca llega a 0. Altura calculada por JS (ver
+     syncManifestoStickyOffsets en main.js), recalculada tambien en cada
+     resize porque depende de window.innerHeight. */
+  .manifesto__release-spacer {
+    display: block;
+    height: var(--manifesto-release-spacer-h, 0px);
+  }
+
+  /* Peticion cliente 2026-07-26 (8a, sin cambios sobre este punto): sube
+     3px el texto en escritorio/tablet, 16px (base) -> 19px. */
+  .manifesto__text {
+    font-size: 19px;
+  }
+
+  /* Reveal-on-scroll (2026-07-30): cada parrafo arranca invisible y
+     desplazado 56px hacia abajo, y pasa a su posicion natural con un
+     fade suave cuando main.js le anade .is-revealed (IntersectionObserver,
+     ver el bloque de Manifiesto en main.js) - mismos valores (56px, 0.9s,
+     misma curva) que #home-servicios .service-showcase__list .service-entry
+     en components.css, para que ambos efectos de parallax del sitio se
+     sientan iguales. */
+  .manifesto__text p {
+    opacity: 0;
+    transform: translateY(56px);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .manifesto__text p.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* .manifesto__curtain: ver el comentario grande en el @media
+   (min-width:861px) de mas arriba ("SI se mantiene..."). display:none
+   base (movil real, cualquier ancho): sin sticky/scroll-jacking en movil
+   no hay nada que la cortina necesite tapar. */
 .manifesto__curtain {
   display: none;
 }
 
 @media (min-width: 861px) {
-  .manifesto__progress {
-    display: block;
-  }
-
-  /* Peticion cliente 2026-07-26 (5a): "cuando llegas al tercer slide
-     quiero que el carrusel se esconda por debajo del texto... y no se
-     vea nada por el hueco que hay despues del texto". Bug real
-     encontrado con Playwright: tras el ultimo parrafo, la pagina no
-     tenia suficiente alto restante (footer aparte) para que el pin,
-     una vez se despega de su position:sticky de forma nativa, termine
-     de recorrer la distancia que le queda hasta desaparecer del todo
-     por encima del viewport (--manifesto-pin-top + su propia altura,
-     lo unico que le falta por recorrer) ANTES de tocar el final real
-     de scroll de la pagina - se quedaba "a medias", parte visible por
-     encima del statement en vez de oculto. Este spacer (alto fijado
-     por JS en --manifesto-release-h, ver main.js) anade exactamente
-     ese hueco que faltaba DESPUES de .manifesto__showcase (fuera de su
-     alto, para no descuadrar el reparto entre los 3 parrafos, que SI
-     depende del alto de .manifesto__showcase) - con eso hay scroll de
-     sobra para que el despegue nativo del pin termine su recorrido y
-     quede completamente fuera de vista antes de llegar al pie de
-     pagina. Va en este @media aparte (no en el bloque grande de mas
-     arriba, que en el archivo aparece ANTES que la regla base
-     display:none de abajo) por el mismo motivo que .manifesto__progress:
-     tiene que ganarle en orden de aparicion en el archivo a su propia
-     regla base (display:none, unas lineas mas arriba en este mismo
-     bloque). */
-  .manifesto__release-spacer {
-    display: block;
-    height: var(--manifesto-release-h, 0px);
-  }
-
+  /* left/width (2026-07-30, corregido junto con el bug del rectangulo
+     negro - ver nota en .manifesto__pin de mas arriba): rect real de
+     .manifesto__text (JS, ver main.js), no de .manifesto__pin - la
+     cortina tiene que ser tan ancha como el TEXTO que oculta, no como el
+     titulo (mucho mas corto). height: var(--manifesto-curtain-height)
+     (JS, pinTop + alto real del pin) cubre desde el techo del viewport
+     hasta el borde INFERIOR del pin (0 a pinTop+altoPin) - ya no se
+     detiene en el borde superior del pin (pinTop a secas): el pin dejo de
+     tener su propio background (ver nota de arriba), asi que ahora es la
+     cortina, no el pin, quien tapa tambien la franja donde vive el propio
+     titulo "Manifiesto". z-index:2 en el pin lo sigue dejando por encima
+     de la cortina (z-index:1), asi que el titulo se ve con normalidad.
+     is-visible: ver IntersectionObserver sobre .manifesto__showcase en
+     main.js. */
   .manifesto__curtain {
     display: block;
     position: fixed;
     top: 0;
     left: var(--manifesto-curtain-left, 0px);
     width: var(--manifesto-curtain-width, 0px);
-    height: var(--manifesto-pin-top, 0px);
+    height: var(--manifesto-curtain-height, 0px);
     background: var(--color-bg);
     z-index: 1;
     opacity: 0;
@@ -940,51 +1069,41 @@
   }
 }
 
+/* Fallback (prefers-reduced-motion: reduce, cualquier ancho) - consolidado
+   2026-07-30 (antes repartido en 2 bloques @media distintos, uno de ellos
+   compartido con .manifesto__progress/__release-spacer, los 2 eliminados
+   junto con el resto del carrusel de scroll-jacking, ver comentario
+   grande en el @media (min-width:861px) de mas arriba): con reduced-motion
+   activado, "Manifiesto" deja de fijarse (mismo criterio que
+   .manifesto__statement, no una preferencia nueva) y los 3 parrafos se
+   muestran directamente en su posicion final, sin el fade+deslizamiento
+   de entrada (el guard !prefersReducedMotion en main.js tampoco añade la
+   clase .is-revealed en este caso - sin este reset se quedarian
+   invisibles, atascados en el estado inicial opacity:0). Sin pin sticky
+   no hay nada que .manifesto__curtain necesite tapar tampoco (mismo
+   guard !prefersReducedMotion evita que main.js la haga visible, pero se
+   oculta aqui tambien por si acaso). .manifesto__eye: mismo guard evita
+   que main.js le anade --manifesto-eye-offset, asi que ya cae en su
+   propio fallback (translateY(0), ver la regla base de mas arriba) sin
+   necesitar reset explicito aqui. */
 @media (prefers-reduced-motion: reduce) {
-  .manifesto__progress {
-    display: none;
-  }
   .manifesto__statement {
     position: static;
+  }
+  .manifesto__pin {
+    position: relative;
+    top: auto;
+  }
+  .manifesto__text p {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
   .manifesto__release-spacer {
     display: none;
   }
   .manifesto__curtain {
     display: none;
-  }
-}
-
-/* Fallback (prefers-reduced-motion: reduce, cualquier ancho): el JS de
-   main.js no calcula el indice activo en este caso (guard
-   !prefersReducedMotion, mismo criterio que el resto de carruseles de
-   este sitio) - sin esa clase is-active, los 3 parrafos quedarian
-   colapsados sin altura (position:absolute + --manifesto-text-h nunca
-   fijado por JS = 0). Se vuelve al mismo flujo apilado y siempre visible
-   que ya usa movil (real, no solo accesibilidad) - mismo patron que el
-   fallback de .service-showcase en components.css. */
-@media (prefers-reduced-motion: reduce) {
-  .manifesto__showcase {
-    height: auto;
-  }
-  .manifesto__pin {
-    position: relative;
-    top: auto;
-  }
-  .manifesto__text {
-    height: auto;
-    overflow: visible;
-  }
-  .manifesto__text p {
-    position: relative;
-    top: auto;
-    left: auto;
-    width: auto;
-    transform: none;
-    transition: none;
-  }
-  .manifesto__text p + p {
-    margin-top: 1.5em;
   }
 }
 
@@ -1574,7 +1693,7 @@
 
 .project-mosaic__caption-title {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 17px;
   line-height: normal;
   color: var(--color-text);
 }
@@ -1681,6 +1800,24 @@
   margin-top: auto;
 }
 
+/* Peticion cliente 2026-07-31: la misma navegacion de 3 botones (anterior/
+   ver todos/siguiente) que ya hay debajo del texto se repite tambien
+   debajo de las imagenes de cada proyecto - se coloca como ultimo item de
+   .project-detail__gallery, con grid-column:1/-1 para ocupar toda la fila
+   tanto en el grid de 6 columnas de escritorio como en el de 2 columnas
+   de movil. Anula margin-top:auto/margin-right:1.953vw heredados de
+   .project-detail__nav (pensados para anclar el otro nav al fondo de la
+   columna sticky de texto, no aplica aqui).
+   Aclaracion cliente el mismo dia: solo aplica en movil - oculto por
+   defecto (desktop/tablet, el unico breakpoint real del sitio son estos
+   860px, ver @media mas abajo) y reactivado dentro de ese media query. */
+.project-detail__nav--gallery {
+  display: none;
+  grid-column: 1 / -1;
+  margin-top: var(--space-md);
+  margin-right: 0;
+}
+
 .project-detail__nav-arrow {
   display: flex;
   align-items: center;
@@ -1746,6 +1883,10 @@
 @media (max-width: 860px) {
   .project-detail__nav {
     margin-top: 20px;
+  }
+
+  .project-detail__nav--gallery {
+    display: flex;
   }
 }
 
@@ -1974,10 +2115,20 @@
     margin-left: 0;
   }
 
-  .manifesto__eye {
+  /* Alto actualizado 2026-07-30 junto con la regla base de mas arriba
+     (mismo motivo: nuevo SVG casi cuadrado, no ancho/bajo) - mismo ratio
+     real del archivo, aplicado al ancho reducido de movil (128 *
+     270.61/251.13 = 137.93, redondeado). Tarea 7 (mismo dia): tamano y
+     posicion viven ahora en .manifesto__eye-frame (el marco/mascara, ver
+     regla base mas arriba) en vez de en la propia imagen - en movil no
+     hay pin sticky ni efecto de desaparición (el listener de scroll de
+     main.js solo corre en escritorio/tablet, ver !isMobileViewport), asi
+     que el marco aqui no necesita overflow:hidden activo, solo el
+     tamano/posicion en flujo normal que ya tenia la imagen antes. */
+  .manifesto__eye-frame {
     position: static;
     width: 128px;
-    height: 50px;
+    height: 138px;
     margin-bottom: var(--space-md);
   }
 

@@ -56,6 +56,7 @@
 #home-proyectos .project-entry {
   border-top: none;
   padding-block: 24px;
+  margin-top: 0;
 }
 
 #home-proyectos .project-entry__title {
@@ -86,9 +87,7 @@
    marca 2026-06-26: Figma unifico el font-size a 16px en las 4 fichas
    (antes 14px solo en Wanderlust, 1:774 - inconsistencia real que el
    propio cliente corrigio) - ya no hace falta el override por ficha, el
-   16px de --text-body (ver tokens.css) cubre las 4. La posicion vertical
-   se corrige mas abajo (anclada al fondo de la fila, no con margin-top
-   fijo). */
+   16px de --text-body (ver tokens.css) cubre las 4. */
 /* Peticion cliente 2026-07-26 (1a): subir el texto 2px - con
    margin-top:auto empujando el bloque al fondo de la fila, aumentar el
    padding-bottom (que reserva el hueco entre el texto y el borde
@@ -97,10 +96,14 @@
    Peticion cliente 2026-07-26 (2a, mismo dia): ademas, subir 2px el
    font-size - de 16px (--text-body, token compartido con el resto del
    sitio) a 18px, explicito y escopado solo a esta ficha de Home para no
-   afectar el resto de usos de --text-body. */
+   afectar el resto de usos de --text-body.
+   Peticion del usuario 2026-07-30: ya no anclada al fondo de la fila -
+   margin-top pasa de auto a 0 en escritorio (>1279px), igual que ya se
+   hizo en tablet (861-1279px, ver @media mas abajo). Solo afecta a
+   escritorio: movil (<=860px) mantiene su propio override de 20px. */
 #home-proyectos .project-entry__description {
   max-width: 410px;
-  margin-top: auto;
+  margin-top: 0;
   padding-bottom: 102px;
   font-size: 18px;
 }
@@ -1021,28 +1024,53 @@
 /* Peticion cliente 2026-07-16: al pasar de una categoria a otra
    (Estrategia/Sistemas de Diseño/Experiencia y Ejecución), el titulo de
    fila NO debe verse deslizarse hacia arriba al soltar su sticky - solo el
-   de la categoria activa debe estar visible, apareciendo directamente en
-   vez de a traves del scroll normal. Solo este titulo cambia asi: la
-   columna de cuerpo (.service-row > div:last-child, con sus
-   .service-group y el sticky anidado de cada uno) se queda exactamente
-   igual, sin tocar (peticion explicita del cliente). display:none/block
-   (sin transition) saca el bloque del todo mientras esta inactivo - por
-   eso no se ve "pasar" scrolleando, solo aparece cuando su clase is-active
-   se activa. El indice activo ya lo calculaba updateServiceRowMedia en
-   main.js para la imagen compartida (.services-media__group) - se
-   reutiliza el mismo calculo para alternar tambien esta clase, sin logica
-   nueva de deteccion de scroll.
+   de la categoria activa debe estar visible. display:none/block (sin
+   transition) resolvia esto ocultando el bloque del todo mientras estaba
+   inactivo.
+
+   Sustituido 2026-07-29 (2 iteraciones el mismo dia): primero se probo un
+   flip 3D (rotateX) propio de esta pagina, pero el cliente pidio en su
+   lugar el MISMO efecto que ya existe en el carrusel de Servicios de Home
+   ("que cuando termine de verse la informacion de un servicio aparezca el
+   siguiente... con el mismo efecto que el carrusel de Servicios de la
+   Home") - un crossfade simple por opacidad, igual que
+   #home-servicios .service-showcase__list .service-entry/.is-active (ver
+   mas abajo en este archivo): sin rotacion ni perspective, solo opacity
+   0<->1 con transition. Se reutiliza el mismo valor de duracion (0.4s
+   ease) que ese carrusel de Home para que el "efecto" sea perceptiblemente
+   el mismo, no solo conceptualmente parecido.
+   La clave sigue siendo la del intento anterior: el toggle se dispara por
+   clase (is-active, puesta por JS en updateServiceRowMedia con el mismo
+   indice activo ya calculado ahi para la imagen compartida), NO por la
+   posicion de scroll en si - evita reintroducir el problema original del
+   2026-07-16 (el titulo deslizandose al soltar su sticky, acoplado 1:1 al
+   scroll). La posicion (`top`, sticky) no cambia: los 3 bloques comparten
+   el mismo `top: calc(...)` (ver arriba, .service-row > div:first-child),
+   asi que en el instante del cambio de fila el saliente y el entrante ya
+   estan en las mismas coordenadas - solo hace falta cruzar su opacidad.
+   pointer-events:none evita que un bloque invisible (aun pintado, solo con
+   opacity:0) intercepte clics - no hay enlaces aqui hoy, pero sigue el
+   mismo criterio que .project-mosaic__caption/.service-entry.
    Solo desktop/tablet (>860px): en movil este titulo sigue el patron
    original de lista apilada con sticky por fila (ver @media
    max-width:860px mas abajo), sin tocar - el cliente no ha pedido cambiar
    el comportamiento movil, solo el "carrusel" de escritorio. */
 @media (min-width: 861px) {
   .service-row__title-block {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
   }
 
   .service-row__title-block.is-active {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-row__title-block {
+    transition: none;
   }
 }
 /* Figma (1:198/1:197, 1:228/1:227, 1:225/1:224, las 3 filas con el mismo
@@ -1547,6 +1575,134 @@
   height: 100%;
 }
 
+/* ---------- Reveal-on-scroll de Servicios en Home (solo escritorio/tablet) ---------- */
+/* Peticion cliente 2026-07-30: sustituye el pin+crossfade+barra de
+   progreso vertical (bloque de arriba, "Carrusel de Servicios en Home")
+   por un efecto de parallax vertical - cada uno de los 3 servicios se
+   revela de forma progresiva (fade + deslizamiento hacia arriba) segun
+   entra en el viewport, sin scroll-jacking (el pin deja de fijarse con
+   position:sticky) y sin la linea de progreso vertical, que el cliente
+   pidio quitar explicitamente. Peticion escopada a "version desktop" - el
+   carrusel de movil real (<=860px, ver @media (max-width:860px) e
+   isMobileViewport en main.js mas abajo/arriba) NO se toca, sigue con el
+   mismo pin+crossfade+barra que ya tenia.
+   Los 3 .service-entry pasan de "paneles superpuestos" (position:absolute
+   inset:0, ver regla base mas arriba) a "filas apiladas en flujo normal"
+   - mismo patron visual que el fallback de prefers-reduced-motion de
+   justo aqui debajo (border-top+padding-block en .service-link-row, sin
+   borde en la primera fila), con el que comparte selectores para no
+   duplicar layout - la unica diferencia es que aqui la opacidad/posicion
+   de cada fila arrancan en 0/translateY(56px) y pasan a 1/translateY(0)
+   con una clase .is-revealed que anade main.js via IntersectionObserver
+   segun cada fila entra en el viewport (ver "Reveal-on-scroll de
+   Servicios en Home" en main.js), en vez de opacity:1 fijo.
+   Este bloque debe ir ANTES (en el CSS) que el fallback de
+   prefers-reduced-motion de justo abajo: mismos selectores/especificidad
+   en ambos, así que si un usuario de escritorio tiene reduced-motion
+   activado necesitamos que gane ESE bloque (opacity:1 sin transicion),
+   no este - el orden en la cascada resuelve ese empate a favor del que
+   aparece despues en el archivo.
+
+   Peticion cliente 2026-07-30 (2a, mismo dia): ademas de lo anterior,
+   "Servicios" tiene que quedarse fijo arriba mientras la lista se oculta
+   detras al hacer scroll - ver #home-servicios .service-showcase__title
+   mas abajo (nuevo wrapper del <h2>+<div class="divider">, sticky con
+   z-index+background). Esa regla vive solo en este @media (no se aplica
+   a movil real, isMobileViewport en main.js) pero SI se aplica con
+   prefers-reduced-motion activado (sticky no es una animacion) - lo unico
+   que desactiva el fallback de reduced-motion de mas abajo es el
+   fade+deslizamiento de cada .service-entry (opacity/transform), no la
+   posicion fija del titulo. */
+@media (min-width: 861px) {
+  .service-showcase {
+    height: auto;
+  }
+
+  .service-showcase__pin {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Peticion cliente 2026-07-30 (2a, sobre este mismo cambio): "Servicios"
+     tiene que quedarse fijo arriba mientras el resto de la seccion se
+     oculta por debajo al hacer scroll - no basta con que deje de
+     moverse, tiene que TAPAR el contenido que pasa detras (igual patron
+     ya usado en el sitio para este mismo efecto: #home-proyectos
+     .project-showcase__pin > .section__heading en movil, mas arriba, y
+     .services-layout__title en la pagina Servicios) en vez de quedar
+     transparente. .service-showcase__title (nuevo wrapper en el HTML,
+     hermano de .service-showcase__list dentro del pin, agrupa el <h2> y
+     el <div class="divider">) es lo que se fija, no todo el pin - el pin
+     ya esta en flujo normal (regla de arriba), asi que el propio alto de
+     .service-showcase__list determina cuanto scroll dura el efecto de
+     forma nativa, sin ningun calculo de distancia en JS.
+     z-index+background: sin esto el titulo se queda pegado pero
+     transparente, y el contenido de la lista (position:relative, mismo
+     nivel de apilamiento) se dibujaria por encima en vez de detras. */
+  #home-servicios .service-showcase__title {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 2;
+    background: var(--color-bg);
+  }
+
+  .service-showcase__progress {
+    display: none;
+  }
+
+  .service-showcase__list {
+    min-height: 0;
+  }
+
+  #home-servicios .service-showcase__list .service-entry {
+    position: relative;
+    inset: auto;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(56px);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #home-servicios .service-showcase__list .service-entry.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #home-servicios .service-showcase__list .service-link-row {
+    border-top: 1px solid var(--color-border);
+    padding-block: var(--space-lg);
+    height: auto;
+  }
+
+  /* Peticion cliente 2026-07-30: quitar la linea separadora que queda
+     ENCIMA de "Estrategia" (la primera fila) - las demas (encima de
+     "Sistemas de Diseño" y "Experiencia y Ejecucion") se mantienen.
+     Bug real encontrado al implementar esto: :first-child (usado aqui
+     hasta ahora) nunca llegaba a matchear ningun .service-entry, porque
+     el hijo REAL mas temprano de .service-showcase__list es
+     .service-showcase__progress (la barra de progreso, ver arriba en
+     este mismo @media - display:none aqui pero sigue presente en el DOM,
+     :first-child no distingue por display) - "Estrategia" (el primer
+     .service-entry) es en realidad el SEGUNDO hijo del contenedor, nunca
+     el primero, asi que el border-top:none de mas abajo jamas se aplicaba
+     y las 3 filas mostraban su linea superior, incluida la de encima de
+     "Estrategia". :first-of-type SI funciona aqui: cuenta solo entre
+     hermanos del MISMO tag (<article>), ignorando el <div> de la barra de
+     progreso que lo precede - selecciona igual el primer .service-entry
+     real ("Estrategia") sin ese falso negativo.
+     Nota aparte, no contradice el comentario de mas arriba ("Sin
+     :first-of-type aqui... service-link-row.first-of-type matchearia las
+     3"): ese caso aplicaba :first-of-type a .service-link-row (hijo unico
+     de cada .service-entry, por tanto SIEMPRE first-of-type de las 3)
+     - aqui se aplica a .service-entry mismo, que si tiene hermanos reales
+     del mismo tag para distinguir. */
+  #home-servicios .service-showcase__list .service-entry:first-of-type .service-link-row {
+    border-top: none;
+  }
+}
+
 /* Fallback documentado (solo prefers-reduced-motion, CUALQUIER ancho): se
    desactiva el pin/scrub del carrusel de Servicios y vuelve al layout en
    flujo normal (lista apilada de las 3 categorias, con sus sub-items
@@ -1585,11 +1741,19 @@
      regla base pone pointer-events:none y solo lo libera via .is-active,
      pero ese JS no corre con reduced-motion, asi que sin este reset los 3
      enlaces de Servicios quedarian permanentemente inaccesibles al tacto/
-     clic para quien tenga esta preferencia activada. */
+     clic para quien tenga esta preferencia activada.
+     transform:none añadido 2026-07-30: el nuevo reveal-on-scroll de
+     escritorio/tablet (ver @media (min-width:861px) mas arriba) arranca
+     cada .service-entry en translateY(56px) antes de revelarse - sin este
+     reset, un usuario de escritorio con reduced-motion activado (JS no
+     añade .is-revealed en ese caso, ver guard !prefersReducedMotion en
+     main.js) veria las 3 filas permanentemente desplazadas 56px hacia
+     abajo aunque opacity:1 las de por visibles. */
   #home-servicios .service-showcase__list .service-entry {
     position: relative;
     inset: auto;
     opacity: 1;
+    transform: none;
     pointer-events: auto;
   }
   #home-servicios .service-showcase__list .service-link-row {
@@ -1597,7 +1761,12 @@
     padding-block: var(--space-lg);
     height: auto;
   }
-  #home-servicios .service-showcase__list .service-entry:first-child .service-link-row {
+  /* :first-of-type (2026-07-30, mismo motivo que el bloque de reveal-on-
+     scroll de mas arriba): :first-child nunca matcheaba ningun
+     .service-entry porque .service-showcase__progress lo precede como
+     hijo real del contenedor - la linea de encima de "Estrategia" no se
+     quitaba. */
+  #home-servicios .service-showcase__list .service-entry:first-of-type .service-link-row {
     border-top: none;
   }
   /* Sin scroll-jacking aqui (lista apilada normal), el concepto de
@@ -1912,15 +2081,10 @@
     width: 100%;
   }
 
-  /* Peticion del usuario 2026-07-25: en tablet, la descripcion de cada
-     proyecto (carrusel de Proyectos, Home) debe llevar interlineado
-     respecto a project-entry__category, no seguir anclada al fondo de
-     la columna (margin-top:auto, regla de escritorio mas arriba) - con
-     la columna de texto estrecha en tablet, ese anclaje al fondo dejaba
-     muy poco aire entre categoria y descripcion cuando el texto envuelve
-     en muchas lineas. Ajustado de 10px a 20px (peticion del usuario,
-     mismo dia, tras ver el resultado de 10px). */
+  /* Peticion del usuario 2026-07-30: volver a anclar la descripcion al
+     fondo de la columna en tablet (margin-top:0), igual que escritorio -
+     sustituye el ajuste de 2026-07-25 (interlineado fijo de 20px). */
   #home-proyectos .project-entry__description {
-    margin-top: 20px;
+    margin-top: 0;
   }
 }
