@@ -1922,19 +1922,35 @@
   color: var(--color-text-muted);
 }
 
+/* Figma (nodo "Proyectos" > "Proyecto_2", presente en las 4 paginas,
+   x=42 y w=245 en las 4 - antes pasada por alto porque su frame
+   contenedor tiene height:0 en la metadata): linea horizontal de 1px,
+   245px de ancho, color #5E5E5E (var(--color-text-muted)) debajo del
+   pais/categoria y antes del cuerpo. Gap real medido en las 4 paginas:
+   14px desde la categoria hasta la linea, 31px desde la linea hasta el
+   cuerpo (14+31=45, el mismo total que se uso antes de encontrar la
+   linea, pero repartido en 2 huecos en vez de uno).
+   Restaurada 2026-09-15: el cliente pidio quitarla ese mismo dia y, tras
+   ver el resultado desplegado, decidio volver a ponerla - ver
+   PROD_11_CONTENT_REFRESH_DIVIDER_REMOVAL_PRODUCTION.md para el contexto
+   completo del ida y vuelta. */
+.project-detail__divider {
+  margin: 0;
+  margin-top: 14px;
+  margin-bottom: 31px;
+  width: 245px;
+  max-width: 100%;
+  height: 1px;
+  border: none;
+  background: var(--color-text-muted);
+}
+
 /* Cambio de marca 2026-06-26: re-verificado en las 6 paginas - el cuerpo
    es **16px/26px de interlineado en las 6, sin excepcion** (antes
    Wanderlust usaba 14px/interlineado normal via el modificador --sm, que
    ya no hace falta - Wanderlust tambien es 16px/26px ahora). */
 .project-detail__body {
   margin: 0;
-  /* Peticion cliente 2026-09-15: quitar la linea separadora
-     (.project-detail__divider, antes un <hr> de 1px debajo de
-     pais/categoria) en todas las fichas de proyecto. Se conserva el
-     hueco total que ocupaba (14px de la categoria a la linea + 31px de
-     la linea al cuerpo = 45px) como margin-top, para no alterar el
-     ritmo vertical ya validado contra Figma. */
-  margin-top: 45px;
   /* Peticion cliente 2026-07-13: separacion de "unos 25px" entre el
      cuerpo de texto y la galeria, medida en devtools sobre el viewport
      de referencia (1280px, el mismo frame de Figma del que salen el
